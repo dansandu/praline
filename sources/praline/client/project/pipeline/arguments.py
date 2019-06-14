@@ -1,6 +1,8 @@
 import argparse
 
 
+pass_remainder_arguments = argparse.REMAINDER
+
 def get_arguments(stages):
     schema = {
         'global': [
