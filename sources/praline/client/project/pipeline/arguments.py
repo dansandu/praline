@@ -22,8 +22,7 @@ def get_arguments(stages):
                 'name': '--executable',
                 'action': 'store_true',
                 'dest': 'executable',
-                'help': 'Make the project an executable by adding the executable.cpp to the sources directory.',
-                'default': False
+                'help': 'Make the project an executable by adding the executable.cpp to the sources directory.'
             }
         ],
         'byStage': {name : stage.parameters for name, stage in stages.items() if stage.exposed}
