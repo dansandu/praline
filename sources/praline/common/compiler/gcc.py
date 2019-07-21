@@ -2,7 +2,7 @@ from logging import getLogger
 from praline.common.compiler.base import Compiler
 from praline.common.file_system import basename, directory_name, execute, execute_and_fail_on_bad_return
 
-flags = ['-fPIC', '-pthread', '-O3', '-std=c++17', '-Werror', '-Wall', '-Wextra']
+flags = ['-fPIC', '-pthread', '-O3', '-std=c++17', '-Werror', '-Wall', '-Wextra', '-Wno-literal-suffix']
 
 
 class GccCompiler(Compiler):
