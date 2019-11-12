@@ -3,18 +3,18 @@ from praline.common.tracing import trace
 
 
 @trace
-def children_count(node, tree):
-    result = {}
+def root_last_traversal(node, tree):
+    visited = []
+    result = []
 
-    def children_count_work(node):
-        if node not in result:
-            count = 0
-            for child in tree[node]:
-                count += children_count_work(child)
-            result[node] = count
-        return result[node]
+    def root_last_traversal_work(node):
+        visited.append(node)
+        for child in tree[node]:
+            if child not in visited:
+                root_last_traversal_work(child)
+        result.append(node)
     
-    children_count_work(node)
+    root_last_traversal_work(node)
     return result
 
 
