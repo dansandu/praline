@@ -2,7 +2,7 @@ from praline.common.cache import Cache
 from praline.client.project.pipeline.arguments import get_arguments
 from praline.client.project.pipeline.dynamic_wiring import deploy_wiring, format_code_wiring, run_unit_tests_wiring
 from praline.client.project.pipeline.stage.base import stages
-from praline.common.algorithm.graph.simple_traversal import depth_first_traversal, children_count
+from praline.common.algorithm.graph.simple_traversal import depth_first_traversal, root_last_traversal
 from praline.common.file_system import current_working_directory, join
 from praline.common.tracing import trace
 
@@ -31,8 +31,7 @@ def create_pipeline(start_stage, stages, run_unit_tests, format_code):
         format_code_wiring(stages)
     stage_tree = get_stage_tree(stages)
     subtree = check_for_cyclic_dependencies(start_stage, stage_tree)
-    dependency_count = children_count(start_stage, subtree)
-    return sorted([stage_name for stage_name in dependency_count], key=lambda s: dependency_count[s])
+    return root_last_traversal(start_stage, subtree)
 
 
 class StageResources:
