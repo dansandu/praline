@@ -5,7 +5,10 @@ from praline.client.configuration import configuration
 clang_format_file_contents = """Language: Cpp
 AccessModifierOffset: -4
 AlignTrailingComments: true
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
 AlwaysBreakTemplateDeclarations: true
+BreakBeforeBraces: Allman
 ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 FixNamespaceComments: false
