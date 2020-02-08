@@ -4,22 +4,28 @@ from subprocess import Popen, PIPE
 from os import access, X_OK, makedirs as make_directories, getcwd as current_working_directory, walk, sep as separator, name as os_name, scandir as scan_directory, remove, pathsep, environ as environment, scandir
 from os.path import join, exists, isdir as is_directory, isfile as is_file, dirname as directory_name, relpath as relative_path, basename, splitext as split_extension
 from shutil import copyfile, copyfileobj, copy, rmtree as remove_directory_recursively
+from sys import platform
 
 logger = getLogger(__name__)
 
 
-def execute(command, add_to_path=[]):
-    environment_copy = environment.copy()
-    if add_to_path:
-        environment_copy['PATH'] += pathsep + pathsep.join(add_to_path)  
+def execute(command, add_to_library_path=[]):
+    environment_copy = dict(environment)
+    if add_to_library_path:
+        if platform == 'linux' or platform == 'darwin':
+            environment_copy['LD_LIBRARY_PATH'] = pathsep + pathsep.join(add_to_library_path)
+        elif platform == 'win32':
+            environment_copy['PATH'] += pathsep + pathsep.join(add_to_library_path)
+        else:
+            raise RuntimeError("Couldn't add to library path -- unsupported platform")
     process = Popen(command, shell=os_name is 'nt', stdout=PIPE, stderr=PIPE, env=environment_copy)
     stdout, stderror = process.communicate()
     return process.returncode, stdout, stderror
 
 
 @trace
-def execute_and_fail_on_bad_return(command, add_to_path=[]):
-    status, stdout, stderror = execute(command, add_to_path=add_to_path)
+def execute_and_fail_on_bad_return(command, add_to_library_path=[]):
+    status, stdout, stderror = execute(command, add_to_library_path=add_to_library_path)
     if stdout:
         logger.info(stdout.decode())
     if stderror:

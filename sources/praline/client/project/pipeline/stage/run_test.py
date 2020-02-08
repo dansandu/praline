@@ -16,5 +16,5 @@ parameters = [
 
 @stage(consumes=['external_libraries_root', 'test_executable'], produces=['test_results'], exposed=True, parameters=parameters)
 def run_test(working_directory, data, cache, arguments):
-    execute_and_fail_on_bad_return([data['test_executable']] + arguments['arguments'], add_to_path=[data['external_libraries_root']])
+    execute_and_fail_on_bad_return([data['test_executable']] + arguments['arguments'], add_to_library_path=[data['external_libraries_root']])
     data['test_results'] = 'success'

@@ -16,4 +16,4 @@ parameters = [
 
 @stage(consumes=['external_libraries_root', 'main_executable', 'resources_root'], exposed=True, parameters=parameters)
 def run_main(working_directory, data, cache, arguments):
-    execute_and_fail_on_bad_return([data['main_executable']] + arguments['arguments'], add_to_path=[data['external_libraries_root']])
+    execute_and_fail_on_bad_return([data['main_executable']] + arguments['arguments'], add_to_library_path=[data['external_libraries_root']])
