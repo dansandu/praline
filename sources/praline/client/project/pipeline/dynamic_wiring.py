@@ -5,10 +5,10 @@ source_root = join(current_working_directory(), 'sources')
 
 def run_unit_tests_wiring(stages):
     if any(f for f in files_in_directory(source_root) if f.endswith('.test.cpp')):
-        stages['package_executable'].consumes.extend(stages['run_test'].produces)
-        stages['package_header_only'].consumes.extend(stages['run_test'].produces)
-        stages['package_library'].consumes.extend(stages['run_test'].produces)
-        stages['run_main'].consumes.extend(stages['run_test'].produces)
+        stages['package_executable'].consumes.extend(stages['test'].produces)
+        stages['package_header_only'].consumes.extend(stages['test'].produces)
+        stages['package_library'].consumes.extend(stages['test'].produces)
+        stages['main'].consumes.extend(stages['test'].produces)
 
 
 def format_code_wiring(stages):

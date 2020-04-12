@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.arguments import pass_remainder_arguments
 from praline.client.project.pipeline.stage.base import stage
-from praline.common.file_system import execute_and_fail_on_bad_return, exists
+from praline.common.file_system import execute_and_fail_on_bad_return
 
 
 parameters = [
@@ -14,7 +14,6 @@ parameters = [
     }
 ]
 
-@stage(consumes=['external_libraries_root', 'test_executable'], produces=['test_results'], exposed=True, parameters=parameters)
-def run_test(working_directory, data, cache, arguments):
-    execute_and_fail_on_bad_return([data['test_executable']] + arguments['arguments'], add_to_library_path=[data['external_libraries_root']])
-    data['test_results'] = 'success'
+@stage(consumes=['external_libraries_root', 'main_executable', 'resources_root'], exposed=True, parameters=parameters)
+def main(working_directory, data, cache, arguments):
+    execute_and_fail_on_bad_return([data['main_executable']] + arguments['arguments'], add_to_library_path=[data['external_libraries_root']])
