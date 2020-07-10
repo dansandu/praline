@@ -5,10 +5,10 @@ from praline.common.file_system import basename, directory_name, FileSystem, rel
 from typing import List
 
 
-flags = ['-fvisibility=hidden', '-fvisibility-inlines-hidden', '-fPIC', '-pthread',
-         '-std=c++17', '-Werror', '-Wall', '-Wextra', '-Wno-literal-suffix',
-         '-DPRALINE_EXPORT=__attribute__((visibility(\\"default\\")))',
-         '-DPRALINE_IMPORT=__attribute__((visibility(\\"default\\")))']
+flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
+         '-Werror', '-Wall', '-Wextra',
+         '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
+         '-DPRALINE_IMPORT=__attribute__((visibility("default")))']
 
 
 class DarwinClangYieldDescriptor(YieldDescriptor):
@@ -85,7 +85,7 @@ class DarwinClangCompiler(Compiler):
                                                          '-rpath', '@executable_path/../libraries',
                                                          '-rpath', '@executable_path/../external/libraries'] +
                                                         flags + objects + [f'-L{external_libraries_root}'] +
-                                                        [f'-l{basename(external_library)[3:-3]}' for external_library in external_libraries])
+                                                        [f'-l{basename(external_library)[3:-6]}' for external_library in external_libraries])
 
     def link_library(self,
                      external_libraries_root: str,
@@ -98,7 +98,7 @@ class DarwinClangCompiler(Compiler):
                      symbols_table: str) -> None:
         self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] +
                                                         flags + objects + [f'-L{external_libraries_root}'] +
-                                                        [f'-l{basename(external_library)[3:-3]}' for external_library in external_libraries])
+                                                        [f'-l{basename(external_library)[3:-6]}' for external_library in external_libraries])
 
     def get_yield_descriptor(self) -> YieldDescriptor:
         return DarwinClangYieldDescriptor()

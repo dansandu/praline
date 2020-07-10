@@ -5,10 +5,10 @@ from praline.common.file_system import basename, directory_name, FileSystem, rel
 from typing import List
 
 
-flags = ['-fvisibility=hidden', '-fvisibility-inlines-hidden', '-fPIC', '-pthread',
-         '-std=c++17', '-Werror', '-Wall', '-Wextra', '-Wno-literal-suffix',
-         '-DPRALINE_EXPORT=__attribute__((visibility(\\"default\\")))',
-         '-DPRALINE_IMPORT=__attribute__((visibility(\\"default\\")))']
+flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
+         '-Werror', '-Wall', '-Wextra', '-Wno-literal-suffix',
+         '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
+         '-DPRALINE_IMPORT=__attribute__((visibility("default")))']
 
 
 class GccYieldDescriptor(YieldDescriptor):
