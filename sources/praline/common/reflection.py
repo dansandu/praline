@@ -1,7 +1,9 @@
+from typing import Any, Type
 
-def subclasses_of(klass):
+
+def subclasses_of(klass: Type[Any]):
     subclasses = []
-    stack = [klass]
+    stack      = [klass]
     while stack:
         parent = stack.pop()
         for subclass in parent.__subclasses__():

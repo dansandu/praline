@@ -1,21 +1,15 @@
-from praline.common.pralinefile.constants import allowed_dependency_fields, allowed_pralinefile_fields
+from praline.common.constants import allowed_pralinefile_fields, allowed_pralinefile_dependency_fields
 from praline.common.pralinefile.validation.validator import PralinefileValidationError, validator
+from typing import Any, Dict
 
 
 @validator
-def validate_allowed_fields(pralinefile):
-    if not isinstance(pralinefile, dict):
-        raise PralinefileValidationError(f"pralinefile has invalid type '{type(pralinefile)}' -- type must be dictionary")
+def validate_allowed_fields(pralinefile: Dict[str, Any]):
     for field in pralinefile:
         if field not in allowed_pralinefile_fields:
             raise PralinefileValidationError(f"pralinefile has unrecognized field '{field}'  -- allowed fields are {allowed_pralinefile_fields}")
-
-    dependencies = pralinefile['dependencies']
-    if not isinstance(dependencies, list):
-        raise PralinefileValidationError(f"pralinefile dependencies {dependencies} has invalid type '{type(dependencies)}' -- type must be list")
+    dependencies = pralinefile.get('dependencies', [])
     for dependency in dependencies:
-        if not isinstance(pralinefile, dict):
-            raise PralinefileValidationError(f"pralinefile dependency {dependency} has invalid type '{type(dependency)}' -- type must be dictionary")
         for field in dependency:
-            if field not in allowed_dependency_fields:
-                raise PralinefileValidationError(f"pralinefile dependency {dependency} has unrecognized field '{field}'  -- allowed fields are {allowed_dependency_fields}")
+            if field not in allowed_pralinefile_dependency_fields:
+                raise PralinefileValidationError(f"pralinefile dependency {dependency} has unrecognized field '{field}'  -- allowed fields are {allowed_pralinefile_dependency_fields}")
