@@ -10,17 +10,17 @@ logger = logging.getLogger(__name__)
 
 
 compiler_flags  = ['/analyze-', '/permissive-', '/GS', '/RTC1', '/Gd', '/MDd', '/Z7', '/FC', '/Od', '/sdl', '/fp:precise',
-                   '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3', '/D_MBCS',
-                   '/DPRALINE_EXPORT=__declspec(dllexport)',
-                   '/DPRALINE_IMPORT=__declspec(dllimport)']
+                   '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3', '/Gm-',
+                    '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_DEBUG', '/D_CONSOLE', '/D_UNICODE',
+                   '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)', '/DPRALINE_IMPORT=__declspec(dllimport)']
 
 
-linker_flags    = ['/DYNAMICBASE', '/DEBUG:FULL', '/NXCOMPAT', '/INCREMENTAL:NO', '/MANIFEST:NO',
-                   '/ERRORREPORT:NONE', '/NOLOGO', '/TLBID:1', '/WX']
+linker_flags    = ['/DYNAMICBASE', '/DEBUG:FULL', '/NXCOMPAT', '/INCREMENTAL:NO', '/MANIFEST:NO', '/ERRORREPORT:NONE',
+                   '/NOLOGO', '/TLBID:1', '/WX']
 
 
-extra_libraries_interfaces = ['kernel32.lib', 'user32.lib', 'gdi32.lib', 'winspool.lib', 'comdlg32.lib', 'advapi32.lib', 'shell32.lib',
-                              'ole32.lib', 'oleaut32.lib', 'uuid.lib', 'odbc32.lib', 'odbccp32.lib']
+extra_libraries_interfaces = ['kernel32.lib', 'user32.lib', 'gdi32.lib', 'winspool.lib', 'comdlg32.lib', 'advapi32.lib',
+                              'shell32.lib', 'ole32.lib', 'oleaut32.lib', 'uuid.lib', 'odbc32.lib', 'odbccp32.lib']
 
 
 def get_msvc_machine(architecture: str):
@@ -95,8 +95,9 @@ class MsvcCompiler(Compiler):
                    external_headers_root: str,
                    headers: List[str],
                    source: str) -> bytes:
-        status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&', 'cl', '/EP', source] +
-                                                            compiler_flags + ['/I', headers_root, '/I', external_headers_root])
+        status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
+                                                             'cl', '/EP', source] + compiler_flags +
+                                                            ['/I', headers_root, '/I', external_headers_root])
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
@@ -109,8 +110,9 @@ class MsvcCompiler(Compiler):
                 headers: List[str],
                 source: str,
                 object_: str) -> None:
-        status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&', 'cl', f'/Fo{object_}', '/c', source] +
-                                                             compiler_flags + ['/I', headers_root, '/I', external_headers_root])
+        status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
+                                                             'cl', f'/Fo{object_}', '/c', source] + compiler_flags +
+                                                            ['/I', headers_root, '/I', external_headers_root])
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
@@ -126,10 +128,12 @@ class MsvcCompiler(Compiler):
                         symbols_table: str) -> None:
         library_interface = executable.replace('.exe', '.lib')
         export_file = executable.replace('.exe', '.exp')
-        status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&', 'link',
-                                                             f'/OUT:{executable}', f'/MACHINE:{get_msvc_machine(self.architecture)}',
-                                                             f'/IMPLIB:{library_interface}', f'/PDB:{symbols_table}']
-                                                             + linker_flags + objects + extra_libraries_interfaces + external_libraries_interfaces)
+        status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
+                                                             'link', f'/OUT:{executable}',
+                                                             f'/MACHINE:{get_msvc_machine(self.architecture)}',
+                                                             f'/IMPLIB:{library_interface}', f'/PDB:{symbols_table}'] +
+                                                            linker_flags + objects + extra_libraries_interfaces +
+                                                            external_libraries_interfaces)
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
@@ -152,8 +156,9 @@ class MsvcCompiler(Compiler):
         export_file = library_interface.replace('.lib', '.exp')
         status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
                                                              'link', f'/OUT:{library}', '/DLL', f'/IMPLIB:{library_interface}',
-                                                             f'/MACHINE:{get_msvc_machine(self.architecture)}', f'/PDB:{symbols_table}'] +
-                                                            linker_flags + objects + extra_libraries_interfaces + external_libraries_interfaces)
+                                                             f'/MACHINE:{get_msvc_machine(self.architecture)}',
+                                                             f'/PDB:{symbols_table}'] + linker_flags + objects +
+                                                            extra_libraries_interfaces + external_libraries_interfaces)
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
@@ -161,7 +166,8 @@ class MsvcCompiler(Compiler):
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
         if not self.file_system.exists(library_interface):
-            raise RuntimeError(f"no library interface file '{library_interface}' was created because there are no symbols to export -- use PRALINE_EXPORT to export symbols")
+            raise RuntimeError(f"no library interface file '{library_interface}' was created because there are no symbols to "
+                               " export -- use PRALINE_EXPORT to export symbols")
 
     def get_yield_descriptor(self) -> YieldDescriptor:
         return MsvcYieldDescriptor()
