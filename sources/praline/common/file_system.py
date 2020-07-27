@@ -1,97 +1,140 @@
+import os
+import os.path
+import platform
+import shutil
+import subprocess
+import sys
+import tarfile
 from logging import getLogger
-from praline.common.tracing import trace
-from subprocess import Popen, PIPE
-from os import access, X_OK, makedirs as make_directories, getcwd as current_working_directory, walk, sep as separator, name as os_name, scandir as scan_directory, remove, pathsep, environ as environment, scandir
-from os.path import join, exists, isdir as is_directory, isfile as is_file, dirname as directory_name, relpath as relative_path, basename, splitext as split_extension
-from shutil import copyfile, copyfileobj, copy, rmtree as remove_directory_recursively
-from sys import platform
+from praline.common.tracing import trace, INFO
+from typing import Any, IO, List
+
 
 logger = getLogger(__name__)
 
 
-def execute(command, add_to_library_path=[]):
-    environment_copy = dict(environment)
-    if add_to_library_path:
-        if platform == 'linux' or platform == 'darwin':
-            environment_copy['LD_LIBRARY_PATH'] = pathsep + pathsep.join(add_to_library_path)
-        elif platform == 'win32':
-            environment_copy['PATH'] += pathsep + pathsep.join(add_to_library_path)
+def directory_name(path : str) -> str:
+    return os.path.dirname(path)
+
+
+def join(path: str, *paths: str) -> str:
+    return os.path.join(path, *paths)
+
+
+def relative_path(path: str, start: str) -> str:
+    return os.path.relpath(path, start)
+
+
+def get_separator() -> str:
+    return os.path.sep
+
+
+def basename(path: str) -> str:
+    return os.path.basename(path)
+
+
+def normalized_path(path: str) -> str:
+    return os.path.normpath(path)
+
+def common_path(paths: List[str]) -> str:
+    return os.path.commonpath(paths)
+
+class FileSystem:
+    @trace
+    def execute(self, command: List[str], add_to_library_path: List[str] = []) -> None:
+        environment_copy = dict(os.environ)
+        if add_to_library_path:
+            if sys.platform == 'linux' or sys.platform == 'darwin':
+                environment_copy['LD_LIBRARY_PATH'] = os.pathsep + os.pathsep.join(add_to_library_path)
+            elif sys.platform == 'win32':
+                environment_copy['PATH'] += os.pathsep + os.pathsep.join(add_to_library_path)
+            else:
+                raise RuntimeError(f"couldn't change library path -- unsupported platform '{sys.platform}'")
+        process = subprocess.Popen(command, shell=(os.name == 'nt'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment_copy)
+        stdout, stderror = process.communicate()
+        return process.returncode, stdout, stderror
+
+    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = []) -> None:
+        status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path)
+        if stdout:
+            logger.info(stdout.decode())
+        if stderror:
+            logger.error(stderror.decode())
+        if status != 0:
+            raise RuntimeError(f"command exited with return code {status}")
+
+    def exists(self, path: str) -> bool:
+        return os.path.exists(path)
+
+    def is_file(self, path: str) -> bool:
+        return os.path.isfile(path)
+
+    def is_directory(self, path: str) -> bool:
+        return os.path.isdir(path)
+
+    def create_file_if_missing(self, path: str, contents: str = '') -> None:
+        if not os.path.exists(path):
+            logger.debug(f"creating file '{path}'")
+            os.makedirs(name=directory_name(path), exist_ok=True)
+            with open(path, 'w') as f:
+                f.write(contents)
+        elif not self.is_file(path):
+            raise RuntimeError(f"'{path}' already exists and is not a file")
+
+    def create_directory_if_missing(self, path: str) -> None:
+        if not self.exists(path):
+            logger.debug(f"creating directory '{path}'")
+            os.makedirs(path)
+        elif not self.is_directory(path):
+            raise RuntimeError(f"'{path}' already exists and is not a directory")
+
+    def list_directory(self, directory: str, hidden: bool = False) -> List[str]:
+        return [entry for entry in os.scandir(directory) if hidden or not entry.name.startswith('.')]
+
+    def files_in_directory(self, directory: str, hidden: bool = False) -> List[str]:
+        return [join(r, f) for r, _, files in os.walk(directory) for f in files if hidden or not f.startswith('.')]
+
+    def open_file(self, path: str, mode: str) -> IO[Any]:
+        return open(path, mode)
+
+    def get_working_directory(self) -> str:
+        return os.getcwd()
+
+    @trace
+    def remove_directory_recursively(self, directory: str) -> None:
+        shutil.rmtree(directory)
+
+    @trace
+    def remove_file(self, path) -> None:
+        os.remove(path)
+
+    def which(self, thing: str) -> str:
+        directories = os.environ["PATH"].split(os.pathsep)
+        current = directory_name(thing)
+        if current:
+            directories.append(current)
+        for directory in directories:
+            if self.exists(directory):
+                for entry in os.scandir(directory):
+                    path = join(directory, entry.name)
+                    if thing == os.path.splitext(entry.name)[0] and os.access(path, os.X_OK) and entry.is_file():
+                        return entry.path
+        return None
+
+    def get_architecture(self) -> str:
+        m = platform.machine()
+        if m == 'i386':
+            return 'x32'
+        elif m == 'AMD64' or m == 'x86_64':
+            return 'x64'
         else:
-            raise RuntimeError("Couldn't add to library path -- unsupported platform")
-    process = Popen(command, shell=os_name is 'nt', stdout=PIPE, stderr=PIPE, env=environment_copy)
-    stdout, stderror = process.communicate()
-    return process.returncode, stdout, stderror
+            raise RuntimeError(f"unrecognized architecture {m}")
 
+    def get_platform(self) -> str:
+        return str(platform.system()).lower()
 
-@trace
-def execute_and_fail_on_bad_return(command, add_to_library_path=[]):
-    status, stdout, stderror = execute(command, add_to_library_path=add_to_library_path)
-    if stdout:
-        logger.info(stdout.decode())
-    if stderror:
-        logger.error(stderror.decode())
-    if status != 0:
-        raise RuntimeError(f"command exited with return code {status}")
+    def open_tarfile(self, path: str, mode: str):
+        return tarfile.open(path, mode)
 
-
-def files_in_directory(directory):
-    for root, file_name in split_files_in_directory(directory):
-        yield join(root, file_name)
-
-
-def top_level_entries_in_directory(directory):
-    for entry in scan_directory(directory):
-        yield entry
-
-
-def split_files_in_directory(directory):
-    for root, _, files in walk(directory):
-        for file_name in files:
-            yield root, file_name
-
-
-def create_directory_if_missing(path):
-    if not exists(path):
-        logger.debug(f"creating directory {path}")
-        make_directories(path)
-    elif not is_directory(path):
-        raise RuntimeError(f"{path} already exists and is not a directory")
-
-
-def create_file_if_missing(path, contents=""):
-    if not exists(path):
-        logger.debug(f"creating file {path}")
-        make_directories(name=directory_name(path), exist_ok=True)
-        with open(path, 'w') as f:
-            f.write(contents)
-    elif not is_file(path):
-        raise RuntimeError(f"{path} already exists and is not a file")
-
-
-@trace
-def copy_files_with_relative_directories(source_root, destination_root, predicate=None):
-    for path, _, files in walk(source_root):
-        for file_name in files:
-            source = join(path, file_name)
-            if predicate is None or predicate(source):
-                destination = join(destination_root, relative_path(path, source_root))
-                make_directories(destination, exist_ok=True)
-                copy(source, destination)
-
-
-@trace
-def which(thing):
-    directories = environment["PATH"].split(pathsep)
-    current = directory_name(thing)
-    if current:
-        directories.append(current)
-    for directory in directories:
-        if exists(directory):
-            for entry in scan_directory(directory):
-                path = join(directory, entry.name)
-                if thing == split_extension(entry.name)[0] and access(path, X_OK) and entry.is_file():
-                    return entry.path
-    return None
-
-def is_directory_empty(directory):
-    return len([d for d in scan_directory(directory)]) == 0
+    def copyfileobj(self, source, destination):
+        shutil.copyfileobj(source, destination)

@@ -1,10 +1,19 @@
-from sys import modules
-from logging import getLogger, DEBUG, INFO, WARNING, ERROR, CRITICAL
-from time import time
 from functools import wraps
+from logging import getLogger, DEBUG, INFO, WARNING, ERROR, CRITICAL
+from sys import modules
+from time import time
 
 
 class Tracer:
+    counter    : int = 0
+    max_counter: int = 0xFFFFFF
+
+    @classmethod
+    def generate_uuid(cls) -> int:
+        result = cls.counter
+        cls.counter = (cls.counter + 1) % cls.max_counter
+        return f'{result: 07x}'
+
     def __init__(self, level, parameters, tags, function, function_args, function_kwargs):
         self.logger = getLogger(modules[function.__module__].__name__)
         self.level = level
@@ -16,9 +25,19 @@ class Tracer:
         self.start_time = None
         self.return_value = None
         self.exception = None
+        self.uuid = self.__class__.generate_uuid()
 
     def __enter__(self):
         self.start_time = time()
+        metadata = {**self.tags}
+        index = 0
+        for value in self.function_args:
+            argument = self.function.__code__.co_varnames[index]
+            if self.parameters == None or argument in self.parameters:
+                metadata[argument] = value
+            index += 1
+        metadata.update(self.function_kwargs)
+        self.logger.log(self.level, f"{self.uuid} {self.function.__name__} {' '.join([k + '=' + repr(v) for k, v in metadata.items()])}")
         return self
 
     def trace(self):
@@ -30,21 +49,14 @@ class Tracer:
         return self.return_value
 
     def __exit__(self, type, value, traceback):
-        max_return_value_output = 2048
-        metadata = {**self.tags}
-        index = 0
-        for value in self.function_args:
-            argument = self.function.__code__.co_varnames[index]
-            if self.parameters is None or argument in self.parameters:
-                metadata[argument] = value
-            index += 1
-        metadata.update(self.function_kwargs)
+        max_return_value_output = 1000
         if not self.exception:
             return_value = str(self.return_value)
             return_value = return_value[:max_return_value_output] + '...' if len(return_value) > max_return_value_output else return_value
-            self.logger.log(self.level, f"{self.function.__name__} {' '.join([k + '=' + repr(v) for k, v in metadata.items()])} -> {return_value} {time() - self.start_time}s")
+            self.logger.log(self.level, f"{self.uuid} {self.function.__name__} -> {return_value} {time() - self.start_time}s")
         else:
-            self.logger.critical(f"{self.function.__name__} {' '.join([k + '=' + repr(v) for k, v in metadata.items()])} raised {self.exception}")
+            self.logger.log(self.level, f"{self.uuid} {self.function.__name__} raised: {self.exception}")
+
 
 def trace(_function=None, *, level=DEBUG, parameters=None, **tags):
     def decorator(function):

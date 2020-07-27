@@ -1,24 +1,30 @@
-from flask import Flask, send_from_directory, request, Response, jsonify
-from logging.config import dictConfig as configure_logging
-from praline.common.file_system import join, exists, create_directory_if_missing, current_working_directory
 from praline.server.configuration import configuration
-from praline.server.package_dependency import get_dependant_packages_recursively
+import logging.config
 
-configure_logging(configuration['logging'])
+logging.config.dictConfig(configuration['logging'])
 
-server = Flask(__name__, root_path=current_working_directory())
+from flask import Flask, send_from_directory, request, Response, jsonify
+from praline.common.file_system import FileSystem, join
+from praline.common.hashing import hash_archive
+from praline.common.package import get_package_dependencies_recursively
+from typing import Dict
 
-package_directory = join(configuration['repository'], 'packages')
+
+file_system = FileSystem()
+
+server = Flask(__name__, root_path=file_system.get_working_directory())
+
+repository_path = join(configuration['repository'], 'packages')
 
 
 @server.route('/package/<package>', methods=['GET', 'PUT'])
-def package(package):
-    create_directory_if_missing(package_directory)
+def package(package) -> Response:
+    file_system.create_directory_if_missing(repository_path)
     if request.method == 'GET':
-        return send_from_directory(package_directory, package, as_attachment=True)
+        return send_from_directory(repository_path, package, as_attachment=True)
     elif request.method == 'PUT':
-        package_path = join(package_directory, package)
-        if exists(package_path):
+        package_path = join(repository_path, package)
+        if file_system.exists(package_path):
             return Response(f"package '{package}' already exists -- increment the version and try again", status=409, mimetype='text/plain')
         with open(package_path, 'wb') as f:
             f.write(request.stream.read())
@@ -26,10 +32,12 @@ def package(package):
 
 
 @server.route('/solve-dependencies', methods=['GET'])
-def solve_dependencies():
-    create_directory_if_missing(package_directory)
+def solve_dependencies() -> Dict[str, str]:
+    file_system.create_directory_if_missing(repository_path)
     payload = request.get_json()
     try:
-        return jsonify(get_dependant_packages_recursively(payload['package'], payload['dependencies'], package_directory))
+        dependencies = get_package_dependencies_recursively(file_system, payload['package'], payload['dependencies'], repository_path)
+        dependencies_with_hashes = {d: hash_archive(file_system, join(repository_path, d)) for d in dependencies}
+        return jsonify(dependencies_with_hashes)
     except RuntimeError as exception:
         return Response(str(exception), status=400, mimetype='text/plain')

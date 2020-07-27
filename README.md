@@ -1,6 +1,6 @@
 ## Praline
 
-A simple C++ build tool and dependency manager. Requires Python 3.6 or later. For MacOS the Clang compiler is needed. For Windows and Linux the GCC compiler is required.
+A simple C++ build tool and dependency manager. Requires Python 3.6 or later. For MacOS the Clang compiler is needed. For Windows an installation of Microsoft Visual Studio is need. For Linux the GCC compiler is required.
 
 ### Quick setup
 
@@ -22,8 +22,8 @@ Create a directory named `hello_world` and inside it create a file named `Pralin
 Then open the terminal in the directory and run the following commands:
 
     export PATH=$PATH:<path to cloned repo>/sources
-    praline.py --executable --skip-formatting main
+    praline.py --executable --skip-formatting --skip-unit-testing main
 
 This adds the `praline.py` script to the path so you can easily invoke it from anywhere. The second command invokes the script and builds the project as an executable artifact by specifying the `--executable` flag. If you have `clang-format` in the environment path you can omit the `--skip-formatting` flag. Inside the terminal you should see something like this:
 
-    2019-04-13 20:34:20,519 INFO praline.common.file_system Hello, world!
+    INFO praline.common.file_system Hello, world!
