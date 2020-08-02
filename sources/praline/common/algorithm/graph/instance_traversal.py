@@ -9,26 +9,26 @@ class Instance:
     parent_node : str
     stack       : List[Tuple[str, str]]
     tree        : Dict[str, Tuple[int, List[str]]]
-    chain       : List[str]
+    path        : List[str]
 
     @classmethod
     def copy_from(cls, instance):
-        return cls(instance.current_node, instance.parent_node, list(instance.stack), dict(instance.tree), list(instance.chain))
+        return cls(instance.current_node, instance.parent_node, list(instance.stack), dict(instance.tree), list(instance.path))
 
     @classmethod
     def fresh(cls, root: str):
         return cls(None, None, [(root, None)], {}, [])
 
 
-def remove_dangling_part_from_chain(instance: Instance, on_cycle: Callable[[List[str]], None]) -> None:
-    while instance.chain and instance.chain[-1] != instance.parent_node:
-        instance.chain.pop()
-    instance.chain.append(instance.current_node)
-    for i in range(len(instance.chain)):
-        current_node_children = instance.tree[instance.current_node][1]
-        if instance.chain[i] in current_node_children:
-            on_cycle(instance.chain[i:])
-            current_node_children.remove(instance.chain[i])
+def update_path(instance: Instance, on_cycle: Callable[[List[str]], None]) -> None:
+    while instance.path and instance.path[-1] != instance.parent_node:
+        instance.path.pop()
+    instance.path.append(instance.current_node)
+    children = instance.tree[instance.current_node][1]
+    for i in range(len(instance.path)):
+        if instance.path[i] in children:
+            on_cycle(instance.path[i:])
+            children.remove(instance.path[i])
 
 
 def multiple_instance_depth_first_traversal(start_node        : str,
@@ -42,7 +42,7 @@ def multiple_instance_depth_first_traversal(start_node        : str,
         if instance.current_node != None:
             if not instance_validator(instance.current_node, instance.tree):
                 return False
-            remove_dangling_part_from_chain(instance, on_cycle)
+            update_path(instance, on_cycle)
             instance.stack.extend((child, instance.current_node) for child in instance.tree[instance.current_node][1])
 
         while instance.stack:
@@ -64,7 +64,7 @@ def multiple_instance_depth_first_traversal(start_node        : str,
             
             if not instance_validator(instance.current_node, instance.tree):
                 return False
-            remove_dangling_part_from_chain(instance, on_cycle)
+            update_path(instance, on_cycle)
             instance.stack.extend((child, instance.current_node) for child in instance.tree[instance.current_node][1])
         return True
 

@@ -31,7 +31,10 @@ class InstanceTraversalTest(TestCase):
             'M': []
         }
 
-        trees = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: True, lambda _: None)
+        def error_on_cycle(cycle):
+            raise RuntimeError(f"cycle detected: {cycle}")
+
+        trees = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: True, error_on_cycle)
 
         self.assertEqual(len(trees), 6)
 
