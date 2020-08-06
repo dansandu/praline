@@ -137,7 +137,9 @@ def link_executable_using_cache(file_system: FileSystem,
     yield_descriptor            = compiler.get_yield_descriptor()
     executable                  = yield_descriptor.get_executable(executables_root, name)
     symbols_table               = yield_descriptor.get_symbols_table(symbols_tables_root, name)
-    if updated or removed or not file_system.exists(executable) or not file_system.exists(symbols_table):
+    remake_executable           = executable and not file_system.exists(executable)
+    remake_symbols_table        = symbols_table and not file_system.exists(symbols_table)
+    if updated or removed or remake_executable or remake_symbols_table:
         if old_executable and file_system.exists(old_executable):
             file_system.remove_file(old_executable)
         if old_symbols_table and file_system.exists(old_symbols_table):
@@ -184,7 +186,10 @@ def link_library_using_cache(file_system: FileSystem,
     library                     = yield_descriptor.get_library(libraries_root, name)
     library_interface           = yield_descriptor.get_library_interface(libraries_interfaces_root, name)
     symbols_table               = yield_descriptor.get_symbols_table(symbols_tables_root, name)
-    if updated or removed or not file_system.exists(library) or not file_system.exists(library_interface) or not file_system.exists(symbols_table):
+    remake_library              = library and not file_system.exist(library)
+    remake_library_interface    = library_interface and not file_system.exist(library_interface)
+    remake_symbols_table        = symbols_table and not file_system.exist(symbols_table)
+    if updated or removed or remake_library or remake_library_interface or remake_symbols_table:
         if old_library and file_system.exists(old_library):
             file_system.remove_file(old_library)
         if old_library_interface and file_system.exists(old_library_interface):
