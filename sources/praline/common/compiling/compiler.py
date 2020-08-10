@@ -186,9 +186,9 @@ def link_library_using_cache(file_system: FileSystem,
     library                     = yield_descriptor.get_library(libraries_root, name)
     library_interface           = yield_descriptor.get_library_interface(libraries_interfaces_root, name)
     symbols_table               = yield_descriptor.get_symbols_table(symbols_tables_root, name)
-    remake_library              = library and not file_system.exist(library)
-    remake_library_interface    = library_interface and not file_system.exist(library_interface)
-    remake_symbols_table        = symbols_table and not file_system.exist(symbols_table)
+    remake_library              = library and not file_system.exists(library)
+    remake_library_interface    = library_interface and not file_system.exists(library_interface)
+    remake_symbols_table        = symbols_table and not file_system.exists(symbols_table)
     if updated or removed or remake_library or remake_library_interface or remake_symbols_table:
         if old_library and file_system.exists(old_library):
             file_system.remove_file(old_library)
