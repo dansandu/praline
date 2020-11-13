@@ -99,7 +99,6 @@ class MsvcCompiler(Compiler):
                                                              'cl', '/EP', source] + compiler_flags +
                                                             ['/I', headers_root, '/I', external_headers_root])
         if status != 0:
-            logger.info(stdout.decode())
             logger.error(stderror.decode())
             raise RuntimeError(f"command exited with return code {status}")
         return stdout
