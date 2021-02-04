@@ -23,6 +23,12 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'action': 'store_true',
                 'dest'  : 'executable',
                 'help'  : 'Make the project an executable by adding the executable.cpp to the sources directory.'
+            },
+            {
+                'name'  : '--release',
+                'action': 'store_true',
+                'dest'  : 'release',
+                'help'  : 'Do not include debug symbols and optimize compiled code. Omit this flag to generate debug symbols.'
             }
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}

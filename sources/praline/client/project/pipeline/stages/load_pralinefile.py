@@ -36,7 +36,7 @@ def load_pralinefile(file_system: FileSystem, resources: StageResources, cache: 
     if platform not in pralinefile['platforms']:
         raise UnsupportedPlatformError(f"{platform} is not supported -- supported architectures are {pralinefile['platforms']}")
 
-    mode = pralinefile['modes'][0]
+    mode = 'release' if program_arguments['global']['release'] else pralinefile['modes'][0]
 
     matching_compilers = [compiler for compiler in get_compilers(file_system, architecture, platform, mode) if compiler.matches()]
     compilers = [compiler for compiler in matching_compilers if compiler.get_name() in pralinefile['compilers']]

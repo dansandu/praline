@@ -5,12 +5,6 @@ from praline.common.file_system import basename, directory_name, FileSystem, rel
 from typing import List
 
 
-flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
-         '-Werror', '-Wall', '-Wextra',
-         '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
-         '-DPRALINE_IMPORT=__attribute__((visibility("default")))']
-
-
 class DarwinClangYieldDescriptor(YieldDescriptor):
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         name = relative_path(source, sources_root).replace(get_separator(), '-').replace('.cpp', '.o')
@@ -35,6 +29,18 @@ class DarwinClangCompiler(Compiler):
         self.architecture = architecture
         self.platform     = platform
         self.mode         = mode
+        
+        self.flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
+                      '-Werror', '-Wall', '-Wextra',
+                      '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
+                      '-DPRALINE_IMPORT=__attribute__((visibility("default")))']
+        
+        if self.mode == 'debug':
+            self.flags.append('-g')
+        elif self.mode == 'release':
+            self.flags.append('-O3')            
+        else:
+            raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
 
     def get_name(self) -> str:
         return 'clang'
@@ -56,7 +62,7 @@ class DarwinClangCompiler(Compiler):
                    external_headers_root: str,
                    headers: List[str],
                    source: str) -> bytes:
-        status, stdout, stderror = self.file_system.execute(['clang++', '-E', '-P', source] + flags + 
+        status, stdout, stderror = self.file_system.execute(['clang++', '-E', '-P', source] + self.flags + 
                                                             [f'-I{headers_root}', f'-I{external_headers_root}'])
         if stderror:
             getLogger(__name__).error(stderror.decode())
@@ -70,7 +76,7 @@ class DarwinClangCompiler(Compiler):
                 headers: List[str],
                 source: str,
                 object_: str) -> None:
-        self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', object_, '-c', source] + flags + 
+        self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', object_, '-c', source] + self.flags + 
                                                         [f'-I{headers_root}', f'-I{external_headers_root}'])
 
     def link_executable(self,
@@ -84,7 +90,7 @@ class DarwinClangCompiler(Compiler):
         self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', executable,
                                                          '-rpath', '@executable_path/../libraries',
                                                          '-rpath', '@executable_path/../external/libraries'] +
-                                                        flags + objects + [f'-L{external_libraries_root}'] +
+                                                        self.flags + objects + [f'-L{external_libraries_root}'] +
                                                         [f'-l{basename(external_library)[3:-6]}' for external_library in external_libraries])
 
     def link_library(self,
@@ -97,7 +103,7 @@ class DarwinClangCompiler(Compiler):
                      library_interface: str,
                      symbols_table: str) -> None:
         self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] +
-                                                        flags + objects + [f'-L{external_libraries_root}'] +
+                                                        self.flags + objects + [f'-L{external_libraries_root}'] +
                                                         [f'-l{basename(external_library)[3:-6]}' for external_library in external_libraries])
 
     def get_yield_descriptor(self) -> YieldDescriptor:
