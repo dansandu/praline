@@ -10,7 +10,7 @@ class ResourceNotPresentError(Exception):
     pass
 
 
-class ResourceOverrideError(Exception):
+class ResourceOverriddenError(Exception):
     pass
 
 
@@ -39,7 +39,7 @@ class StageResources:
     def __setitem__(self, resource: str, value) -> None:
         logger.debug(f"stage '{self.stage}' set resource '{resource}' to {value}")
         if resource in self.resources:
-            raise ResourceOverrideError(f"stage '{self.stage}' is trying to override resource '{resource}'")
+            raise ResourceOverriddenError(f"stage '{self.stage}' is trying to override resource '{resource}'")
         if resource not in self.constrained_output:
             raise UndeclaredResourceSuppliedError(f"stage '{self.stage}' is trying to supply resource '{resource}' but it didn't declare it as output")
         self.resources[resource] = value

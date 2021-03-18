@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stage_resources import StageResources, ResourceNotPresentError, ResourceOverrideError, UndeclaredResourceSuppliedError
+from praline.client.project.pipeline.stage_resources import StageResources, ResourceNotPresentError, ResourceOverriddenError, UndeclaredResourceSuppliedError
 from unittest import TestCase
 
 
@@ -30,4 +30,4 @@ class StageResourcesTest(TestCase):
         self.assertIn('test_results', resources)
         self.assertEqual(resources['package'], 'myPackage')
         self.assertEqual(resources['test_results'], expected_test_results)
-        self.assertRaises(ResourceOverrideError, resources.__setitem__, 'package', 'anotherPackage')
+        self.assertRaises(ResourceOverriddenError, resources.__setitem__, 'package', 'anotherPackage')
