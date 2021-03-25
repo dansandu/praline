@@ -36,12 +36,14 @@ def basename(path: str) -> str:
 def normalized_path(path: str) -> str:
     return os.path.normpath(path)
 
+
 def common_path(paths: List[str]) -> str:
     return os.path.commonpath(paths)
 
+
 class FileSystem:
     @trace
-    def execute(self, command: List[str], add_to_library_path: List[str] = []) -> None:
+    def execute(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False) -> None:
         environment_copy = dict(os.environ)
         if add_to_library_path:
             if sys.platform == 'linux' or sys.platform == 'darwin':
@@ -50,16 +52,26 @@ class FileSystem:
                 environment_copy['PATH'] += os.pathsep + os.pathsep.join(add_to_library_path)
             else:
                 raise RuntimeError(f"couldn't change library path -- unsupported platform '{sys.platform}'")
-        process = subprocess.Popen(command, shell=(os.name == 'nt'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment_copy)
-        stdout, stderror = process.communicate()
-        return process.returncode, stdout, stderror
+        
+        if interactive:
+            process = subprocess.Popen(command, shell=(os.name == 'nt'), env=environment_copy)
+            process.wait()
+            return process.returncode
+        else:
+            process = subprocess.Popen(command, shell=(os.name == 'nt'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment_copy)
+            stdout, stderror = process.communicate()
+            return process.returncode, stdout, stderror
 
-    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = []) -> None:
-        status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path)
-        if stdout:
-            logger.info(stdout.decode())
-        if stderror:
-            logger.error(stderror.decode())
+    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False) -> None:
+        if interactive:
+            status = self.execute(command, add_to_library_path=add_to_library_path, interactive=True)
+        else:
+            status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path)
+            if stdout:
+                logger.info(stdout.decode())
+            if stderror:
+                logger.error(stderror.decode())
+        
         if status != 0:
             raise RuntimeError(f"command exited with return code {status}")
 

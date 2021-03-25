@@ -25,6 +25,8 @@ def test(file_system: FileSystem, resources: StageResources, cache: Dict[str, An
     test_executable         = resources['test_executable']
     arguments               = program_arguments['byStage']['arguments']
 
-    file_system.execute_and_fail_on_bad_return([test_executable] + arguments, add_to_library_path=[external_libraries_root])
+    file_system.execute_and_fail_on_bad_return([test_executable] + arguments,
+                                               add_to_library_path=[external_libraries_root],
+                                               interactive=True)
     
     resources['test_results'] = 'success'

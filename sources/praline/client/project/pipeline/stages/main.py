@@ -27,4 +27,6 @@ def main(file_system: FileSystem, resources: StageResources, cache: Dict[str, An
     main_executable         = resources['main_executable']
     arguments               = program_arguments['byStage']['arguments']
 
-    file_system.execute_and_fail_on_bad_return([main_executable] + arguments, add_to_library_path=[external_libraries_root, resources_root])
+    file_system.execute_and_fail_on_bad_return([main_executable] + arguments,
+                                               add_to_library_path=[external_libraries_root, resources_root],
+                                               interactive=True)
