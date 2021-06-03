@@ -36,6 +36,9 @@ def get_environment_file(architecture):
 
 
 class MsvcYieldDescriptor(YieldDescriptor):
+    def __init__(self, mode):
+        self.mode = mode
+
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         name = relative_path(source, sources_root).replace(get_separator(), '-').replace('.cpp', '.obj')
         return join(objects_root, name)
@@ -50,7 +53,12 @@ class MsvcYieldDescriptor(YieldDescriptor):
         return join(library_interfaces_root, f'{name}.lib')
 
     def get_symbols_table(self, symbols_tables_root: str, name: str) -> str:
-        return join(symbols_tables_root, f'{name}.pdb')
+        if self.mode == 'debug':
+            return join(symbols_tables_root, f'{name}.pdb')
+        elif self.mode == 'release':
+            return None
+        else:
+            raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
 
 
 class MsvcCompiler(Compiler):
@@ -60,9 +68,9 @@ class MsvcCompiler(Compiler):
         self.platform     = platform
         self.mode         = mode
 
-        self.compiler_flags  = ['/analyze-', '/permissive-', '/GS', '/RTC1', '/Gd', '/FC', '/Od', '/sdl', '/fp:precise',
+        self.compiler_flags  = ['/analyze-', '/permissive-', '/GS', '/Gd', '/FC', '/sdl', '/fp:precise',
                                 '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3', '/Gm-',
-                                '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_DEBUG', '/D_CONSOLE', '/D_UNICODE',
+                                '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_CONSOLE', '/D_UNICODE',
                                 '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)', '/DPRALINE_IMPORT=__declspec(dllimport)']
 
         self.linker_flags = ['/DYNAMICBASE', '/NXCOMPAT', '/INCREMENTAL:NO', '/MANIFEST:NO', '/ERRORREPORT:NONE',
@@ -72,10 +80,10 @@ class MsvcCompiler(Compiler):
                                            'shell32.lib', 'ole32.lib', 'oleaut32.lib', 'uuid.lib', 'odbc32.lib', 'odbccp32.lib']
 
         if self.mode == 'debug':
-            self.compiler_flags.extend(['/MDd', '/Z7'])
+            self.compiler_flags.extend(['/MDd', '/RTC1', '/Z7', '/Od', '/D_DEBUG'])
             self.linker_flags.extend(['/DEBUG:FULL'])
         elif self.mode == 'release':
-            self.compiler_flags.extend(['/MD', '/O2'])
+            self.compiler_flags.extend(['/MD', '/O2', '/DNDEBUG'])
             self.linker_flags.extend(['/DEBUG:NONE'])
         else:
             raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
@@ -174,4 +182,4 @@ class MsvcCompiler(Compiler):
                                " export -- use PRALINE_EXPORT to export symbols")
 
     def get_yield_descriptor(self) -> YieldDescriptor:
-        return MsvcYieldDescriptor()
+        return MsvcYieldDescriptor(self.mode)
