@@ -62,16 +62,18 @@ class MsvcYieldDescriptor(YieldDescriptor):
 
 
 class MsvcCompiler(Compiler):
-    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str):
-        self.file_system  = file_system
-        self.architecture = architecture
-        self.platform     = platform
-        self.mode         = mode
+    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int):
+        self.file_system   = file_system
+        self.architecture  = architecture
+        self.platform      = platform
+        self.mode          = mode
+        self.logging_level = logging_level
 
         self.compiler_flags  = ['/analyze-', '/permissive-', '/GS', '/Gd', '/FC', '/sdl', '/fp:precise',
                                 '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3', '/Gm-',
                                 '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_CONSOLE', '/D_UNICODE',
-                                '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)', '/DPRALINE_IMPORT=__declspec(dllimport)']
+                                '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)', '/DPRALINE_IMPORT=__declspec(dllimport)',
+                                f'-DPRALINE_LOGGING_LEVEL={self.logging_level}']
 
         self.linker_flags = ['/DYNAMICBASE', '/NXCOMPAT', '/INCREMENTAL:NO', '/MANIFEST:NO', '/ERRORREPORT:NONE',
                              '/NOLOGO', '/TLBID:1', '/WX']

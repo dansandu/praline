@@ -46,8 +46,9 @@ def pull_dependencies(file_system: FileSystem, resources: StageResources, cache:
         external_symbols_tables.extend(contents['symbols_tables'])
         external_executables.extend(contents['executables'])
 
-    pralinefile  = resources['pralinefile']
-    compiler     = resources['compiler']
+    pralinefile   = resources['pralinefile']
+    compiler      = resources['compiler']
+    logging_level = program_arguments['global']['logging_level']
     
     packages = remote_proxy.solve_dependencies(pralinefile,
                                                compiler.get_architecture(),
@@ -58,11 +59,11 @@ def pull_dependencies(file_system: FileSystem, resources: StageResources, cache:
     
     for package in removed:
         package_path = join(external_packages_root, package)
-        clean_up_package(file_system, package_path, external_root)
+        clean_up_package(file_system, package_path, external_root, logging_level)
 
     for package in updated:
         package_path = join(external_packages_root, package)
-        clean_up_package(file_system, package_path, external_root)
+        clean_up_package(file_system, package_path, external_root, logging_level)
         remote_proxy.pull_package(package_path)
         contents = unpack(file_system, package_path, external_root)
         extend_externals(contents)

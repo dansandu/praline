@@ -38,7 +38,9 @@ def load_pralinefile(file_system: FileSystem, resources: StageResources, cache: 
 
     mode = 'release' if program_arguments['global']['release'] else pralinefile['modes'][0]
 
-    matching_compilers = [compiler for compiler in get_compilers(file_system, architecture, platform, mode) if compiler.matches()]
+    logging_level = program_arguments['global']['logging_level']
+
+    matching_compilers = [compiler for compiler in get_compilers(file_system, architecture, platform, mode, logging_level) if compiler.matches()]
     compilers = [compiler for compiler in matching_compilers if compiler.get_name() in pralinefile['compilers']]
     if not compilers:
         raise NoMatchingCompilerFoundError(f"no suitable compiler was found -- matching compilers are {[c.get_name() for c in matching_compilers]} while specified compilers are {pralinefile['compilers']}")

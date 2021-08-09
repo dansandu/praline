@@ -1,3 +1,4 @@
+import logging
 from os.path import dirname, normpath
 from praline.common.package import (clean_up_package, get_matching_packages, get_package,
                                     get_package_dependencies_from_archive,
@@ -178,7 +179,9 @@ class PackageTest(TestCase):
         })
         extraction_path = 'external'
 
-        clean_up_package(file_system, package_path, extraction_path)
+        logging_level = 4
+
+        clean_up_package(file_system, package_path, extraction_path, logging_level)
 
         expected_files = {
             'external/resources/org/other_art/app.config': b'app-config'

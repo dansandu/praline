@@ -23,7 +23,8 @@ pralinefile = {
 
 program_arguments = {
     'global': {
-        'release': False
+        'release'      : False,
+        'logging_level': 4
     }
 }
 

@@ -111,9 +111,15 @@ class PullDependenciesStageTest(TestCase):
             'fruit-raspberry-x64-darwin-clang-release-1.0.0.tar.gz': 'raspberry-hash'
         }
 
+        program_arguments = {
+            'global': {
+                'logging_level': 4
+            }
+        }
+
         remote_proxy = RemoteProxyMock(file_system)
 
-        pull_dependencies(file_system, resources, cache, None, None, remote_proxy)
+        pull_dependencies(file_system, resources, cache, program_arguments, None, remote_proxy)
 
         expected_files = {
             'project/target/external/headers/fruit/apple/apple.hpp': b'fruit-apple-hpp',

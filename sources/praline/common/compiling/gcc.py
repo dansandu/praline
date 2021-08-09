@@ -5,12 +5,6 @@ from praline.common.file_system import basename, directory_name, FileSystem, rel
 from typing import List
 
 
-flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
-         '-Werror', '-Wall', '-Wextra', '-Wno-literal-suffix',
-         '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
-         '-DPRALINE_IMPORT=__attribute__((visibility("default")))']
-
-
 class GccYieldDescriptor(YieldDescriptor):
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         name = relative_path(source, sources_root).replace(get_separator(), '-').replace('.cpp', '.o')
@@ -30,11 +24,18 @@ class GccYieldDescriptor(YieldDescriptor):
 
 
 class GccCompiler(Compiler):
-    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str):
-        self.file_system  = file_system
-        self.architecture = architecture
-        self.platform     = platform
-        self.mode         = mode
+    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int):
+        self.file_system   = file_system
+        self.architecture  = architecture
+        self.platform      = platform
+        self.mode          = mode
+        self.logging_level = logging_level
+
+        self.flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
+                      '-Werror', '-Wall', '-Wextra', '-Wno-literal-suffix',
+                      '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
+                      '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
+                      f'-DPRALINE_LOGGING_LEVEL={self.logging_level}']
 
     def get_name(self) -> str:
         return 'gcc'
@@ -56,7 +57,7 @@ class GccCompiler(Compiler):
                    external_headers_root: str,
                    headers: List[str],
                    source: str) -> bytes:
-        status, stdout, stderror = self.file_system.execute(['g++', '-E', '-P', source] + flags + 
+        status, stdout, stderror = self.file_system.execute(['g++', '-E', '-P', source] + self.flags + 
                                                             [f'-I{headers_root}', f'-I{external_headers_root}'])
         if stderror:
             getLogger(__name__).error(stderror.decode())
@@ -70,7 +71,7 @@ class GccCompiler(Compiler):
                 headers: List[str],
                 source: str,
                 object_: str) -> None:
-        self.file_system.execute_and_fail_on_bad_return(['g++', '-o', object_, '-c', source] + flags + 
+        self.file_system.execute_and_fail_on_bad_return(['g++', '-o', object_, '-c', source] + self.flags + 
                                                         [f'-I{headers_root}', f'-I{external_headers_root}'])
 
     def link_executable(self,
@@ -84,7 +85,7 @@ class GccCompiler(Compiler):
         self.file_system.execute_and_fail_on_bad_return(['g++', '-o', executable,
                                                          '-Wl,-rpath,$ORIGIN/../libraries',
                                                          '-Wl,-rpath,$ORIGIN/../external/libraries'] +
-                                                        flags + objects + [f'-L{external_libraries_root}'] +
+                                                        self.flags + objects + [f'-L{external_libraries_root}'] +
                                                         [f'-l{basename(external_library)[3:-3]}' for external_library in external_libraries])
 
     def link_library(self,
@@ -97,7 +98,7 @@ class GccCompiler(Compiler):
                      library_interface: str,
                      symbols_table: str) -> None:
         self.file_system.execute_and_fail_on_bad_return(['g++', '-o', library, '-shared'] +
-                                                        flags + objects + [f'-L{external_libraries_root}'] +
+                                                        self.flags + objects + [f'-L{external_libraries_root}'] +
                                                         [f'-l{basename(external_library)[3:-3]}' for external_library in external_libraries])
 
     def get_yield_descriptor(self) -> YieldDescriptor:

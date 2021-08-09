@@ -29,6 +29,13 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'action': 'store_true',
                 'dest'  : 'release',
                 'help'  : 'Do not include debug symbols and optimize compiled code. Omit this flag to generate debug symbols.'
+            },
+            {
+                'name'   : '--logging-level',
+                'type'   : int,
+                'dest'   : 'logging_level',
+                'default': 4,
+                'help'   : 'Log macros higher than the specified value are ignored during compilation. Note that non-macro log statements are not affected by this flag. No logging (0); errors only (1); errors and warnings (2); errors, warnings and information (3); errors, warnings, information and debug (4).'
             }
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}

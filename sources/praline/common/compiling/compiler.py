@@ -209,15 +209,15 @@ def link_library_using_cache(file_system: FileSystem,
     return (library, library_interface, symbols_table)
 
 
-def get_compilers(file_system: FileSystem, architecture: str, platform: str, mode: str) -> List[Compiler]:
-    compilers = [klass(file_system, architecture, platform, mode) for klass in subclasses_of(Compiler)]
+def get_compilers(file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int) -> List[Compiler]:
+    compilers = [klass(file_system, architecture, platform, mode, logging_level) for klass in subclasses_of(Compiler)]
     duplicates = [(i, j) for i in range(len(compilers)) for j in range(i + 1, len(compilers)) if compilers[i].get_name() == compilers[j].get_name()]
     if duplicates:
         raise RuntimeError(f"multiple compilers defined with the same name '{compilers[duplicates[0][0]].get_name()}'")
     return compilers
 
-def get_compiler(file_system: FileSystem, name: str, architecture: str, platform: str, mode: str) -> Compiler:
-    compilers = [klass(file_system, architecture, platform, mode) for klass in subclasses_of(Compiler)]
+def get_compiler(file_system: FileSystem, name: str, architecture: str, platform: str, mode: str, logging_level: int) -> Compiler:
+    compilers = [klass(file_system, architecture, platform, mode, logging_level) for klass in subclasses_of(Compiler)]
     matching  = [compiler for compiler in compilers if compiler.get_name() == name]
     if not matching:
         raise RuntimeError(f"no compiler named '{name}' was found")
