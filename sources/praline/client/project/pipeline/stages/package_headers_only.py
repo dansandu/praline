@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
-from praline.common.package import get_package, pack, package_extension
+from praline.common.package import get_package, pack
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.file_system import FileSystem, join, relative_path
 from typing import Any, Dict
@@ -36,6 +36,8 @@ def package_headers_only(file_system: FileSystem, resources: StageResources, cac
                                                                  compiler.get_name(),
                                                                  compiler.get_mode(),
                                                                  pralinefile['version']))
+
+    file_system.create_directory_if_missing(join(project_directory, 'target'))
 
     package_files = [(path, join('resources', relative_path(path, resources_root))) for path in resource_files]
     package_files.extend((path, join('headers', relative_path(path, headers_root))) for path in headers)
