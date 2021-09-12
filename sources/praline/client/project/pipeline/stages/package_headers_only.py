@@ -26,7 +26,7 @@ def package_headers_only(file_system: FileSystem, resources: StageResources, cac
     headers_root      = resources['headers_root']
     if resources.activation in [0, 1]:
         headers = resources['formatted_headers']
-    elif resources.activation in [2, 4]:
+    elif resources.activation in [2, 3]:
         headers = resources['headers']
 
     package_path = join(project_directory, 'target', get_package(pralinefile['organization'],
