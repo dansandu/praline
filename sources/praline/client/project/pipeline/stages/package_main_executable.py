@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
-from praline.common.package import get_package, pack, package_extension
+from praline.common.package import get_package, pack
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.file_system import basename, FileSystem, join, relative_path
 from typing import Any, Dict
@@ -22,7 +22,7 @@ def package_main_executable(file_system: FileSystem, resources: StageResources, 
     main_executable_symbols_table = resources['main_executable_symbols_table']
     if resources.activation in [0, 1]:
         headers = resources['formatted_headers']
-    elif resources.activation in [2, 4]:
+    elif resources.activation in [2, 3]:
         headers = resources['headers']
 
     package_path = join(project_directory, 'target', get_package(pralinefile['organization'],

@@ -1,8 +1,7 @@
 from os.path import basename, normpath
 from praline.client.project.pipeline.stages.pull_dependencies import pull_dependencies
-from praline.common.package import get_package, get_package_dependencies_from_pralinefile
 from praline.common.testing.file_system_mock import FileSystemMock
-from typing import Any, Dict, IO
+from typing import Any, Dict
 from unittest import TestCase
 import pickle
 

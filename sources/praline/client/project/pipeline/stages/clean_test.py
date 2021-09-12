@@ -1,7 +1,6 @@
 from os.path import normpath
 from praline.client.project.pipeline.stages.clean import clean
 from praline.common.testing.file_system_mock import FileSystemMock
-from typing import Any, IO
 from unittest import TestCase
 
 

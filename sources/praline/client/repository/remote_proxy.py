@@ -1,7 +1,7 @@
 from praline.common.file_system import basename, FileSystem
 from praline.common.package import get_package, get_package_dependencies_from_pralinefile
 from praline.common.tracing import trace
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 import requests
 
 

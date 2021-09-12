@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.file_system import FileSystem
-from praline.common.tracing import trace, INFO
+from praline.common.tracing import trace
 from typing import Any, Callable, Dict, List
 
 

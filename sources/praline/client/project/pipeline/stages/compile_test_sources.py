@@ -3,7 +3,6 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.compiling.compiler import compile_using_cache
 from praline.common.file_system import FileSystem, join
-from praline.common.hashing import hash_file, key_delta
 from typing import Any, Dict
 
 

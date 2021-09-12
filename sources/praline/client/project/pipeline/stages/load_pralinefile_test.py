@@ -1,6 +1,5 @@
 from praline.client.project.pipeline.stages.load_pralinefile import load_pralinefile, NoMatchingCompilerFoundError, UnsupportedArchitectureError, UnsupportedPlatformError
 from praline.common.testing.file_system_mock import FileSystemMock
-from typing import Any, IO
 from unittest import TestCase
 
 

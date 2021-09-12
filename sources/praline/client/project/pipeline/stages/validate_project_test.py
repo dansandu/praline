@@ -1,7 +1,6 @@
 from os.path import normpath
 from praline.client.project.pipeline.stages.validate_project import validate_project, IllformedProjectError
 from praline.common.testing.file_system_mock import FileSystemMock
-from typing import Any, IO
 from unittest import TestCase
 
 

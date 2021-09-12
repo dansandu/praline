@@ -1,7 +1,6 @@
 from os.path import normpath
 from praline.client.project.pipeline.stages.load_clang_format import clang_format_style_file_contents, ClangFormatConfigurationError, load_clang_format
 from praline.common.testing.file_system_mock import FileSystemMock
-from typing import Any, IO
 from unittest import TestCase
 
 

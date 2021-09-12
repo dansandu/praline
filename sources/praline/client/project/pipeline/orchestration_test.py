@@ -1,9 +1,7 @@
 from os.path import normpath
-from praline.client.project.pipeline.orchestration import create_pipeline, invoke_stage, CyclicStagesError, MultipleSuppliersError, ResourceNotSuppliedError, UnsatisfiableStageError
+from praline.client.project.pipeline.orchestration import create_pipeline, invoke_stage, CyclicStagesError, MultipleSuppliersError, UnsatisfiableStageError
 from praline.client.project.pipeline.stages.stage import Stage
 from praline.common.testing.file_system_mock import FileSystemMock
-from io import BytesIO
-from typing import Any, IO
 from unittest import TestCase
 import pickle
 
