@@ -12,13 +12,13 @@ test_executable_contents = """\
 
 using dansandu::ballotin::logging::Level;
 using dansandu::ballotin::logging::Logger;
-using dansandu::ballotin::logging::standardOutputHandler;
+using dansandu::ballotin::logging::UnitTestsHandler;
 
 int main(const int argumentsCount, const char* const* const arguments)
 {
     auto& logger = Logger::globalInstance();
     logger.setLevel(Level::debug);
-    logger.addHandler("UnitTests", Level::debug, &standardOutputHandler);
+    logger.addHandler("UnitTests", Level::debug, UnitTestsHandler{"unit_tests.log"});
 
     const auto catchResult = Catch::Session().run(argumentsCount, arguments);
 
