@@ -36,6 +36,13 @@ class GccCompiler(Compiler):
                       '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
                       '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
                       f'-DPRALINE_LOGGING_LEVEL={self.logging_level}']
+        
+        if self.mode == 'debug':
+            self.flags.append('-g')
+        elif self.mode == 'release':
+            self.flags.append('-O3')            
+        else:
+            raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
 
     def get_name(self) -> str:
         return 'gcc'
