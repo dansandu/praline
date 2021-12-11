@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 from praline.client.configuration import configuration
 import logging.config
 import logging
