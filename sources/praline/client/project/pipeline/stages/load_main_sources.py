@@ -10,7 +10,7 @@ main_executable_contents = """\
 
 int main(int, char**)
 {
-    std::cout << "Hello, world!";
+    std::cout << "Hello, world!" << std::endl;
     return 0;
 }
 """

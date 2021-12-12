@@ -27,11 +27,12 @@ int main(const int argumentsCount, const char* const* const arguments)
 """
 
 
-def no_unit_tests_skip(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
-    return not program_arguments['global']['skip_unit_tests']
+def can_unit_tests(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
+    return (not program_arguments['global']['skip_unit_tests'] and 
+        [f for f in file_system.files_in_directory('sources') if f.endswith('.test.cpp') and not f.endswith('executable.test.cpp')])
 
 
-@stage(requirements=[['pralinefile', 'test_sources_root']], output=['test_sources'], predicate=no_unit_tests_skip)
+@stage(requirements=[['pralinefile', 'test_sources_root']], output=['test_sources'], predicate=can_unit_tests)
 def load_test_sources(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
     pralinefile            = resources['pralinefile']
     test_sources_root      = resources['test_sources_root']
