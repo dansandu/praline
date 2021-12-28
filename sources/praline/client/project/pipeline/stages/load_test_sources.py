@@ -28,8 +28,7 @@ int main(const int argumentsCount, const char* const* const arguments)
 
 
 def can_run_unit_tests(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
-    return (not program_arguments['global']['skip_unit_tests'] and 
-        [f for f in file_system.files_in_directory('sources') if f.endswith('.test.cpp') and not f.endswith('executable.test.cpp')])
+    return not program_arguments['global']['skip_unit_tests'] and any(f for f in file_system.files_in_directory('sources') if f.endswith('.test.cpp'))
 
 
 @stage(requirements=[['pralinefile', 'test_sources_root']], output=['test_sources'], predicate=can_run_unit_tests)
