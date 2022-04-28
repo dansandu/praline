@@ -9,7 +9,7 @@ allowed_architectures = ['arm', 'x32', 'x64']
 
 allowed_platforms = ['windows', 'linux', 'darwin']
 
-allowed_compilers = ['gcc', 'clang', 'msvc']
+allowed_compilers = ['gcc', 'clang', 'msvc', 'clang_cl']
 
 allowed_modes = ['debug', 'release']
 

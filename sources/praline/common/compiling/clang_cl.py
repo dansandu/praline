@@ -29,7 +29,7 @@ def get_environment_file(architecture):
     return fr"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\{batfile}"
 
 
-class MsvcYieldDescriptor(YieldDescriptor):
+class WindowsClangYieldDescriptor(YieldDescriptor):
     def __init__(self, mode):
         self.mode = mode
 
@@ -55,7 +55,7 @@ class MsvcYieldDescriptor(YieldDescriptor):
             raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
 
 
-class MsvcCompiler(Compiler):
+class WindowsClangCompiler(Compiler):
     def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int):
         self.file_system   = file_system
         self.architecture  = architecture
@@ -64,7 +64,7 @@ class MsvcCompiler(Compiler):
         self.logging_level = logging_level
 
         self.compiler_flags  = ['/analyze-', '/permissive-', '/GS', '/Gd', '/FC', '/sdl', '/fp:precise',
-                                '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3', '/Gm-',
+                                '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3',
                                 '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_CONSOLE', '/D_UNICODE',
                                 '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)', '/DPRALINE_IMPORT=__declspec(dllimport)',
                                 f'-DPRALINE_LOGGING_LEVEL={self.logging_level}']
@@ -85,7 +85,7 @@ class MsvcCompiler(Compiler):
             raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
 
     def get_name(self) -> str:
-        return 'msvc'
+        return 'clang_cl'
 
     def get_architecture(self) -> str:
         return self.architecture
@@ -97,7 +97,7 @@ class MsvcCompiler(Compiler):
         return self.mode
 
     def matches(self) -> bool:
-        return self.file_system.exists(get_environment_file(self.architecture)) and self.platform == 'windows'
+        return self.file_system.which('clang-cl') != None and self.file_system.exists(get_environment_file(self.architecture)) and self.platform == 'windows'
 
     def preprocess(self,
                    headers_root: str,
@@ -105,7 +105,7 @@ class MsvcCompiler(Compiler):
                    headers: List[str],
                    source: str) -> bytes:
         status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
-                                                             'cl', '/EP', source] + self.compiler_flags +
+                                                             'clang-cl', '/EP', source] + self.compiler_flags +
                                                             ['/I', headers_root, '/I', external_headers_root])
         if status != 0:
             logger.error(stderror.decode())
@@ -119,7 +119,7 @@ class MsvcCompiler(Compiler):
                 source: str,
                 object_: str) -> None:
         status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
-                                                             'cl', f'/Fo{object_}', '/c', source] + self.compiler_flags +
+                                                             'clang-cl', f'/Fo{object_}', '/c', source] + self.compiler_flags +
                                                             ['/I', headers_root, '/I', external_headers_root])
         if status != 0:
             logger.info(stdout.decode())
@@ -137,7 +137,7 @@ class MsvcCompiler(Compiler):
         library_interface = executable.replace('.exe', '.lib')
         export_file = executable.replace('.exe', '.exp')
         status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
-                                                             'link', f'/OUT:{executable}',
+                                                             'lld-link', f'/OUT:{executable}',
                                                              f'/MACHINE:{get_msvc_machine(self.architecture)}',
                                                              f'/IMPLIB:{library_interface}', f'/PDB:{symbols_table}'] +
                                                             self.linker_flags + objects + self.extra_libraries_interfaces +
@@ -163,7 +163,7 @@ class MsvcCompiler(Compiler):
                      symbols_table: str) -> None:
         export_file = library_interface.replace('.lib', '.exp')
         status, stdout, stderror = self.file_system.execute([get_environment_file(self.architecture), '>nul', '2>&1', '&&',
-                                                             'link', f'/OUT:{library}', '/DLL', f'/IMPLIB:{library_interface}',
+                                                             'lld-link', f'/OUT:{library}', '/DLL', f'/IMPLIB:{library_interface}',
                                                              f'/MACHINE:{get_msvc_machine(self.architecture)}',
                                                              f'/PDB:{symbols_table}'] + self.linker_flags + objects +
                                                             self.extra_libraries_interfaces + external_libraries_interfaces)
@@ -178,4 +178,4 @@ class MsvcCompiler(Compiler):
                                " export -- use PRALINE_EXPORT to export symbols")
 
     def get_yield_descriptor(self) -> YieldDescriptor:
-        return MsvcYieldDescriptor(self.mode)
+        return WindowsClangYieldDescriptor(self.mode)
