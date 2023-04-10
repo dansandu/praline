@@ -2,6 +2,7 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.common.package import get_package, pack
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem, join, relative_path
 from typing import Any, Dict
 
@@ -17,7 +18,13 @@ def has_headers_only(file_system: FileSystem, program_arguments: Dict[str, Any],
                      ['project_directory', 'pralinefile', 'compiler', 'resources_root', 'resources', 'headers_root',           'headers', 'test_results'],
                      ['project_directory', 'pralinefile', 'compiler', 'resources_root', 'resources', 'headers_root',           'headers']],
        output=['headers_only_package'], predicate=has_headers_only, cacheable=True)
-def package_headers_only(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def package_headers_only(file_system: FileSystem, 
+                         resources: StageResources, 
+                         cache: Dict[str, Any], 
+                         program_arguments: Dict[str, Any], 
+                         configuration: Dict[str, Any], 
+                         remote_proxy: RemoteProxy,
+                         progressBarSupplier: ProgressBarSupplier):
     project_directory = resources['project_directory']
     pralinefile       = resources['pralinefile']
     compiler          = resources['compiler']

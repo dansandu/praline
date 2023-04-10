@@ -13,7 +13,7 @@ class LoadClangFormatStageTest(TestCase):
         resources     = {'project_directory': 'my/project'}
         configuration = {'clang-format-executable-path': normalized_executable_path}
         
-        load_clang_format(file_system, resources, None, None, configuration, None)
+        load_clang_format(file_system, resources, None, None, configuration, None, None)
 
         self.assertEqual(resources['clang_format_executable'], normalized_executable_path)
 
@@ -29,7 +29,7 @@ class LoadClangFormatStageTest(TestCase):
         resources     = {'project_directory': 'my/project'}
         configuration = {}
         
-        load_clang_format(file_system, resources, None, None, configuration, None)
+        load_clang_format(file_system, resources, None, None, configuration, None, None)
 
         self.assertEqual(resources['clang_format_executable'], normalized_executable_path)
 
@@ -46,7 +46,7 @@ class LoadClangFormatStageTest(TestCase):
         resources     = {'project_directory': 'my/project'}
         configuration = {'clang-format-executable-path': normalized_executable_path}
         
-        load_clang_format(file_system, resources, None, None, configuration, None)
+        load_clang_format(file_system, resources, None, None, configuration, None, None)
 
         self.assertEqual(normpath(resources['clang_format_executable']), normalized_executable_path)
 
@@ -61,4 +61,4 @@ class LoadClangFormatStageTest(TestCase):
         }
         configuration = {}
         
-        self.assertRaises(ClangFormatConfigurationError, load_clang_format, file_system, resources, None, None, configuration, None)
+        self.assertRaises(ClangFormatConfigurationError, load_clang_format, file_system, resources, None, None, configuration, None, None)

@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.compiling.compiler import get_compilers
 from praline.common.file_system import FileSystem, join
 from praline.common.pralinefile import pralinefile_from_path
@@ -20,7 +21,13 @@ class UnsupportedPlatformError(Exception):
 
 
 @stage(output=['project_directory', 'pralinefile', 'compiler'])
-def load_pralinefile(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def load_pralinefile(file_system: FileSystem, 
+                     resources: StageResources, 
+                     cache: Dict[str, Any], 
+                     program_arguments: Dict[str, Any], 
+                     configuration: Dict[str, Any], 
+                     remote_proxy: RemoteProxy,
+                     progressBarSupplier: ProgressBarSupplier):
     resources['project_directory'] = project_directory = file_system.get_working_directory()
     pralinefile_path = join(project_directory, 'Pralinefile')
     try:

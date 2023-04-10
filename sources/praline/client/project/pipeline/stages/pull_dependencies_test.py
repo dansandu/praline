@@ -118,7 +118,7 @@ class PullDependenciesStageTest(TestCase):
 
         remote_proxy = RemoteProxyMock(file_system)
 
-        pull_dependencies(file_system, resources, cache, program_arguments, None, remote_proxy)
+        pull_dependencies(file_system, resources, cache, program_arguments, None, remote_proxy, None)
 
         expected_files = {
             'project/target/external/headers/fruit/apple/apple.hpp': b'fruit-apple-hpp',

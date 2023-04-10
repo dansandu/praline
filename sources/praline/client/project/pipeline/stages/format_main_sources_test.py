@@ -32,7 +32,7 @@ class FormatMainSourcesTest(TestCase):
             'project/sources/org/art/request.cpp': 'stale'
         }.items()}
 
-        format_main_sources(file_system, resources, cache, None, None, None)
+        format_main_sources(file_system, resources, cache, None, None, None, None)
 
         expected_formatted_main_sources = {
             'project/sources/org/art/math.cpp',

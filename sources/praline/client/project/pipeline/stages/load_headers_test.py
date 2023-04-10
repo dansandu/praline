@@ -1,5 +1,6 @@
 from os.path import normpath
 from praline.client.project.pipeline.stages.load_headers import load_headers
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.testing.file_system_mock import FileSystemMock
 from unittest import TestCase
 
@@ -18,7 +19,7 @@ class LoadHeadersTest(TestCase):
 
         resources = {'headers_root': 'project/sources'}
 
-        load_headers(file_system, resources, None, None, None, None)
+        load_headers(file_system, resources, None, None, None, None, None)
 
         expected_headers = {
             'project/sources/org/art/main.hpp',

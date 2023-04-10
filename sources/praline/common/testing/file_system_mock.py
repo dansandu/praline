@@ -117,6 +117,7 @@ class FileSystemMock:
         self.working_directory = os.path.normpath(working_directory) if working_directory else None
         self.on_which          = on_which
         self.on_execute        = on_execute
+        self.stdout            = io.StringIO("")
 
     def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = []) -> None:
         if not self.on_execute(command, add_to_library_path):
@@ -251,3 +252,6 @@ class FileSystemMock:
             if tail:
                 self.directories.add(tail)
         self.directories = unique_directories(self.directories)
+
+    def print(self, *args, **kwargs):
+        print(*args, **kwargs, file=self.stdout)

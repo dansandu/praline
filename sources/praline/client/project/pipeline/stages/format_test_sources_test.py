@@ -31,7 +31,7 @@ class FormatTestSourcesTest(TestCase):
             'project/sources/org/art/request.test.cpp': 'stale'
         }.items()}
 
-        format_test_sources(file_system, resources, cache, None, None, None)
+        format_test_sources(file_system, resources, cache, None, None, None, None)
 
         expected_formatted_test_sources = {
             'project/sources/org/art/math.test.cpp',

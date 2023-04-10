@@ -34,7 +34,7 @@ class LoadPralinefileStageTest(TestCase):
 
         resources = {}
 
-        load_pralinefile(file_system, resources, None, program_arguments, None, None)
+        load_pralinefile(file_system, resources, None, program_arguments, None, None, None)
 
         self.assertEqual(resources['project_directory'], file_system.get_working_directory())
 
@@ -47,25 +47,25 @@ class LoadPralinefileStageTest(TestCase):
 
         resources = {}
 
-        self.assertRaises(FileNotFoundError, load_pralinefile, file_system, resources, None, program_arguments, None, None)
+        self.assertRaises(FileNotFoundError, load_pralinefile, file_system, resources, None, program_arguments, None, None, None)
 
     def test_load_pralinefile_stage_with_invalid_architecture(self):
         file_system = FileSystemMock({working_directory}, pralinefile, working_directory=working_directory, architecture='cheese', on_which=gcc_which)
 
         resources = {}
 
-        self.assertRaises(UnsupportedArchitectureError, load_pralinefile, file_system, resources, None, program_arguments, None, None)
+        self.assertRaises(UnsupportedArchitectureError, load_pralinefile, file_system, resources, None, program_arguments, None, None, None)
 
     def test_load_pralinefile_stage_with_invalid_platform(self):
         file_system = FileSystemMock({working_directory}, pralinefile, working_directory=working_directory, platform='cake', on_which=gcc_which)
 
         resources = {}
 
-        self.assertRaises(UnsupportedPlatformError, load_pralinefile, file_system, resources, None, program_arguments, None, None)
+        self.assertRaises(UnsupportedPlatformError, load_pralinefile, file_system, resources, None, program_arguments, None, None, None)
 
     def test_load_pralinefile_stage_with_no_matching_compiler(self):
         file_system = FileSystemMock({working_directory}, pralinefile, working_directory=working_directory)
 
         resources = {}
 
-        self.assertRaises(NoMatchingCompilerFoundError, load_pralinefile, file_system, resources, None, program_arguments, None, None)
+        self.assertRaises(NoMatchingCompilerFoundError, load_pralinefile, file_system, resources, None, program_arguments, None, None, None)

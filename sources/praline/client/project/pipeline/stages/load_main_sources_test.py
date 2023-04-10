@@ -28,7 +28,7 @@ class LoadMainSourcesTest(TestCase):
             'global': {'executable': False}
         }
 
-        load_main_sources(file_system, resources, None, program_arguments, None, None)
+        load_main_sources(file_system, resources, None, program_arguments, None, None, None)
 
         expected_main_sources = {
             'project/sources/org/art/math.cpp'
@@ -52,7 +52,7 @@ class LoadMainSourcesTest(TestCase):
             'global': {'executable': True}
         }
 
-        load_main_sources(file_system, resources, None, program_arguments, None, None)
+        load_main_sources(file_system, resources, None, program_arguments, None, None, None)
 
         expected_files = {
             'project/sources/org/art/executable.cpp': main_executable_contents.encode('utf-8')

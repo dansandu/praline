@@ -15,7 +15,7 @@ class OrchestrationTest(TestCase):
         #      /  | \ 
         #    [C] [A][B C]
         #
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         cant_run   = lambda _, __, ___: False
         stages     = {
@@ -41,7 +41,7 @@ class OrchestrationTest(TestCase):
         #   |  | 
         #   --[A]
         #
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         stages     = {
             'A': Stage('A', [['c']], ['a'], can_run, [], False, False, do_nothing),
@@ -55,7 +55,7 @@ class OrchestrationTest(TestCase):
         self.assertRaises(CyclicStagesError, create_pipeline, 'C', stages, file_system, program_arguments, configuration)
 
     def test_create_pipeline_with_multiple_suppliers(self):
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         stages     = {
             'A': Stage('A',    [], ['x'], can_run, [], False, False, do_nothing),
@@ -69,7 +69,7 @@ class OrchestrationTest(TestCase):
         self.assertRaises(MultipleSuppliersError, create_pipeline, 'C', stages, file_system, program_arguments, configuration)
 
     def test_create_pipeline_with_no_suppliers(self):
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         stages     = {
             'A': Stage('A',    [], ['a'], can_run, [], False, False, do_nothing),
@@ -90,40 +90,40 @@ class OrchestrationTest(TestCase):
         #      |      /|  |  
         #     [E]<-[F][G][H]
         #
-        def ai(f, r, c, a, cfg, rp):
+        def ai(f, r, c, a, cfg, rp, pb):
             self.assertIsNone(c)
             self.assertEqual(r['c'], 'c_value')
             self.assertEqual(r['d'], 'd_value')
             self.assertEqual(len(a['byStage']), 0)
             r['a'] = 'a_value'
 
-        def bi(f, r, c, a, cfg, rp):
+        def bi(f, r, c, a, cfg, rp, pb):
             self.fail("stage B shouldn't be invoked")
         
-        def ci(f, r, c, a, cfg, rp):
+        def ci(f, r, c, a, cfg, rp, pb):
             self.assertIsNotNone(c)
             self.assertEqual(r['g'], 'g_value')
             self.assertEqual(a['byStage']['some-argument'], 'some_value')
             r['c'] = c['c'] = 'c_value'
 
-        def di(f, r, c, a, cfg, rp):
+        def di(f, r, c, a, cfg, rp, pb):
             self.assertIsNotNone(c)
             self.assertEqual(r['h'], 'h_value')
             self.assertEqual(len(a['byStage']), 0)
             r['d'] = c['d'] = 'd_value'
         
-        def ei(f, r, c, a, cfg, rp):
+        def ei(f, r, c, a, cfg, rp, pb):
             self.fail("stage E shouldn't be invoked")
 
-        def fi(f, r, c, a, cfg, rp):
+        def fi(f, r, c, a, cfg, rp, pb):
             self.fail("stage F shouldn't be invoked")
 
-        def gi(f, r, c, a, cfg, rp):
+        def gi(f, r, c, a, cfg, rp, pb):
             self.assertIsNotNone(c)
             self.assertEqual(len(a['byStage']), 0)
             r['g'] = c['g'] = 'g_value'
 
-        def hi(f, r, c, a, cfg, rp):
+        def hi(f, r, c, a, cfg, rp, pb):
             self.assertIsNone(c)
             self.assertEqual(len(a['byStage']), 0)
             r['h'] = 'h_value'
@@ -161,7 +161,7 @@ class OrchestrationTest(TestCase):
         #      \_ |
         #         D
         #
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         stages     = {
             'A': Stage('A', [['c']], ['a'], can_run, [], False, False, do_nothing),
@@ -175,7 +175,7 @@ class OrchestrationTest(TestCase):
         self.assertRaises(CyclicStagesError, invoke_stage, 'A', stages, file_system, program_arguments, None, None)
 
     def test_invoke_stage_with_unsatisfiable_disabled_stage(self):
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         cant_run   = lambda _, __, ___:  False
         stages     = {
@@ -190,7 +190,7 @@ class OrchestrationTest(TestCase):
         self.assertRaises(UnsatisfiableStageError, invoke_stage, 'A', stages, file_system, program_arguments, None, None)
 
     def test_invoke_stage_with_unsatisfiable_nonexistent_stage(self):
-        do_nothing = lambda f, r, c, a, cfg, rp: None
+        do_nothing = lambda f, r, c, a, cfg, rp, pb: None
         can_run    = lambda _, __, ___:  True
         stages     = {
             'A': Stage('A', [['b', 'c']], ['a'],  can_run, [], False, False, do_nothing),

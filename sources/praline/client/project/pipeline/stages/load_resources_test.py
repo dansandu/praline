@@ -17,7 +17,7 @@ class LoadResourcesTest(TestCase):
 
         resources = {'resources_root': 'project/resources'}
 
-        load_resources(file_system, resources, None, None, None, None)
+        load_resources(file_system, resources, None, None, None, None, None)
 
         expected_resources = {
             'project/resources/org/art/app.config',

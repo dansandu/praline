@@ -2,6 +2,7 @@ from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
@@ -20,7 +21,13 @@ program_arguments = [
 
 @stage(requirements=[['external_libraries_root', 'test_executable']], output=['test_results'],
        exposed=True, program_arguments=program_arguments)
-def test(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def test(file_system: FileSystem, 
+         resources: StageResources, 
+         cache: Dict[str, Any], 
+         program_arguments: Dict[str, Any], 
+         configuration: Dict[str, Any], 
+         remote_proxy: RemoteProxy,
+         progressBarSupplier: ProgressBarSupplier):
     external_libraries_root = resources['external_libraries_root']
     test_executable         = resources['test_executable']
     arguments               = program_arguments['byStage']['arguments']
