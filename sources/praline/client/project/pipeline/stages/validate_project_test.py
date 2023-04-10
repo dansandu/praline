@@ -19,7 +19,7 @@ class ValidateProjectStageTest(TestCase):
             }
         }
 
-        validate_project(file_system, resources, None, None, None, None)
+        validate_project(file_system, resources, None, None, None, None, None)
 
         expected_directories = {
             'my/project/resources/my_organization/my_artifact',
@@ -45,7 +45,7 @@ class ValidateProjectStageTest(TestCase):
             }
         }
 
-        self.assertRaises(IllformedProjectError, validate_project, file_system, resources, None, None, None, None)
+        self.assertRaises(IllformedProjectError, validate_project, file_system, resources, None, None, None, None, None)
 
     def test_invalid_sources_project(self):
         file_system = FileSystemMock({
@@ -61,7 +61,7 @@ class ValidateProjectStageTest(TestCase):
             }
         }
 
-        self.assertRaises(IllformedProjectError, validate_project, file_system, resources, None, None, None, None)
+        self.assertRaises(IllformedProjectError, validate_project, file_system, resources, None, None, None, None, None)
 
     def test_valid_project_with_hidden_file(self):
         file_system = FileSystemMock({
@@ -78,4 +78,4 @@ class ValidateProjectStageTest(TestCase):
             }
         }
 
-        validate_project(file_system, resources, None, None, None, None)
+        validate_project(file_system, resources, None, None, None, None, None)

@@ -1,10 +1,40 @@
 from os.path import normpath
-from praline.common.compiling.compiler import compile_using_cache, Compiler, link_executable_using_cache, link_library_using_cache
+from praline.common.compiling.compiler import compile_using_cache, link_executable_using_cache, link_library_using_cache
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.file_system import get_separator, join, relative_path
 from praline.common.testing.file_system_mock import FileSystemMock
 from typing import List
 from unittest import TestCase
+
+
+class ProgressBarMock:
+    def __init__(self, test_case: TestCase, resolution: int):
+        self.test_case = test_case
+        self.resolution = resolution
+        self.progress = 0
+
+    def __enter__(self):
+        return self
+    
+    def update_summary(self, summary: str):
+        pass
+
+    def advance(self, amount: int = 1):
+        self.progress += amount
+        self.test_case.assertLessEqual(self.progress, self.resolution)
+
+    def __exit__(self, type, value, traceback):
+        self.test_case.assertEqual(self.progress, self.resolution)
+
+
+class ProgressBarSupplierMock:
+    def __init__(self, test_case: TestCase, expected_resolution: int):
+        self.test_case = test_case
+        self.expected_resolution = expected_resolution
+
+    def create(self, resolution: int):
+        self.test_case.assertEqual(resolution, self.expected_resolution)
+        return ProgressBarMock(self.test_case, resolution)
 
 
 class YieldDescriptorMock(YieldDescriptor):
@@ -137,14 +167,18 @@ class CompilerTest(TestCase):
             'objects/b.obj': b'header-b.source-b.',
             'objects/c.obj': b'header-c.source-c.'
         })
-        compiler     = CompilerMock(file_system)
-        headers      = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
-        sources      = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
-        cache        = {
+        compiler       = CompilerMock(file_system)
+        headers        = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
+        sources        = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
+        to_be_compiled = [                 'sources/b.cpp', 'sources/d.cpp']
+        cache          = {
             'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
             'sources/b.cpp': '5addc12d3b54fb9836277adccb06a03131ab92c10faf97613259bb77775db8d3',
             'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5'
         }
+
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=len(to_be_compiled))
+
         objects = compile_using_cache(file_system,
                                       compiler,
                                       headers_root,
@@ -153,7 +187,8 @@ class CompilerTest(TestCase):
                                       objects_root,
                                       headers,
                                       sources,
-                                      cache)
+                                      cache,
+                                      progress_bar_supplier)
 
         self.assertEqual(objects, ['objects/a.obj', 'objects/b.obj', 'objects/d.obj'])
 

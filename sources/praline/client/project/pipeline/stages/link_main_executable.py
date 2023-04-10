@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.compiling.compiler import link_executable_using_cache
 from praline.common.file_system import basename, FileSystem, join
 from typing import Any, Dict
@@ -14,7 +15,13 @@ def has_executable(file_system: FileSystem, program_arguments: Dict[str, Any], c
 
 @stage(requirements=[['project_directory', 'pralinefile', 'compiler', 'main_objects', 'external_libraries_root', 'external_libraries_interfaces_root', 'external_libraries', 'external_libraries_interfaces']],
        output=['main_executable', 'main_executable_symbols_table'], predicate=has_executable, cacheable=True)
-def link_main_executable(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def link_main_executable(file_system: FileSystem, 
+                         resources: StageResources, 
+                         cache: Dict[str, Any], 
+                         program_arguments: Dict[str, Any], 
+                         configuration: Dict[str, Any], 
+                         remote_proxy: RemoteProxy,
+                         progressBarSupplier: ProgressBarSupplier):
     project_directory                  = resources['project_directory']
     pralinefile                        = resources['pralinefile']
     organization                       = pralinefile['organization']

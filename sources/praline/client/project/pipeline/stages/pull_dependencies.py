@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem, join
 from praline.common.hashing import key_delta
 from praline.common.package import clean_up_package, get_package_extracted_contents, unpack
@@ -11,7 +12,13 @@ from typing import Any, Dict
        output=['external_resources_root', 'external_headers_root', 'external_executables_root', 'external_libraries_root', 'external_libraries_interfaces_root', 'external_symbols_tables_root',
                'external_resources', 'external_headers', 'external_executables', 'external_libraries', 'external_libraries_interfaces', 'external_symbols_tables'],
        cacheable=True, exposed=True)
-def pull_dependencies(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def pull_dependencies(file_system: FileSystem, 
+                      resources: StageResources, 
+                      cache: Dict[str, Any], 
+                      program_arguments: Dict[str, Any], 
+                      configuration: Dict[str, Any], 
+                      remote_proxy: RemoteProxy,
+                      progressBarSupplier: ProgressBarSupplier):
     project_directory      = resources['project_directory']
     external_root          = join(project_directory, 'target', 'external')
     external_packages_root = join(external_root, 'packages')

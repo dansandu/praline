@@ -2,6 +2,7 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.common.package import get_package, pack
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import basename, FileSystem, join, relative_path
 from typing import Any, Dict
 
@@ -11,7 +12,13 @@ from typing import Any, Dict
                      ['project_directory', 'pralinefile', 'compiler', 'resources_root', 'resources', 'headers_root',           'headers', 'main_executable', 'main_executable_symbols_table', 'test_results'],
                      ['project_directory', 'pralinefile', 'compiler', 'resources_root', 'resources', 'headers_root',           'headers', 'main_executable', 'main_executable_symbols_table']],
        output=['main_executable_package'], cacheable=True)
-def package_main_executable(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def package_main_executable(file_system: FileSystem, 
+                            resources: StageResources, 
+                            cache: Dict[str, Any], 
+                            program_arguments: Dict[str, Any], 
+                            configuration: Dict[str, Any], 
+                            remote_proxy: RemoteProxy,
+                            progressBarSupplier: ProgressBarSupplier):
     project_directory = resources['project_directory']
     pralinefile       = resources['pralinefile']
     compiler          = resources['compiler']

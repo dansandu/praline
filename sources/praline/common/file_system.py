@@ -150,3 +150,6 @@ class FileSystem:
 
     def copyfileobj(self, source, destination):
         shutil.copyfileobj(source, destination)
+
+    def print(self, *args, **kwargs):
+        print(*args, **kwargs)

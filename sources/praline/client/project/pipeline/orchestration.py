@@ -5,6 +5,7 @@ from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.algorithm.graph.instance_traversal import multiple_instance_depth_first_traversal
 from praline.common.algorithm.graph.simple_traversal import root_last_traversal
 from praline.common.file_system import FileSystem, join
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.tracing import trace
 from typing import Any, Dict, List
 
@@ -83,12 +84,13 @@ def invoke_stage(target_stage: str, stages: Dict[str, Stage], file_system: FileS
         stage = stages[stage_name]
         stage_resources = StageResources(stage_name, activation, {resource : resources[resource] for resource in stage.requirements[activation]}, stage.output)
         stage_program_arguments = get_stage_program_arguments(stage_name, program_arguments)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_name)
         if stage.cacheable:
             with Cache(file_system, cache_path) as cache:
                 cache[stage_name] = stage_cache = cache.get(stage_name, {})
-                stage.invoker(file_system, stage_resources, stage_cache, stage_program_arguments, configuration, remote_proxy)
+                stage.invoker(file_system, stage_resources, stage_cache, stage_program_arguments, configuration, remote_proxy, progress_bar_supplier)
         else:
-            stage.invoker(file_system, stage_resources, None, stage_program_arguments, configuration, remote_proxy)
+            stage.invoker(file_system, stage_resources, None, stage_program_arguments, configuration, remote_proxy, progress_bar_supplier)
         for resource in stage.output:
             if resource not in stage_resources:
                 raise ResourceNotSuppliedError(f"stage '{stage_name}' didn't supply resource '{resource}'")

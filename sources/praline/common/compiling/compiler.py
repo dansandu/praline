@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.constants import get_artifact_full_name
-from praline.common.file_system import directory_name, FileSystem, get_separator, join, relative_path
+from praline.common.file_system import basename, FileSystem
 from praline.common.hashing import key_delta, hash_binary, hash_file
 from praline.common.reflection import subclasses_of
 from typing import Any, Dict, List, Tuple
@@ -81,7 +82,8 @@ def compile_using_cache(file_system: FileSystem,
                         objects_root: str,
                         headers: List[str],
                         sources: List[str],
-                        cache: Dict[str, Any]) -> List[str]:
+                        cache: Dict[str, Any],
+                        progress_bar_supplier: ProgressBarSupplier) -> List[str]:
     file_system.create_directory_if_missing(objects_root)
 
     def hash_translation_unit(source):
@@ -91,19 +93,25 @@ def compile_using_cache(file_system: FileSystem,
     objects                     = []
     yield_descriptor            = compiler.get_yield_descriptor()
 
-    for source in updated:
-        object_ = yield_descriptor.get_object(sources_root, objects_root, source)
-        compiler.compile(headers_root, external_headers_root, headers, source, object_)
+    missing_on_disk = [source for source in sources if source not in updated and source not in removed and not file_system.exists(yield_descriptor.get_object(sources_root, objects_root, source))]
+    to_be_compiled = updated + missing_on_disk
+
+    with progress_bar_supplier.create(len(to_be_compiled)) as progress_bar:
+        for source in to_be_compiled:
+            object_ = yield_descriptor.get_object(sources_root, objects_root, source)
+            progress_bar.update_summary(basename(object_))
+            compiler.compile(headers_root, external_headers_root, headers, source, object_)
+            progress_bar.advance()
+
     for source in removed:
         object_ = yield_descriptor.get_object(sources_root, objects_root, source)
         if file_system.exists(object_):
             file_system.remove_file(object_)
+    
     for source in sources:
         object_ = yield_descriptor.get_object(sources_root, objects_root, source)
-        if not file_system.exists(object_):
-            compiler.compile(headers_root, external_headers_root, headers, source, object_)
         objects.append(object_)
-    
+
     cache.clear()
     cache.update(new_cache)
     return objects

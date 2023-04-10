@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem, join
 from typing import Any, Dict
 
@@ -32,7 +33,13 @@ def can_run_unit_tests(file_system: FileSystem, program_arguments: Dict[str, Any
 
 
 @stage(requirements=[['pralinefile', 'test_sources_root']], output=['test_sources'], predicate=can_run_unit_tests)
-def load_test_sources(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def load_test_sources(file_system: FileSystem, 
+                      resources: StageResources, 
+                      cache: Dict[str, Any], 
+                      program_arguments: Dict[str, Any], 
+                      configuration: Dict[str, Any], 
+                      remote_proxy: RemoteProxy,
+                      progressBarSupplier: ProgressBarSupplier):
     pralinefile            = resources['pralinefile']
     test_sources_root      = resources['test_sources_root']
     test_executable_source = join(test_sources_root, pralinefile['organization'], pralinefile['artifact'], 'executable.test.cpp')

@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.compiling.compiler import compile_using_cache
 from praline.common.file_system import FileSystem, join
 from typing import Any, Dict
@@ -10,7 +11,13 @@ from typing import Any, Dict
                      ['project_directory', 'compiler', 'headers_root', 'external_headers_root', 'test_sources_root',           'headers',           'test_sources']],
        output=['test_objects_root', 'test_objects'],
        cacheable=True)
-def compile_test_sources(file_system: FileSystem, resources: StageResources, cache: Dict[str, Any], program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy):
+def compile_test_sources(file_system: FileSystem, 
+                         resources: StageResources, 
+                         cache: Dict[str, Any], 
+                         program_arguments: Dict[str, Any], 
+                         configuration: Dict[str, Any], 
+                         remote_proxy: RemoteProxy,
+                         progressBarSupplier: ProgressBarSupplier):
     project_directory     = resources['project_directory']
     compiler              = resources['compiler']
     header_roots          = resources['headers_root']
@@ -33,4 +40,5 @@ def compile_test_sources(file_system: FileSystem, resources: StageResources, cac
                                                          objects_root,
                                                          headers,
                                                          sources,
-                                                         cache)
+                                                         cache,
+                                                         progressBarSupplier)

@@ -31,7 +31,7 @@ class FormatHeadersTest(TestCase):
             'project/sources/org/art/request.hpp': 'stale'
         }.items()}
 
-        format_headers(file_system, resources, cache, None, None, None)
+        format_headers(file_system, resources, cache, None, None, None, None)
 
         expected_formatted_headers = {
             'project/sources/org/art/math.hpp',

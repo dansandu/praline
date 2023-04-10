@@ -9,7 +9,7 @@ class CleanStageTest(TestCase):
         file_system = FileSystemMock({'my/project/target'})
         resources   = {'project_directory': 'my/project'}
 
-        clean(file_system, resources, None, None, None, None)
+        clean(file_system, resources, None, None, None, None, None)
 
         self.assertEqual(file_system.directories, {normpath('my/project')})
 
@@ -17,6 +17,6 @@ class CleanStageTest(TestCase):
         file_system       = FileSystemMock({'my/project'})
         resources         = {'project_directory': 'my/project'}
 
-        clean(file_system, resources, None, None, None, None)
+        clean(file_system, resources, None, None, None, None, None)
 
         self.assertEqual(file_system.directories, {normpath('my/project')})

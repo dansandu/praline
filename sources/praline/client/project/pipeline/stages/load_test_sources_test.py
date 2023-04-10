@@ -20,7 +20,7 @@ class LoadTestSourcesTest(TestCase):
             }
         }
 
-        load_test_sources(file_system, resources, None, None, None, None)
+        load_test_sources(file_system, resources, None, None, None, None, None)
 
         expected_test_sources = {
             'project/sources/org/art/math.test.cpp',
