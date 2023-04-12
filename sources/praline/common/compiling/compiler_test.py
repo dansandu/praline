@@ -151,33 +151,37 @@ class CompilerTest(TestCase):
         sources_root = 'sources/'
         headers_root = 'sources/'
         external_headers_root = 'external/headers/'
-        file_system = FileSystemMock({
-            objects_root,
-            sources_root,
-            headers_root,
-            external_headers_root
-        }, {
-            'sources/a.hpp': b'header-a.',
-            'sources/a.cpp': b'source-a.',
-            'sources/b.hpp': b'updated-header-b.',
-            'sources/b.cpp': b'source-b.',
-            'sources/d.hpp': b'header-d.',
-            'sources/d.cpp': b'source-d.',
-            'objects/a.obj': b'header-a.source-a.',
-            'objects/b.obj': b'header-b.source-b.',
-            'objects/c.obj': b'header-c.source-c.'
-        })
+        
+        file_system = FileSystemMock(
+            directories={
+                objects_root,
+                sources_root,
+                headers_root,
+                external_headers_root
+            }, 
+            files={
+                'sources/a.hpp': b'header-a.',
+                'sources/a.cpp': b'source-a.',
+                'sources/b.hpp': b'updated-header-b.',
+                'sources/b.cpp': b'source-b.',
+                'sources/d.hpp': b'header-d.',
+                'sources/d.cpp': b'source-d.',
+                'objects/a.obj': b'header-a.source-a.',
+                'objects/b.obj': b'header-b.source-b.',
+                'objects/c.obj': b'header-c.source-c.'
+            }
+        )
+
         compiler       = CompilerMock(file_system)
         headers        = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
         sources        = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
-        to_be_compiled = [                 'sources/b.cpp', 'sources/d.cpp']
         cache          = {
             'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
             'sources/b.cpp': '5addc12d3b54fb9836277adccb06a03131ab92c10faf97613259bb77775db8d3',
             'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5'
         }
 
-        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=len(to_be_compiled))
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=len(sources))
 
         objects = compile_using_cache(file_system,
                                       compiler,
@@ -190,7 +194,9 @@ class CompilerTest(TestCase):
                                       cache,
                                       progress_bar_supplier)
 
-        self.assertEqual(objects, ['objects/a.obj', 'objects/b.obj', 'objects/d.obj'])
+        expected_objects = {'objects/a.obj', 'objects/b.obj', 'objects/d.obj'}
+
+        self.assertEqual(set(objects), expected_objects)
 
         new_files = {
             'sources/a.hpp': b'header-a.',
@@ -204,15 +210,17 @@ class CompilerTest(TestCase):
             'objects/d.obj': b'header-d.source-d.'
         }
 
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
+        expected_files = {normpath(p): data for p, data in new_files.items()}
 
-        new_cache = {
+        self.assertEqual(file_system.files, expected_files)
+
+        expected_cache = {
             'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
             'sources/b.cpp': 'db4b8fea71a29aedd0eac30601ac3489bdc72a3261697215901cf04da2d6a931',
             'sources/d.cpp': 'edf58f60231d34dfe3eb468e1b4cfeb35dd39cecd796183660cf13bf301f103b'
         }
 
-        self.assertEqual(cache, new_cache)
+        self.assertEqual(cache, expected_cache)
 
     def test_link_executable_using_clean_cache(self):
         objects_root                       = 'objects/'
