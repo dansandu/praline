@@ -3,7 +3,7 @@ from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.constants import get_artifact_full_name
 from praline.common.file_system import basename, FileSystem
-from praline.common.hashing import key_delta, hash_binary, hash_file
+from praline.common.hashing import key_delta, hash_binary, hash_file, delta, DeltaType
 from praline.common.reflection import subclasses_of
 from typing import Any, Dict, List, Tuple
 
@@ -86,31 +86,27 @@ def compile_using_cache(file_system: FileSystem,
                         progress_bar_supplier: ProgressBarSupplier) -> List[str]:
     file_system.create_directory_if_missing(objects_root)
 
-    def hash_translation_unit(source):
-        return hash_binary(compiler.preprocess(headers_root, external_headers_root, headers, source))
-
-    updated, removed, new_cache = key_delta(sources, hash_translation_unit, cache)
-    objects                     = []
-    yield_descriptor            = compiler.get_yield_descriptor()
-
-    missing_on_disk = [source for source in sources if source not in updated and source not in removed and not file_system.exists(yield_descriptor.get_object(sources_root, objects_root, source))]
-    to_be_compiled = updated + missing_on_disk
-
-    with progress_bar_supplier.create(len(to_be_compiled)) as progress_bar:
-        for source in to_be_compiled:
-            object_ = yield_descriptor.get_object(sources_root, objects_root, source)
-            progress_bar.update_summary(basename(object_))
-            compiler.compile(headers_root, external_headers_root, headers, source, object_)
-            progress_bar.advance()
-
-    for source in removed:
-        object_ = yield_descriptor.get_object(sources_root, objects_root, source)
-        if file_system.exists(object_):
-            file_system.remove_file(object_)
+    new_cache        = {}
+    objects          = []
+    yield_descriptor = compiler.get_yield_descriptor()
     
-    for source in sources:
-        object_ = yield_descriptor.get_object(sources_root, objects_root, source)
-        objects.append(object_)
+    with progress_bar_supplier.create(len(sources)) as progress_bar:
+        def hasher(source: str):
+            progress_bar.update_summary(source)
+            return hash_binary(compiler.preprocess(headers_root, external_headers_root, headers, source))
+
+        for item in delta(sources, hasher, cache, new_cache):
+            object_ = yield_descriptor.get_object(sources_root, objects_root, item.key)
+            if item.delta_type == DeltaType.Modified:
+                compiler.compile(headers_root, external_headers_root, headers, item.key, object_)
+                objects.append(object_)
+                progress_bar.advance()
+            elif item.delta_type == DeltaType.UpToDate:
+                objects.append(object_)
+                progress_bar.advance()
+            elif item.delta_type == DeltaType.Removed:
+                if file_system.exists(object_):
+                    file_system.remove_file(object_)
 
     cache.clear()
     cache.update(new_cache)
@@ -223,6 +219,7 @@ def get_compilers(file_system: FileSystem, architecture: str, platform: str, mod
     if duplicates:
         raise RuntimeError(f"multiple compilers defined with the same name '{compilers[duplicates[0][0]].get_name()}'")
     return compilers
+
 
 def get_compiler(file_system: FileSystem, name: str, architecture: str, platform: str, mode: str, logging_level: int) -> Compiler:
     compilers = [klass(file_system, architecture, platform, mode, logging_level) for klass in subclasses_of(Compiler)]
