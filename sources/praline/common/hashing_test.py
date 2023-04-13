@@ -1,4 +1,4 @@
-from praline.common.hashing import hash_archive, hash_binary, hash_file, key_delta, delta, DeltaType, DeltaItem
+from praline.common.hashing import hash_archive, hash_binary, hash_file, key_delta, delta, DeltaType, DeltaItem, progression_resolution
 from praline.common.testing.file_system_mock import FileSystemMock
 from unittest import TestCase
 import pickle
@@ -61,3 +61,11 @@ class HashingTest(TestCase):
         expected_new_cache = {'a': 'new_a', 'b': 'new_b', 'c': 'new_c'}
 
         self.assertEqual(new_cache, expected_new_cache)
+
+    def test_progression_resolution(self):
+        keys  = ['a', 'b']
+        cache = {'b': 'b-hash', 'c': 'c-hash'}
+
+        resolution = progression_resolution(keys, cache)
+
+        self.assertEqual(resolution, 3)

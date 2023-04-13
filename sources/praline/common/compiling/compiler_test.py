@@ -152,7 +152,7 @@ class CompilerTest(TestCase):
             'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5'
         }
 
-        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=len(sources))
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
         objects = compile_using_cache(file_system,
                                       compiler,

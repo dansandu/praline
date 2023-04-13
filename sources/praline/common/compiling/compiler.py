@@ -3,7 +3,7 @@ from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.constants import get_artifact_full_name
 from praline.common.file_system import basename, FileSystem
-from praline.common.hashing import key_delta, hash_binary, hash_file, delta, DeltaType
+from praline.common.hashing import key_delta, hash_binary, hash_file, delta, DeltaType, progression_resolution
 from praline.common.reflection import subclasses_of
 from typing import Any, Dict, List, Tuple
 
@@ -90,7 +90,8 @@ def compile_using_cache(file_system: FileSystem,
     objects          = []
     yield_descriptor = compiler.get_yield_descriptor()
     
-    with progress_bar_supplier.create(len(sources)) as progress_bar:
+    resolution = progression_resolution(sources, cache)
+    with progress_bar_supplier.create(resolution) as progress_bar:
         def hasher(source: str):
             progress_bar.update_summary(source)
             return hash_binary(compiler.preprocess(headers_root, external_headers_root, headers, source))
@@ -100,13 +101,12 @@ def compile_using_cache(file_system: FileSystem,
             if item.delta_type == DeltaType.Modified:
                 compiler.compile(headers_root, external_headers_root, headers, item.key, object_)
                 objects.append(object_)
-                progress_bar.advance()
             elif item.delta_type == DeltaType.UpToDate:
                 objects.append(object_)
-                progress_bar.advance()
             elif item.delta_type == DeltaType.Removed:
                 if file_system.exists(object_):
                     file_system.remove_file(object_)
+            progress_bar.advance()
 
     cache.clear()
     cache.update(new_cache)
