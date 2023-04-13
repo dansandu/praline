@@ -69,32 +69,35 @@ class PullDependenciesStageTest(TestCase):
               version: 1.0.0
             """
         
-        file_system = FileSystemMock({
-            'project/target/external/headers/fruit/grapes',
-            'project/target/external/headers/fruit/waterlemon',
-            'project/target/external/headers/fruit/raspberry',
-            'project/target/external/libraries',
-            'project/target/external/packages'
-        }, {
-            'project/target/external/headers/fruit/grapes/grapes.hpp': b'fruit-grapes-hpp',
-            'project/target/external/headers/fruit/waterlemon/waterlemon.hpp': b'fruit-waterlemon-hpp',
-            'project/target/external/headers/fruit/raspberry/raspberry.hpp': b'fruit-raspberry-hpp',
-            'project/target/external/libraries/libfruit-grapes-x64-darwin-clang-release-1.0.0.dylib': b'fruit-grapes-dylib',
-            'project/target/external/libraries/libfruit-waterlemon-x64-darwin-clang-release-1.0.0.dylib': b'fruit-waterlemon-dylib',
-            'project/target/external/libraries/libfruit-raspberry-x64-darwin-clang-release-1.0.0.dylib': b'fruit-raspberry-dylib',
-            'project/target/external/packages/fruit-grapes-x64-darwin-clang-release-1.0.0.tar.gz': pickle.dumps({
-                'headers/fruit/grapes/grapes.hpp': b'fruit-grapes-hpp',
-                'libraries/libfruit-grapes-x64-darwin-clang-release-1.0.0.dylib': b'fruit-grapes-dylib'
-            }),
-            'project/target/external/packages/fruit-waterlemon-x64-darwin-clang-release-1.0.0.tar.gz': pickle.dumps({
-                'headers/fruit/waterlemon/waterlemon.hpp': b'fruit-waterlemon-hpp',
-                'libraries/libfruit-waterlemon-x64-darwin-clang-release-1.0.0.dylib': b'fruit-waterlemon-dylib'
-            }),
-            'project/target/external/packages/fruit-raspberry-x64-darwin-clang-release-1.0.0.tar.gz': pickle.dumps({
-                'headers/fruit/raspberry/raspberry.hpp': b'fruit-raspberry-hpp',
-                'libraries/libfruit-raspberry-x64-darwin-clang-release-1.0.0.dylib': b'fruit-raspberry-dylib'
-            })
-        })
+        file_system = FileSystemMock(
+            directories={
+                'project/target/external/headers/fruit/grapes',
+                'project/target/external/headers/fruit/waterlemon',
+                'project/target/external/headers/fruit/raspberry',
+                'project/target/external/libraries',
+                'project/target/external/packages'
+            }, 
+            files={
+                'project/target/external/headers/fruit/grapes/grapes.hpp': b'fruit-grapes-hpp',
+                'project/target/external/headers/fruit/waterlemon/waterlemon.hpp': b'fruit-waterlemon-hpp',
+                'project/target/external/headers/fruit/raspberry/raspberry.hpp': b'fruit-raspberry-hpp',
+                'project/target/external/libraries/libfruit-grapes-x64-darwin-clang-release-1.0.0.dylib': b'fruit-grapes-dylib',
+                'project/target/external/libraries/libfruit-waterlemon-x64-darwin-clang-release-1.0.0.dylib': b'fruit-waterlemon-dylib',
+                'project/target/external/libraries/libfruit-raspberry-x64-darwin-clang-release-1.0.0.dylib': b'fruit-raspberry-dylib',
+                'project/target/external/packages/fruit-grapes-x64-darwin-clang-release-1.0.0.tar.gz': pickle.dumps({
+                    'headers/fruit/grapes/grapes.hpp': b'fruit-grapes-hpp',
+                    'libraries/libfruit-grapes-x64-darwin-clang-release-1.0.0.dylib': b'fruit-grapes-dylib'
+                }),
+                'project/target/external/packages/fruit-waterlemon-x64-darwin-clang-release-1.0.0.tar.gz': pickle.dumps({
+                    'headers/fruit/waterlemon/waterlemon.hpp': b'fruit-waterlemon-hpp',
+                    'libraries/libfruit-waterlemon-x64-darwin-clang-release-1.0.0.dylib': b'fruit-waterlemon-dylib'
+                }),
+                'project/target/external/packages/fruit-raspberry-x64-darwin-clang-release-1.0.0.tar.gz': pickle.dumps({
+                    'headers/fruit/raspberry/raspberry.hpp': b'fruit-raspberry-hpp',
+                    'libraries/libfruit-raspberry-x64-darwin-clang-release-1.0.0.dylib': b'fruit-raspberry-dylib'
+                })
+            }
+        )
 
         resources = {
             'project_directory': 'project',
@@ -119,7 +122,7 @@ class PullDependenciesStageTest(TestCase):
 
         remote_proxy = RemoteProxyMock(file_system)
 
-        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=len(remote_proxy.packages))
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
         pull_dependencies(file_system, resources, cache, program_arguments, None, remote_proxy, progress_bar_supplier)
 

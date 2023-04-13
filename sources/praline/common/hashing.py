@@ -69,3 +69,12 @@ def delta(keys: List[str], key_hasher: Callable[[str],str], cache: Dict[str, str
             yield DeltaItem(key, DeltaType.Modified)
         else:
             yield DeltaItem(key, DeltaType.UpToDate)
+
+
+def progression_resolution(keys: List[str], cache: Dict[str, str]):
+    modified_or_update_to_date_count = len(keys)
+    removed_count = 0
+    for key in cache:
+        if key not in keys:
+            removed_count += 1
+    return modified_or_update_to_date_count + removed_count

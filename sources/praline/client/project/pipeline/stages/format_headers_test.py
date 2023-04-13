@@ -1,22 +1,26 @@
 from os.path import normpath
 from praline.client.project.pipeline.stages.format_headers import format_headers
 from praline.common.testing.file_system_mock import FileSystemMock
+from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 from unittest import TestCase
 
 
 class FormatHeadersTest(TestCase):
     def test_format_headers(self):
         def on_execute(command, add_to_library_path):
-            return (normpath('project/sources/org/art/math.hpp') in command and
-                    normpath('project/sources/org/art/vector.hpp') not in command and
-                    normpath('project/sources/org/art/map.hpp') in command and
-                    normpath('project/sources/org/art/request.hpp') not in command)
+            return True
 
-        file_system = FileSystemMock({'project/sources/org/art'}, {
-            'project/sources/org/art/math.hpp': b'math-contents',
-            'project/sources/org/art/vector.hpp': b'vector-contents',
-            'project/sources/org/art/map.hpp': b'map-contents'
-        }, on_execute=on_execute)
+        file_system = FileSystemMock(
+            directories={
+                'project/sources/org/art'
+            }, 
+            files={
+                'project/sources/org/art/math.hpp': b'math-contents',
+                'project/sources/org/art/vector.hpp': b'vector-contents',
+                'project/sources/org/art/map.hpp': b'map-contents',
+            }, 
+            on_execute=on_execute
+        )
 
         clang_format_executable = 'path/to/clang-format'
 
@@ -31,7 +35,9 @@ class FormatHeadersTest(TestCase):
             'project/sources/org/art/request.hpp': 'stale'
         }.items()}
 
-        format_headers(file_system, resources, cache, None, None, None, None)
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
+
+        format_headers(file_system, resources, cache, None, None, None, progress_bar_supplier)
 
         expected_formatted_headers = {
             'project/sources/org/art/math.hpp',

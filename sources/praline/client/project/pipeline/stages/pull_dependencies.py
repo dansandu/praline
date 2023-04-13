@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem, join
-from praline.common.hashing import delta, DeltaItem, DeltaType
+from praline.common.hashing import delta, DeltaType, progression_resolution
 from praline.common.package import clean_up_package, get_package_extracted_contents, unpack
 from typing import Any, Dict
 
@@ -58,16 +58,18 @@ def pull_dependencies(file_system: FileSystem,
     logging_level = program_arguments['global']['logging_level']
     
     
-    packageHashes = remote_proxy.solve_dependencies(pralinefile,
-                                                    compiler.get_architecture(),
-                                                    compiler.get_platform(),
-                                                    compiler.get_name(),
-                                                    compiler.get_mode())
+    package_hashes = remote_proxy.solve_dependencies(pralinefile,
+                                                     compiler.get_architecture(),
+                                                     compiler.get_platform(),
+                                                     compiler.get_name(),
+                                                     compiler.get_mode())
     
     new_cache = {}
 
-    with progressBarSupplier.create(len(packageHashes)) as progress_bar:
-        for item in delta(packageHashes.keys(), lambda p: packageHashes[p], cache, new_cache):
+    packages   = package_hashes.keys()
+    resolution = progression_resolution(packages, cache)
+    with progressBarSupplier.create(resolution) as progress_bar:
+        for item in delta(packages, lambda p: package_hashes[p], cache, new_cache):
             package = item.key
             progress_bar.update_summary(package)
             package_path = join(external_packages_root, package)
@@ -76,7 +78,6 @@ def pull_dependencies(file_system: FileSystem,
                 remote_proxy.pull_package(package_path)
                 contents = unpack(file_system, package_path, external_root)
                 extend_externals(contents)
-                progress_bar.advance()
             elif item.delta_type == DeltaType.UpToDate:
                 if not file_system.exists(package_path):
                     remote_proxy.pull_package(package_path)
@@ -84,9 +85,9 @@ def pull_dependencies(file_system: FileSystem,
                 else:
                     contents = get_package_extracted_contents(file_system, package_path, external_root)
                 extend_externals(contents)
-                progress_bar.advance()
             elif item.delta_type == DeltaType.Removed:
                 clean_up_package(file_system, package_path, external_root, logging_level)
+            progress_bar.advance()
     
     resources['external_resources']            = external_resources
     resources['external_headers']              = external_headers
