@@ -3,38 +3,9 @@ from praline.common.compiling.compiler import compile_using_cache, link_executab
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.file_system import get_separator, join, relative_path
 from praline.common.testing.file_system_mock import FileSystemMock
+from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 from typing import List
 from unittest import TestCase
-
-
-class ProgressBarMock:
-    def __init__(self, test_case: TestCase, resolution: int):
-        self.test_case = test_case
-        self.resolution = resolution
-        self.progress = 0
-
-    def __enter__(self):
-        return self
-    
-    def update_summary(self, summary: str):
-        pass
-
-    def advance(self, amount: int = 1):
-        self.progress += amount
-        self.test_case.assertLessEqual(self.progress, self.resolution)
-
-    def __exit__(self, type, value, traceback):
-        self.test_case.assertEqual(self.progress, self.resolution)
-
-
-class ProgressBarSupplierMock:
-    def __init__(self, test_case: TestCase, expected_resolution: int):
-        self.test_case = test_case
-        self.expected_resolution = expected_resolution
-
-    def create(self, resolution: int):
-        self.test_case.assertEqual(resolution, self.expected_resolution)
-        return ProgressBarMock(self.test_case, resolution)
 
 
 class YieldDescriptorMock(YieldDescriptor):
