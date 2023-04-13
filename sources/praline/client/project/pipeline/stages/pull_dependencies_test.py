@@ -1,6 +1,7 @@
 from os.path import basename, normpath
 from praline.client.project.pipeline.stages.pull_dependencies import pull_dependencies
 from praline.common.testing.file_system_mock import FileSystemMock
+from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 from typing import Any, Dict
 from unittest import TestCase
 import pickle
@@ -118,7 +119,9 @@ class PullDependenciesStageTest(TestCase):
 
         remote_proxy = RemoteProxyMock(file_system)
 
-        pull_dependencies(file_system, resources, cache, program_arguments, None, remote_proxy, None)
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=len(remote_proxy.packages))
+
+        pull_dependencies(file_system, resources, cache, program_arguments, None, remote_proxy, progress_bar_supplier)
 
         expected_files = {
             'project/target/external/headers/fruit/apple/apple.hpp': b'fruit-apple-hpp',

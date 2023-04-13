@@ -9,14 +9,14 @@ class ProgressBarTest(TestCase):
 
         expected_lines = [
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage name ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage name ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
 
-            "\rstage ██████████████████████████████████████████████████ 100.00%                                         \r\n",
+            "\rstage name ██████████████████████████████████████████████████ 100.00%                                         \r\n",
         ]
 
-        progress_bar_supplier = ProgressBarSupplier(file_system, 'stage')
+        progress_bar_supplier = ProgressBarSupplier(file_system, 'stage_name', 10, True)
         with progress_bar_supplier.create(0) as progress_bar:
             self.assertEqual(file_system.stdout.getvalue(), expected_lines[0])
 
@@ -28,21 +28,21 @@ class ProgressBarTest(TestCase):
 
     def test_nonzero_resolution(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, 'stage')
+        progress_bar_supplier = ProgressBarSupplier(file_system, 'stage_name', 12, False)
 
         expected_lines = [
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage_name   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                   0001                  \r",
+            "\rstage_name   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                   0001                  \r",
 
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                   0001                  \r",
+            "\rstage_name   █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                   0001                  \r",
 
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% ...ng/to/display/inside/the/progress/bar\r",
+            "\rstage_name   █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% ...ng/to/display/inside/the/progress/bar\r",
 
-            "\rstage ██████████████████████████████████████████████████ 100.00%                                         \r",
+            "\rstage_name   ██████████████████████████████████████████████████ 100.00%                                         \r",
 
-            "\rstage ██████████████████████████████████████████████████ 100.00%                                         \r\n",
+            "\rstage_name   ██████████████████████████████████████████████████ 100.00%                                         \r\n",
 
         ]
 

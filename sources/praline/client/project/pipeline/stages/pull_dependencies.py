@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem, join
-from praline.common.hashing import key_delta
+from praline.common.hashing import delta, DeltaItem, DeltaType
 from praline.common.package import clean_up_package, get_package_extracted_contents, unpack
 from typing import Any, Dict
 
@@ -57,34 +57,37 @@ def pull_dependencies(file_system: FileSystem,
     compiler      = resources['compiler']
     logging_level = program_arguments['global']['logging_level']
     
-    packages = remote_proxy.solve_dependencies(pralinefile,
-                                               compiler.get_architecture(),
-                                               compiler.get_platform(),
-                                               compiler.get_name(),
-                                               compiler.get_mode())
-    updated, removed, new_cache = key_delta(packages.keys(), lambda p: packages[p], cache)
     
-    for package in removed:
-        package_path = join(external_packages_root, package)
-        clean_up_package(file_system, package_path, external_root, logging_level)
+    packageHashes = remote_proxy.solve_dependencies(pralinefile,
+                                                    compiler.get_architecture(),
+                                                    compiler.get_platform(),
+                                                    compiler.get_name(),
+                                                    compiler.get_mode())
+    
+    new_cache = {}
 
-    for package in updated:
-        package_path = join(external_packages_root, package)
-        clean_up_package(file_system, package_path, external_root, logging_level)
-        remote_proxy.pull_package(package_path)
-        contents = unpack(file_system, package_path, external_root)
-        extend_externals(contents)
-
-    for package in packages:
-        if package not in updated:
+    with progressBarSupplier.create(len(packageHashes)) as progress_bar:
+        for item in delta(packageHashes.keys(), lambda p: packageHashes[p], cache, new_cache):
+            package = item.key
+            progress_bar.update_summary(package)
             package_path = join(external_packages_root, package)
-            if not file_system.exists(package_path):
+            if item.delta_type == DeltaType.Modified:
+                clean_up_package(file_system, package_path, external_root, logging_level)
                 remote_proxy.pull_package(package_path)
                 contents = unpack(file_system, package_path, external_root)
-            else:
-                contents = get_package_extracted_contents(file_system, package_path, external_root)
-            extend_externals(contents)
-
+                extend_externals(contents)
+                progress_bar.advance()
+            elif item.delta_type == DeltaType.UpToDate:
+                if not file_system.exists(package_path):
+                    remote_proxy.pull_package(package_path)
+                    contents = unpack(file_system, package_path, external_root)
+                else:
+                    contents = get_package_extracted_contents(file_system, package_path, external_root)
+                extend_externals(contents)
+                progress_bar.advance()
+            elif item.delta_type == DeltaType.Removed:
+                clean_up_package(file_system, package_path, external_root, logging_level)
+    
     resources['external_resources']            = external_resources
     resources['external_headers']              = external_headers
     resources['external_libraries']            = external_libraries
