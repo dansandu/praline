@@ -80,14 +80,15 @@ def invoke_stage(target_stage: str, stages: Dict[str, Stage], file_system: FileS
     project_directory = file_system.get_working_directory()
     cache_path = join(project_directory, 'target', 'cache.pickle')
 
-    stage_name_padding = max(len(stage_name) for _, stage_name in pipeline)
+    progress_bar_header_padding = max(len(stage_name) for _, stage_name in pipeline)
 
     for activation, stage_name in pipeline:
         stage = stages[stage_name]
         stage_resources = StageResources(stage_name, activation, {resource : resources[resource] for resource in stage.requirements[activation]}, stage.output)
         stage_program_arguments = get_stage_program_arguments(stage_name, program_arguments)
         
-        progress_bar_supplier = ProgressBarSupplier(file_system, stage_name, stage_name_padding, replace_header_underscores_with_spaces=True)
+        progress_bar_header   = stage_name.replace('_', ' ')
+        progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_padding)
         if stage.cacheable:
             with Cache(file_system, cache_path) as cache:
                 cache[stage_name] = stage_cache = cache.get(stage_name, {})
