@@ -116,7 +116,7 @@ class PullDependenciesStageTest(TestCase):
 
         program_arguments = {
             'global': {
-                'logging_level': 4
+                'logging_level': 'default'
             }
         }
 

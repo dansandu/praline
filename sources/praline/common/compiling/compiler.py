@@ -74,6 +74,17 @@ class Compiler(ABC):
         raise NotImplementedError()
 
 
+def logging_level_code(logging_level, mode):
+    return {
+        'default': 1 if mode == 'release' else 4,
+        'none':  0,
+        'error': 1,
+        'warn':  2,
+        'info':  3,
+        'debug': 4 
+    }[logging_level]
+
+
 def compile_using_cache(file_system: FileSystem,
                         compiler: Compiler,
                         headers_root: str,
@@ -213,7 +224,7 @@ def link_library_using_cache(file_system: FileSystem,
     return (library, library_interface, symbols_table)
 
 
-def get_compilers(file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int) -> List[Compiler]:
+def get_compilers(file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: str) -> List[Compiler]:
     compilers = [klass(file_system, architecture, platform, mode, logging_level) for klass in subclasses_of(Compiler)]
     duplicates = [(i, j) for i in range(len(compilers)) for j in range(i + 1, len(compilers)) if compilers[i].get_name() == compilers[j].get_name()]
     if duplicates:
@@ -221,7 +232,7 @@ def get_compilers(file_system: FileSystem, architecture: str, platform: str, mod
     return compilers
 
 
-def get_compiler(file_system: FileSystem, name: str, architecture: str, platform: str, mode: str, logging_level: int) -> Compiler:
+def get_compiler(file_system: FileSystem, name: str, architecture: str, platform: str, mode: str, logging_level: str) -> Compiler:
     compilers = [klass(file_system, architecture, platform, mode, logging_level) for klass in subclasses_of(Compiler)]
     matching  = [compiler for compiler in compilers if compiler.get_name() == name]
     if not matching:

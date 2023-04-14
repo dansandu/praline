@@ -1,4 +1,4 @@
-from praline.common.compiling.compiler import Compiler
+from praline.common.compiling.compiler import Compiler, logging_level_code
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.file_system import FileSystem, relative_path, get_separator, join
 from typing import List
@@ -56,7 +56,7 @@ class WindowsClangYieldDescriptor(YieldDescriptor):
 
 
 class WindowsClangCompiler(Compiler):
-    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int):
+    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: str):
         self.file_system   = file_system
         self.architecture  = architecture
         self.platform      = platform
@@ -67,7 +67,7 @@ class WindowsClangCompiler(Compiler):
                                 '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++17', '/nologo', '/WX', '/W3',
                                 '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_CONSOLE', '/D_UNICODE',
                                 '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)', '/DPRALINE_IMPORT=__declspec(dllimport)',
-                                f'-DPRALINE_LOGGING_LEVEL={self.logging_level}']
+                                f'-DPRALINE_LOGGING_LEVEL={logging_level_code(self.logging_level, self.mode)}']
 
         self.linker_flags = ['/DYNAMICBASE', '/NXCOMPAT', '/INCREMENTAL:NO', '/MANIFEST:NO', '/ERRORREPORT:NONE',
                              '/NOLOGO', '/TLBID:1', '/WX']

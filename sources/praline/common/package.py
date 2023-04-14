@@ -205,7 +205,7 @@ def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> 
 
 
 @trace
-def clean_up_package(file_system: FileSystem, package_path: str, extraction_path: str, logging_level: int):
+def clean_up_package(file_system: FileSystem, package_path: str, extraction_path: str, logging_level: str):
     package           = get_package_metadata(package_path)
     name              = package['name'].replace(package_extension, '')
     organization      = package['organization']
