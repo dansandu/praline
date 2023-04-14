@@ -179,7 +179,7 @@ class PackageTest(TestCase):
         })
         extraction_path = 'external'
 
-        logging_level = 4
+        logging_level = 'default'
 
         clean_up_package(file_system, package_path, extraction_path, logging_level)
 

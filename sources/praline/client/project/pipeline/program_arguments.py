@@ -32,10 +32,13 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
             },
             {
                 'name'   : '--logging-level',
-                'type'   : int,
+                'type'   : str,
                 'dest'   : 'logging_level',
-                'default': 4,
-                'help'   : 'Log macros higher than the specified value are ignored during compilation. Note that non-macro log statements are not affected by this flag. No logging (0); errors only (1); errors and warnings (2); errors, warnings and information (3); errors, warnings, information and debug (4).'
+                'choices': ['default', 'none', 'error', 'warn', 'info', 'debug'],
+                'default': 'default',
+                'help'   : 'Specify the logging level such that log macros higher than the specified value are ignored during compilation. '
+                           + 'Non-macro log statements are not affected by this flag. '
+                           + 'By default the error level is used for the release mode otherwise the debug level is used.'
             }
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}

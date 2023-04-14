@@ -1,5 +1,5 @@
 from logging import getLogger
-from praline.common.compiling.compiler import Compiler
+from praline.common.compiling.compiler import Compiler, logging_level_code
 from praline.common.compiling.yield_descriptor import YieldDescriptor
 from praline.common.file_system import basename, directory_name, FileSystem, relative_path, get_separator, join
 from typing import List
@@ -24,7 +24,7 @@ class DarwinClangYieldDescriptor(YieldDescriptor):
 
 
 class DarwinClangCompiler(Compiler):
-    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: int):
+    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: str):
         self.file_system   = file_system
         self.architecture  = architecture
         self.platform      = platform
@@ -35,7 +35,7 @@ class DarwinClangCompiler(Compiler):
                       '-Werror', '-Wall', '-Wextra',
                       '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
                       '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
-                      f'-DPRALINE_LOGGING_LEVEL={self.logging_level}']
+                      f'-DPRALINE_LOGGING_LEVEL={logging_level_code(self.logging_level, self.mode)}']
         
         if self.mode == 'debug':
             self.flags.append('-g')
