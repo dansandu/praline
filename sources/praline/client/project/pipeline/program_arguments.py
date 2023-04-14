@@ -35,7 +35,6 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'type'   : str,
                 'dest'   : 'logging_level',
                 'choices': ['default', 'none', 'error', 'warn', 'info', 'debug'],
-                'nargs'  : '?',
                 'default': 'default',
                 'help'   : 'Specify the logging level such that log macros higher than the specified value are ignored during compilation. '
                            + 'Non-macro log statements are not affected by this flag. '
