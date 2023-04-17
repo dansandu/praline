@@ -34,6 +34,7 @@ def test(file_system: FileSystem,
 
     file_system.execute_and_fail_on_bad_return([test_executable] + arguments,
                                                add_to_library_path=[external_libraries_root],
-                                               interactive=True)
+                                               interactive=True,
+                                               add_to_env={'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(progressBarSupplier.header_length)})
     
     resources['test_results'] = 'success'

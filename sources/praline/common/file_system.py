@@ -7,7 +7,7 @@ import sys
 import tarfile
 from logging import getLogger
 from praline.common.tracing import trace, INFO
-from typing import Any, IO, List
+from typing import Any, IO, List, Dict
 
 
 logger = getLogger(__name__)
@@ -43,7 +43,7 @@ def common_path(paths: List[str]) -> str:
 
 class FileSystem:
     @trace
-    def execute(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False) -> None:
+    def execute(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False, add_to_env: Dict[str, str] = {}) -> None:
         environment_copy = dict(os.environ)
         if add_to_library_path:
             if sys.platform == 'linux' or sys.platform == 'darwin':
@@ -52,6 +52,12 @@ class FileSystem:
                 environment_copy['PATH'] += os.pathsep + os.pathsep.join(add_to_library_path)
             else:
                 raise RuntimeError(f"couldn't change library path -- unsupported platform '{sys.platform}'")
+        
+        for key, value in add_to_env.items():
+            if key in environment_copy:
+                raise RuntimeError(f"variable '{key}' already present in environment")
+            else:
+                environment_copy[key] = value
         
         if interactive:
             process = subprocess.Popen(command, shell=(os.name == 'nt'), env=environment_copy)
@@ -62,11 +68,11 @@ class FileSystem:
             stdout, stderror = process.communicate()
             return process.returncode, stdout, stderror
 
-    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False) -> None:
+    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False, add_to_env: Dict[str, str] = {}) -> None:
         if interactive:
-            status = self.execute(command, add_to_library_path=add_to_library_path, interactive=True)
+            status = self.execute(command, add_to_library_path=add_to_library_path, interactive=True, add_to_env=add_to_env)
         else:
-            status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path)
+            status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path, add_to_env=add_to_env)
             if stdout:
                 logger.info(stdout.decode())
             if stderror:
