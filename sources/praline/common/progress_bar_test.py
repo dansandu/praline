@@ -9,40 +9,37 @@ class ProgressBarTest(TestCase):
 
         expected_lines = [
 
-            "\rstage name   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage name   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
 
-            "\rstage name   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
-
-            "\rstage name   ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \r\n",
+            "\rstage name   ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \n",
         ]
 
-        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage name', header_padding=12)
+        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage name', header_length=12)
         with progress_bar_supplier.create(resolution=0) as progress_bar:
             self.assertEqual(file_system.stdout.getvalue(), expected_lines[0])
 
-            progress_bar.advance()
-            self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines[:2]))
+            self.assertRaises(ValueError, progress_bar.advance)
         
         self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines))
 
 
     def test_nonzero_resolution(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_padding=0)
+        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
 
         expected_lines = [
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                short/text               \r",
+            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                \033[34mshort/text\033[0m               ",
 
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                short/text               \r",
+            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                \033[34mshort/text\033[0m               ",
 
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% ...ng/to/display/inside/the/progress/bar\r",
+            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% \033[34m...ng/to/display/inside/the/progress/bar\033[0m",
 
-            "\rstage ██████████████████████████████████████████████████ 100.00% ...ng/to/display/inside/the/progress/bar\r",
+            "\rstage ██████████████████████████████████████████████████ 100.00% \033[34m...ng/to/display/inside/the/progress/bar\033[0m",
 
-            "\rstage ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \r\n",
+            "\rstage ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \n",
 
         ]
 
@@ -65,15 +62,15 @@ class ProgressBarTest(TestCase):
 
     def test_early_exit(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_padding=0)
+        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
 
         expected_lines = [
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
 
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                                         \r",
+            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                                         ",
 
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                  \033[31mhalted\033[0m                 \r\n",
+            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                  \033[31mhalted\033[0m                 \n",
 
         ]
 
@@ -87,15 +84,15 @@ class ProgressBarTest(TestCase):
 
     def test_exception(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_padding=0)
+        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
 
         expected_lines = [
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         \r",
+            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
 
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                                         \r",
+            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                                         ",
 
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                  \033[31mhalted\033[0m                 \r\n",
+            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                  \033[31mhalted\033[0m                 \n",
 
         ]
 
