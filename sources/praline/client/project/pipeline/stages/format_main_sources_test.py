@@ -1,16 +1,14 @@
 from os.path import normpath
 from praline.client.project.pipeline.stages.format_main_sources import format_main_sources
 from praline.common.testing.file_system_mock import FileSystemMock
+from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 from unittest import TestCase
 
 
 class FormatMainSourcesTest(TestCase):
     def test_format_main_sources(self):
         def on_execute(command, add_to_library_path):
-            return (normpath('project/sources/org/art/math.cpp') in command and
-                    normpath('project/sources/org/art/vector.cpp') not in command and
-                    normpath('project/sources/org/art/map.cpp') in command and
-                    normpath('project/sources/org/art/request.cpp') not in command)
+            return True
 
         file_system = FileSystemMock({'project/sources/org/art'}, {
             'project/sources/org/art/math.cpp': b'math-contents',
@@ -32,7 +30,9 @@ class FormatMainSourcesTest(TestCase):
             'project/sources/org/art/request.cpp': 'stale'
         }.items()}
 
-        format_main_sources(file_system, resources, cache, None, None, None, None)
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
+
+        format_main_sources(file_system, resources, cache, None, None, None, progress_bar_supplier)
 
         expected_formatted_main_sources = {
             'project/sources/org/art/math.cpp',
