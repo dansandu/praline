@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
-from praline.common.hashing import hash_file, key_delta
+from praline.common.hashing import hash_file, delta, progression_resolution, DeltaType
 from typing import Any, Dict
 
 
@@ -19,10 +19,18 @@ def format_main_sources(file_system: FileSystem,
                         progressBarSupplier: ProgressBarSupplier):
     main_sources = resources['main_sources']
     hasher       = lambda f: hash_file(file_system, f)
-    updated, _, new_cache = key_delta(main_sources, hasher, cache)
-    if updated:
-        clang_format_executable = resources['clang_format_executable']
-        file_system.execute_and_fail_on_bad_return([clang_format_executable, '-i', '-style=file'] + updated)
+    new_cache    = {}
+
+    resolution = progression_resolution(main_sources, cache)
+    with progressBarSupplier.create(resolution) as progress_bar:
+        for item in delta(main_sources, hasher, cache, new_cache):
+            main_source = item.key
+            if item.delta_type == DeltaType.Modified:
+                progress_bar.update_summary(main_source)
+                clang_format_executable = resources['clang_format_executable']
+                file_system.execute_and_fail_on_bad_return([clang_format_executable, '-i', '-style=file', main_source])
+            progress_bar.advance()
+
     resources['formatted_main_sources']           = main_sources
     resources['formatted_main_executable_source'] = resources['main_executable_source']
     cache.clear()
