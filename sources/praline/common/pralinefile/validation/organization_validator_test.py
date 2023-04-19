@@ -27,7 +27,7 @@ class OrganizationValidatorTest(TestCase):
 
     def test_invalid_organization_with_numbers(self):
         pralinefile = {
-            'organization': 'my_organization23'
+            'organization': '23my_organization'
         }
         
         self.assertRaises(PralinefileValidationError, validate_organization, pralinefile)

@@ -31,7 +31,7 @@ class PackageTest(TestCase):
         self.assertEqual(package['version'], (1, 0, 0))
 
     def test_get_package_metadata_invalid_name(self):
-        package = 'my_organization-my_artifact34-x32-windows-msvc-debug-1.0.0.tar.gz'
+        package = 'my_organization-34my_artifact-x32-windows-msvc-debug-1.0.0.tar.gz'
 
         self.assertRaises(InvalidPackageNameError, get_package_metadata, package)
 
@@ -181,7 +181,9 @@ class PackageTest(TestCase):
 
         logging_level = 'default'
 
-        clean_up_package(file_system, package_path, extraction_path, logging_level)
+        exported_symbols = 'explicit'
+
+        clean_up_package(file_system, package_path, extraction_path, logging_level, exported_symbols)
 
         expected_files = {
             'external/resources/org/other_art/app.config': b'app-config'

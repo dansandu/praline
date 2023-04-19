@@ -24,14 +24,17 @@ class DarwinClangYieldDescriptor(YieldDescriptor):
 
 
 class DarwinClangCompiler(Compiler):
-    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: str):
-        self.file_system   = file_system
-        self.architecture  = architecture
-        self.platform      = platform
-        self.mode          = mode
-        self.logging_level = logging_level
+    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: str, exported_symbols: str):
+        self.file_system      = file_system
+        self.architecture     = architecture
+        self.platform         = platform
+        self.mode             = mode
+        self.logging_level    = logging_level
+        self.exported_symbols = exported_symbols
 
-        self.flags = ['-fvisibility=hidden', '-fPIC', '-pthread', '-std=c++17',
+        visibility = 'hidden' if self.exported_symbols == 'explicit' else 'default'
+
+        self.flags = [f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++17',
                       '-Werror', '-Wall', '-Wextra',
                       '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
                       '-DPRALINE_IMPORT=__attribute__((visibility("default")))',

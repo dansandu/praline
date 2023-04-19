@@ -17,9 +17,9 @@ allowed_dependency_scopes = ['main', 'test']
 
 mandatory_fields = ['organization', 'artifact', 'version']
 
-organization_regex = r"[a-z]+(?:_[a-z]+)*"
+organization_regex = r"[a-z][_a-z0-9]*[a-z0-9]"
 
-artifact_regex = r"[a-z]+(?:_[a-z]+)*"
+artifact_regex = r"[a-z][_a-z0-9]*[a-z0-9]"
 
 fixed_version_regex = r"(?P<major>[1-9]\d*|[1-9])\.(?P<minor>[1-9]\d*|\d)\.(?P<bugfix>[1-9]\d*|\d)"
 

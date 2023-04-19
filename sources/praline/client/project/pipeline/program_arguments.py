@@ -39,6 +39,14 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'help'   : 'Specify the logging level such that log macros higher than the specified value are ignored during compilation. '
                            + 'Non-macro log statements are not affected by this flag. '
                            + 'By default the error level is used for the release mode otherwise the debug level is used.'
+            },
+            {
+                'name'   : '--exported-symbols',
+                'type'   : str,
+                'dest'   : 'exported_symbols',
+                'choices': ['explicit', 'all'],
+                'default': 'explicit',
+                'help'   : 'If set to explicit only symbols marked by the PRALINE_EXPORT macro will be exported otherwise all symbols are exported.'
             }
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}
