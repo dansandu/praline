@@ -34,7 +34,7 @@ class ArtifactValidatorTest(TestCase):
     def test_invalid_artifact_with_numbers(self):
         pralinefile = {
             'organization': 'candyco',
-            'artifact': 'my_artifact3',
+            'artifact': '3my_artifact',
             'version': '1.5.0'
         }
 

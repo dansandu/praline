@@ -53,9 +53,10 @@ def pull_dependencies(file_system: FileSystem,
         external_symbols_tables.extend(contents['symbols_tables'])
         external_executables.extend(contents['executables'])
 
-    pralinefile   = resources['pralinefile']
-    compiler      = resources['compiler']
-    logging_level = program_arguments['global']['logging_level']
+    pralinefile      = resources['pralinefile']
+    compiler         = resources['compiler']
+    logging_level    = program_arguments['global']['logging_level']
+    exported_symbols = program_arguments['global']['exported_symbols']
     
     
     package_hashes = remote_proxy.solve_dependencies(pralinefile,
@@ -74,7 +75,7 @@ def pull_dependencies(file_system: FileSystem,
             progress_bar.update_summary(package)
             package_path = join(external_packages_root, package)
             if item.delta_type == DeltaType.Modified:
-                clean_up_package(file_system, package_path, external_root, logging_level)
+                clean_up_package(file_system, package_path, external_root, logging_level, exported_symbols)
                 remote_proxy.pull_package(package_path)
                 contents = unpack(file_system, package_path, external_root)
                 extend_externals(contents)
@@ -86,7 +87,7 @@ def pull_dependencies(file_system: FileSystem,
                     contents = get_package_extracted_contents(file_system, package_path, external_root)
                 extend_externals(contents)
             elif item.delta_type == DeltaType.Removed:
-                clean_up_package(file_system, package_path, external_root, logging_level)
+                clean_up_package(file_system, package_path, external_root, logging_level, exported_symbols)
             progress_bar.advance()
     
     resources['external_resources']            = external_resources

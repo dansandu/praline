@@ -205,7 +205,7 @@ def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> 
 
 
 @trace
-def clean_up_package(file_system: FileSystem, package_path: str, extraction_path: str, logging_level: str):
+def clean_up_package(file_system: FileSystem, package_path: str, extraction_path: str, logging_level: str, exported_symbols: str):
     package           = get_package_metadata(package_path)
     name              = package['name'].replace(package_extension, '')
     organization      = package['organization']
@@ -214,7 +214,7 @@ def clean_up_package(file_system: FileSystem, package_path: str, extraction_path
     platform          = package['platform']
     compiler          = package['compiler']
     mode              = package['mode']
-    yield_descriptor  = get_compiler(file_system, compiler, architecture, platform, mode, logging_level).get_yield_descriptor()
+    yield_descriptor  = get_compiler(file_system, compiler, architecture, platform, mode, logging_level, exported_symbols).get_yield_descriptor()
     resources         = join(extraction_path, 'resources', organization, artifact)
     headers           = join(extraction_path, 'headers', organization, artifact)
     library           = yield_descriptor.get_library(join(extraction_path, 'libraries'), name)
