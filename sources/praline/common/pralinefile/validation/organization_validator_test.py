@@ -6,7 +6,7 @@ from unittest import TestCase
 class OrganizationValidatorTest(TestCase):
     def test_valid_organization(self):
         pralinefile = {
-            'organization': 'my_organization'
+            'organization': 'my2_organization'
         }
         
         validate_organization(pralinefile)

@@ -6,7 +6,7 @@ from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
 
-@stage(requirements=[['headers_only_package'], ['main_library_package'], ['main_executable_package']], exposed=True)
+@stage(requirements=[['package']], exposed=True)
 def deploy(file_system: FileSystem, 
            resources: StageResources, 
            cache: Dict[str, Any], 
@@ -14,9 +14,4 @@ def deploy(file_system: FileSystem,
            configuration: Dict[str, Any], 
            remote_proxy: RemoteProxy,
            progressBarSupplier: ProgressBarSupplier):
-    if resources.activation == 0:
-        remote_proxy.push_package(resources['headers_only_package'])
-    elif resources.activation == 1:
-        remote_proxy.push_package(resources['main_library_package'])
-    elif resources.activation == 2:
-        remote_proxy.push_package(resources['main_executable_package'])
+    remote_proxy.push_package(resources['package'])

@@ -35,11 +35,11 @@ def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]):
 
 
 @trace(parameters=[])
-def create_pipeline(target_stage: str,
-                    stages: Dict[str, Stage],
-                    file_system: FileSystem,
+def create_pipeline(file_system: FileSystem,
+                    configuration: Dict[str, Any],
                     program_arguments: Dict[str, Any],
-                    configuration: Dict[str, Any]) -> List[str]:    
+                    target_stage: str,
+                    stages: Dict[str, Stage]) -> List[str]:    
     def on_cycle(cycle: List[str]):
         raise CyclicStagesError(f"cyclic dependencies for stages {cycle}")
 
@@ -74,9 +74,14 @@ def create_pipeline(target_stage: str,
 
 
 @trace
-def invoke_stage(target_stage: str, stages: Dict[str, Stage], file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy) -> None:
+def invoke_stage(file_system: FileSystem,
+                 configuration: Dict[str, Any],
+                 program_arguments: Dict[str, Any],
+                 remote_proxy: RemoteProxy,
+                 target_stage: str, 
+                 stages: Dict[str, Stage]):
     resources = {}
-    pipeline = create_pipeline(target_stage, stages, file_system, program_arguments, configuration)
+    pipeline = create_pipeline(file_system, configuration, program_arguments, target_stage, stages)
     project_directory = file_system.get_working_directory()
     cache_path = join(project_directory, 'target', 'cache.pickle')
 

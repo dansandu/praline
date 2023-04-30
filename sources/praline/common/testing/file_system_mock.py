@@ -21,12 +21,12 @@ class DirEntryMock:
 
 
 class FileMock(io.BytesIO):
-    def __init__(self, contents: bytes, on_close: Callable[[bytes], None]):
+    def __init__(self, contents: bytes, on_close: Callable[[Any], None]):
         super(FileMock, self).__init__(contents)
         self.on_close = on_close
 
     def __exit__(self, type, value, traceback):
-        self.on_close(self.getvalue())
+        self.on_close(self)
         super(FileMock, self).__exit__(type, value, traceback)
 
 
@@ -40,10 +40,10 @@ class ArchiveMemberMock:
 
 
 class ArchiveMock:
-    def __init__(self, file_system, contents: bytes, on_close: Callable[[bytes], None]):
-        self.file_system = file_system
-        self.members     = pickle.loads(contents)
-        self.on_close    = on_close
+    def __init__(self, members: Dict[str, bytes]):
+        self.file_system = None
+        self.members     = members
+        self.on_close    = None
 
     def __enter__(self):
         return self
@@ -58,18 +58,17 @@ class ArchiveMock:
 
     def extract(self, member, extraction_path):
         path = os.path.join(extraction_path, member.name)
-        self.file_system.create_directory_if_missing(os.path.dirname(path))
         with self.file_system.open_file(path, 'wb') as f:
             f.write(member.contents)
 
     def extractfile(self, archive_file_path: str):
-        def on_close(contents: bytes):
-            self.members[archive_file_path] = contents
+        def on_close(file: FileMock):
+            self.members[archive_file_path] = file.getvalue()
 
         return FileMock(self.members[archive_file_path], on_close)
 
     def __exit__(self, type, value, traceback):
-        self.on_close(pickle.dumps(self.members))
+        self.on_close(self)
 
 
 def is_subpath(sub: str, path: str):
@@ -95,8 +94,8 @@ class FileSystemMock:
                  architecture: str = 'x64',
                  platform: str = 'linux',
                  working_directory: str = None,
-                 on_which: Callable[[str], str] = lambda _: None,
-                 on_execute: Callable[[List[str], List[str]], bool] = lambda _: None):
+                 on_which: Callable[[str], str] = None,
+                 on_execute: Callable[[List[str], List[str], bool, Dict[str, str]], bool] = None):
         self.directories = unique_directories({os.path.normpath(p) for p in directories})
         self.files       = {}
         for path, contents in files.items():
@@ -119,8 +118,12 @@ class FileSystemMock:
         self.on_execute        = on_execute
         self.stdout            = io.StringIO("")
 
-    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = []) -> None:
-        if not self.on_execute(command, add_to_library_path):
+    def execute_and_fail_on_bad_return(self,
+                                       command: List[str], 
+                                       add_to_library_path: List[str] = [], 
+                                       interactive: bool = False, 
+                                       add_to_env: Dict[str, str] = {}) -> None:
+        if not self.on_execute(command, add_to_library_path, interactive, add_to_env):
             raise RuntimeError("command exited with failure")
 
     def get_working_directory(self) -> str:
@@ -194,40 +197,59 @@ class FileSystemMock:
         
         self.open_files.add(normalized_path)
 
-        def on_close(contents: bytes):
-            self.files[normalized_path] = contents
+        def on_close(file: FileMock):
+            self.files[normalized_path] = file.getvalue()
             self.open_files.remove(normalized_path)
 
         return FileMock(self.files[normalized_path], on_close)
 
     def open_tarfile(self, archive_path: str, mode: str):
         normalized_path = os.path.normpath(archive_path)
+
         if normalized_path in self.open_files:
             raise RuntimeError(f"file '{normalized_path}' is already open")
-        if 'r' in mode and normalized_path not in self.files:
-            raise FileNotFoundError(normalized_path)
-        if 'w' in mode and normalized_path not in self.files:
-            for directory_path in self.directories:
-                if is_subpath_or_path(normalized_path, directory_path):
-                    raise RuntimeError(f"cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
-            directory = os.path.dirname(normalized_path)
-            if directory and not self.is_directory(directory):
-                raise RuntimeError(f"directory '{directory}' doesn't exist")
-            self.files[normalized_path] = pickle.dumps({})
 
+        file_exists = normalized_path in self.files
+
+        if mode == 'r:gz':
+            if file_exists:
+                if not isinstance(self.files[normalized_path], ArchiveMock):
+                    raise RuntimeError(f"file '{normalized_path}' is not an archive")
+            else:
+                raise FileNotFoundError(normalized_path)
+        elif mode == 'w:gz':
+            if not file_exists:
+                for directory_path in self.directories:
+                    if is_subpath_or_path(normalized_path, directory_path):
+                        raise RuntimeError(
+                            f"cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
+                directory = os.path.dirname(normalized_path)
+                if directory and not self.is_directory(directory):
+                    raise RuntimeError(f"directory '{directory}' doesn't exist")
+        else:
+            raise RuntimeError(f"FileSystemMock doesn't support mode '{mode}'")
+    
         self.open_files.add(normalized_path)
 
-        def on_close(contents: bytes):
-            self.files[normalized_path] = contents
-            self.open_files.remove(normalized_path)
+        if file_exists:
+            archive = self.files[normalized_path]
+        else:
+            self.files[normalized_path] = archive = ArchiveMock({})
+        
+        archive.file_system = self
+        archive.on_close = lambda archive: self.open_files.remove(normalized_path)
 
-        return ArchiveMock(self, self.files[normalized_path], on_close)
+        return archive
 
     def remove_file(self, path: str) -> None:
         normalized_path = os.path.normpath(path)
         if normalized_path not in self.files:
             raise FileNotFoundError(normalized_path)
         self.files.pop(normalized_path)
+
+    def remove_file_if_it_exists(self, path) -> None:
+        if self.exists(path):
+            self.remove_file(path)
 
     def remove_directory_recursively(self, directory: str) -> None:
         normalized_path = os.path.normpath(directory)
@@ -252,6 +274,10 @@ class FileSystemMock:
             if tail:
                 self.directories.add(tail)
         self.directories = unique_directories(self.directories)
+
+    def remove_directory_recursively_if_it_exists(self, directory: str) -> None:
+        if self.exists(directory):
+            self.remove_directory_recursively(directory)
 
     def print(self, *args, **kwargs):
         print(*args, **kwargs, file=self.stdout)

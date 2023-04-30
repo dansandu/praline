@@ -6,17 +6,21 @@ from unittest import TestCase
 
 class CleanStageTest(TestCase):
     def test_clean_stage_with_target_folder(self):
-        file_system = FileSystemMock({'my/project/target'})
-        resources   = {'project_directory': 'my/project'}
-
-        clean(file_system, resources, None, None, None, None, None)
+        file_system = FileSystemMock(
+            directories={'my/project/target'},
+            working_directory='my/project',
+        )
+ 
+        clean(file_system, None, None, None, None, None, None)
 
         self.assertEqual(file_system.directories, {normpath('my/project')})
 
     def test_clean_stage_without_target_folder(self):
-        file_system       = FileSystemMock({'my/project'})
-        resources         = {'project_directory': 'my/project'}
+        file_system = FileSystemMock(
+            directories={'my/project'},
+            working_directory='my/project',
+        )
 
-        clean(file_system, resources, None, None, None, None, None)
+        clean(file_system, None, None, None, None, None, None)
 
         self.assertEqual(file_system.directories, {normpath('my/project')})

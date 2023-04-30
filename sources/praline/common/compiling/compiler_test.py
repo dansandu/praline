@@ -1,17 +1,19 @@
 from os.path import normpath
-from praline.common.compiling.compiler import compile_using_cache, link_executable_using_cache, link_library_using_cache
-from praline.common.compiling.yield_descriptor import YieldDescriptor
-from praline.common.file_system import get_separator, join, relative_path
+from praline.common import ProjectStructure
+from praline.common.compiling.compiler import (
+    ICompiler, compile_using_cache, link_executable_using_cache, link_library_using_cache, YieldDescriptor,
+)
+from praline.common.file_system import join
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
+
 from typing import List
 from unittest import TestCase
 
 
 class YieldDescriptorMock(YieldDescriptor):
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
-        name = relative_path(source, sources_root).replace(get_separator(), '-').replace('.cpp', '.obj')
-        return join(objects_root, name)
+        return super().get_object(sources_root, objects_root, source) + '.obj'
 
     def get_executable(self, executables_root: str, name: str) -> str:
         return join(executables_root, f'{name}.exe')
@@ -26,27 +28,12 @@ class YieldDescriptorMock(YieldDescriptor):
         return join(symbols_tables_root, f'{name}.pdb')
 
 
-class CompilerMock:
+class CompilerMock(ICompiler):
     def __init__(self, file_system):
         self.file_system = file_system
-        self.architecture = 'x32'
-        self.platform = 'windows'
-        self.mode = 'debug'
 
-    def get_name(self):
-        return 'compmock'
-
-    def get_architecture(self) -> str:
-        return self.architecture
-
-    def get_platform(self) -> str:
-        return self.platform
-
-    def get_mode(self) -> str:
-        return self.mode
-
-    def matches(self) -> bool:
-        return True
+    def get_yield_descriptor(self) -> YieldDescriptor:
+        return YieldDescriptorMock()
 
     def preprocess(self,
                    headers_root: str,
@@ -79,7 +66,7 @@ class CompilerMock:
         data = b''
         for file_name in objects + external_libraries + external_libraries_interfaces:
             with self.file_system.open_file(file_name, 'rb') as o:
-                data = data + o.read()
+                data += o.read()
         with self.file_system.open_file(executable, 'wb') as e:
             e.write(data + b'exe')
         with self.file_system.open_file(symbols_table, 'wb') as s:
@@ -97,7 +84,7 @@ class CompilerMock:
         data = b''
         for file_name in objects + external_libraries + external_libraries_interfaces:
             with self.file_system.open_file(file_name, 'rb') as o:
-                data = data + o.read()
+                data += o.read()
         with self.file_system.open_file(library, 'wb') as l:
             l.write(data + b'dll')
         with self.file_system.open_file(library_interface, 'wb') as li:
@@ -105,30 +92,36 @@ class CompilerMock:
         with self.file_system.open_file(symbols_table, 'wb') as s:
             s.write(data + b'pbd')
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
-        return YieldDescriptorMock()
-
-    def get_packager(self):
-        raise NotImplementedError()
-
-
-organization = 'org'
-artifact     = 'art'
-version      = '1.0.0'
 
 class CompilerTest(TestCase):
+    def setUp(self):
+        self.artifact_identifier = 'org-art-x32-windows-compmock-debug-1.0.0'
+
+        self.project_structure = ProjectStructure(
+            project_directory='project',
+            resources_root='resources',
+            sources_root='sources',
+            target_root='target',
+            objects_root='target/objects',
+            executables_root='target/executables',
+            libraries_root='target/libraries',
+            libraries_interfaces_root='target/libraries_interfaces',
+            symbols_tables_root='target/symbols_tables',
+            external_root='target/external',
+            external_packages_root='target/external/packages',
+            external_headers_root='target/external/headers',
+            external_executables_root='target/external/executables',
+            external_libraries_root='target/external/libraries',
+            external_libraries_interfaces_root='target/external/libraries_interfaces',
+            external_symbols_tables_root='target/external/symbols_tables'
+        )
+
     def test_compilation_using_cache(self):
-        objects_root = 'objects/'
-        sources_root = 'sources/'
-        headers_root = 'sources/'
-        external_headers_root = 'external/headers/'
-        
         file_system = FileSystemMock(
             directories={
-                objects_root,
-                sources_root,
-                headers_root,
-                external_headers_root
+                self.project_structure.objects_root,
+                self.project_structure.sources_root,
+                self.project_structure.external_headers_root
             }, 
             files={
                 'sources/a.hpp': b'header-a.',
@@ -137,16 +130,16 @@ class CompilerTest(TestCase):
                 'sources/b.cpp': b'source-b.',
                 'sources/d.hpp': b'header-d.',
                 'sources/d.cpp': b'source-d.',
-                'objects/a.obj': b'header-a.source-a.',
-                'objects/b.obj': b'header-b.source-b.',
-                'objects/c.obj': b'header-c.source-c.'
+                'target/objects/a.obj': b'header-a.source-a.',
+                'target/objects/b.obj': b'header-b.source-b.',
+                'target/objects/c.obj': b'header-c.source-c.'
             }
         )
 
-        compiler       = CompilerMock(file_system)
-        headers        = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
-        sources        = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
-        cache          = {
+        compiler = CompilerMock(file_system)
+        headers  = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
+        sources  = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
+        cache    = {
             'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
             'sources/b.cpp': '5addc12d3b54fb9836277adccb06a03131ab92c10faf97613259bb77775db8d3',
             'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5'
@@ -155,19 +148,16 @@ class CompilerTest(TestCase):
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
         objects = compile_using_cache(file_system,
+                                      self.project_structure,
                                       compiler,
-                                      headers_root,
-                                      external_headers_root,
-                                      sources_root,
-                                      objects_root,
                                       headers,
                                       sources,
                                       cache,
                                       progress_bar_supplier)
 
-        expected_objects = {'objects/a.obj', 'objects/b.obj', 'objects/d.obj'}
+        expected_objects = {'target/objects/a.obj', 'target/objects/b.obj', 'target/objects/d.obj'}
 
-        self.assertEqual(set(objects), expected_objects)
+        self.assertEqual({normpath(o) for o in objects}, {normpath(o) for o in expected_objects})
 
         new_files = {
             'sources/a.hpp': b'header-a.',
@@ -176,9 +166,9 @@ class CompilerTest(TestCase):
             'sources/b.cpp': b'source-b.',
             'sources/d.hpp': b'header-d.',
             'sources/d.cpp': b'source-d.',
-            'objects/a.obj': b'header-a.source-a.',
-            'objects/b.obj': b'updated-header-b.source-b.',
-            'objects/d.obj': b'header-d.source-d.'
+            'target/objects/a.obj': b'header-a.source-a.',
+            'target/objects/b.obj': b'updated-header-b.source-b.',
+            'target/objects/d.obj': b'header-d.source-d.'
         }
 
         expected_files = {normpath(p): data for p, data in new_files.items()}
@@ -193,568 +183,114 @@ class CompilerTest(TestCase):
 
         self.assertEqual(cache, expected_cache)
 
-    def test_link_executable_using_clean_cache(self):
-        objects_root                       = 'objects/'
-        executables_root                   = 'executables/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            executables_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        cache                              = {}
+    def test_link_executable_using_cache(self):
+        file_system = FileSystemMock(
+            directories={
+                self.project_structure.objects_root,
+                self.project_structure.executables_root,
+                self.project_structure.symbols_tables_root,
+                self.project_structure.external_libraries_root,
+                self.project_structure.external_libraries_interfaces_root
+            },
+            files={
+                'target/objects/a.obj':                       b'object-a.',
+                'target/external/libraries/b.dll':            b'external-library-b.',
+                'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.'
+            }
+        )
+
+        compiler                      = CompilerMock(file_system)
+        objects                       = ['target/objects/a.obj']
+        external_libraries            = ['target/external/libraries/b.dll']
+        external_libraries_interfaces = ['target/external/libraries_interfaces/c.lib']
+        cache                         = {}
 
         executable, symbols_table = link_executable_using_cache(file_system,
+                                                                self.project_structure,
                                                                 compiler,
-                                                                executables_root,
-                                                                symbols_tables_root,
-                                                                external_libraries_root,
-                                                                external_libraries_interfaces_root,
+                                                                self.artifact_identifier,
                                                                 objects,
                                                                 external_libraries,
                                                                 external_libraries_interfaces,
-                                                                organization,
-                                                                artifact,
-                                                                version,
                                                                 cache)
 
-        self.assertEqual(executable, 'executables/org-art-x32-windows-compmock-debug-1.0.0.exe')
+        self.assertEqual(normpath(executable), 
+                         normpath('target/executables/org-art-x32-windows-compmock-debug-1.0.0.exe'))
 
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
+        self.assertEqual(normpath(symbols_table),
+                         normpath('target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb'))
 
         new_files = {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'executables/org-art-x32-windows-compmock-debug-1.0.0.exe':       b'object-a.external-library-b.external-library-interface-c.exe',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb':    b'object-a.external-library-b.external-library-interface-c.pbd'
+            'target/objects/a.obj':                       b'object-a.',
+            'target/external/libraries/b.dll':            b'external-library-b.',
+            'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.',
+            'target/executables/org-art-x32-windows-compmock-debug-1.0.0.exe':
+                b'object-a.external-library-b.external-library-interface-c.exe',
+            'target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb':
+                b'object-a.external-library-b.external-library-interface-c.pbd'
         }
 
         self.assertEqual(file_system.files, {normpath(p): d for p, d in new_files.items()})
 
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('executables/org-art-x32-windows-compmock-debug-1.0.0.exe', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
+        new_cache = {}
 
         self.assertEqual(cache, new_cache)
 
-    def test_link_executable_using_cache_with_changed_object(self):
-        objects_root                       = 'objects/'
-        executables_root                   = 'executables/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            executables_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'updated-object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'executables/org-art-x32-windows-compmock-debug-1.0.0.exe': b'object-a.external-library-b.external-library-interface-c.exe',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'object-a.external-library-b.external-library-interface-c.pbd'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        cache                              = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
+    def test_link_library_using_cache(self):
+        file_system = FileSystemMock(
+            directories={
+                self.project_structure.objects_root,
+                self.project_structure.libraries_root,
+                self.project_structure.libraries_interfaces_root,
+                self.project_structure.symbols_tables_root,
+                self.project_structure.external_libraries_root,
+                self.project_structure.external_libraries_interfaces_root
             },
-            'output': ('executables/org-art-x32-windows-compmock-debug-1.0.0.exe', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
+            files={
+                'target/objects/a.obj':                       b'object-a.',
+                'target/external/libraries/b.dll':            b'external-library-b.',
+                'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.'
+            }
+        )
 
-        executable, symbols_table = link_executable_using_cache(file_system,
-                                                                compiler,
-                                                                executables_root,
-                                                                symbols_tables_root,
-                                                                external_libraries_root,
-                                                                external_libraries_interfaces_root,
-                                                                objects,
-                                                                external_libraries,
-                                                                external_libraries_interfaces,
-                                                                organization,
-                                                                artifact,
-                                                                version,
-                                                                cache)
+        compiler                      = CompilerMock(file_system)
+        objects                       = ['target/objects/a.obj']
+        external_libraries            = ['target/external/libraries/b.dll']
+        external_libraries_interfaces = ['target/external/libraries_interfaces/c.lib']
+        cache                         = {}
 
-        self.assertEqual(executable, 'executables/org-art-x32-windows-compmock-debug-1.0.0.exe')
-
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-
-        new_files = {
-            'objects/a.obj':                       b'updated-object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'executables/org-art-x32-windows-compmock-debug-1.0.0.exe': b'updated-object-a.external-library-b.external-library-interface-c.exe',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'updated-object-a.external-library-b.external-library-interface-c.pbd'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
-
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'e44b36b477a83194da4a4da7a97ed69932cf3729127dfc98af3a83c7abe43e10',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('executables/org-art-x32-windows-compmock-debug-1.0.0.exe', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-
-        self.assertEqual(cache, new_cache)
-
-    def test_link_executable_using_cache_with_changed_external_library(self):
-        objects_root                       = 'objects/'
-        executables_root                   = 'executables/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            executables_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'updated-external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'executables/my-executable.exe':       b'object-a.external-library-b.external-library-interface-c.exe',
-            'symbols_tables/my-executable.pdb':    b'object-a.external-library-b.external-library-interface-c.pbd'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        cache                              = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('executables/my-executable.exe', 'symbols_tables/my-executable.pdb')
-        }
-
-        executable, symbols_table = link_executable_using_cache(file_system,
-                                                                compiler,
-                                                                executables_root,
-                                                                symbols_tables_root,
-                                                                external_libraries_root,
-                                                                external_libraries_interfaces_root,
-                                                                objects,
-                                                                external_libraries,
-                                                                external_libraries_interfaces,
-                                                                organization,
-                                                                artifact,
-                                                                version,
-                                                                cache)
-
-        self.assertEqual(executable, 'executables/org-art-x32-windows-compmock-debug-1.0.0.exe')
-
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-
-        new_files = {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'updated-external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'executables/org-art-x32-windows-compmock-debug-1.0.0.exe': b'object-a.updated-external-library-b.external-library-interface-c.exe',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'object-a.updated-external-library-b.external-library-interface-c.pbd'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
-
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '09e93c7c7aae2efb94a0f6d12ee5b59c0b7a810989d84f866ef515e8dd0f6e41',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('executables/org-art-x32-windows-compmock-debug-1.0.0.exe', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-
-        self.assertEqual(cache, new_cache)
-
-    def test_link_executable_using_cache_with_changed_external_library_interface(self):
-        objects_root                       = 'objects/'
-        executables_root                   = 'executables/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            executables_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'updated-external-library-interface-c.',
-            'executables/my-executable.exe':       b'object-a.external-library-b.external-library-interface-c.exe',
-            'symbols_tables/my-executable.pdb':    b'object-a.external-library-b.external-library-interface-c.pbd'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        name                               = 'my-executable'
-        cache                              = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('executables/my-executable.exe', 'symbols_tables/my-executable.pdb')
-        }
-
-        executable, symbols_table = link_executable_using_cache(file_system,
-                                                                compiler,
-                                                                executables_root,
-                                                                symbols_tables_root,
-                                                                external_libraries_root,
-                                                                external_libraries_interfaces_root,
-                                                                objects,
-                                                                external_libraries,
-                                                                external_libraries_interfaces,
-                                                                organization,
-                                                                artifact,
-                                                                version,
-                                                                cache)
-
-        self.assertEqual(executable, 'executables/org-art-x32-windows-compmock-debug-1.0.0.exe')
-
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-
-        new_files = {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'updated-external-library-interface-c.',
-            'executables/org-art-x32-windows-compmock-debug-1.0.0.exe': b'object-a.external-library-b.updated-external-library-interface-c.exe',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'object-a.external-library-b.updated-external-library-interface-c.pbd'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
-
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '4655380785da55ddee626b49e92bf336911a4f8ea828b1693ecbf1d12714d8f8'
-            },
-            'output': ('executables/org-art-x32-windows-compmock-debug-1.0.0.exe', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-
-        self.assertEqual(cache, new_cache)
-
-    def test_link_library_using_clean_cache(self):
-        objects_root                       = 'objects/'
-        libraries_root                     = 'libraries/'
-        libraries_interfaces_root          = 'libraries_interfaces/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            libraries_root,
-            libraries_interfaces_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        name                               = 'my-library'
-        cache                              = {}
         library, library_interface, symbols_table = link_library_using_cache(file_system,
+                                                                             self.project_structure,
                                                                              compiler,
-                                                                             libraries_root,
-                                                                             libraries_interfaces_root,
-                                                                             symbols_tables_root,
-                                                                             external_libraries_root,
-                                                                             external_libraries_interfaces_root,
+                                                                             self.artifact_identifier,
                                                                              objects,
                                                                              external_libraries,
                                                                              external_libraries_interfaces,
-                                                                             organization,
-                                                                             artifact,
-                                                                             version,
                                                                              cache)
 
-        self.assertEqual(library, 'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll')
+        self.assertEqual(normpath(library), 
+                         normpath('target/libraries/org-art-x32-windows-compmock-debug-1.0.0.dll'))
 
-        self.assertEqual(library_interface, 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib')
+        self.assertEqual(normpath(library_interface), 
+                         normpath('target/libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib'))
 
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
+        self.assertEqual(normpath(symbols_table), 
+                         normpath('target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb'))
 
         new_files = {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll': b'object-a.external-library-b.external-library-interface-c.dll',
-            'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib': b'object-a.external-library-b.external-library-interface-c.lib',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'object-a.external-library-b.external-library-interface-c.pbd'
+            'target/objects/a.obj':                       b'object-a.',
+            'target/external/libraries/b.dll':            b'external-library-b.',
+            'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.',
+            'target/libraries/org-art-x32-windows-compmock-debug-1.0.0.dll': 
+                b'object-a.external-library-b.external-library-interface-c.dll',
+            'target/libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib': 
+                b'object-a.external-library-b.external-library-interface-c.lib',
+            'target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': 
+                b'object-a.external-library-b.external-library-interface-c.pbd'
         }
 
         self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
 
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-
-        self.assertEqual(cache, new_cache)
-
-    def test_link_library_using_cache_with_changed_object(self):
-        objects_root                       = 'objects/'
-        libraries_root                     = 'libraries/'
-        libraries_interfaces_root          = 'libraries_interfaces/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            libraries_root,
-            libraries_interfaces_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root,
-        }, {
-            'objects/a.obj':                       b'updated-object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        cache                              = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.obj':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries/interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-        library, library_interface, symbols_table = link_library_using_cache(file_system,
-                                                                             compiler,
-                                                                             libraries_root,
-                                                                             libraries_interfaces_root,
-                                                                             symbols_tables_root,
-                                                                             external_libraries_root,
-                                                                             external_libraries_interfaces_root,
-                                                                             objects,
-                                                                             external_libraries,
-                                                                             external_libraries_interfaces,
-                                                                             organization,
-                                                                             artifact,
-                                                                             version,
-                                                                             cache)
-
-        self.assertEqual(library, 'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll')
-
-        self.assertEqual(library_interface, 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib')
-
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-
-        new_files = {
-            'objects/a.obj':                       b'updated-object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll': b'updated-object-a.external-library-b.external-library-interface-c.dll',
-            'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib': b'updated-object-a.external-library-b.external-library-interface-c.lib',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'updated-object-a.external-library-b.external-library-interface-c.pbd'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
-
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'e44b36b477a83194da4a4da7a97ed69932cf3729127dfc98af3a83c7abe43e10',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-
-        self.assertEqual(cache, new_cache)
-
-    def test_link_library_using_cache_with_changed_library(self):
-        objects_root                       = 'objects/'
-        libraries_root                     = 'libraries/'
-        libraries_interfaces_root          = 'libraries_interfaces/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            libraries_root,
-            libraries_interfaces_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'updated-external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        cache                              = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.obj':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries/interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-        library, library_interface, symbols_table = link_library_using_cache(file_system,
-                                                                             compiler,
-                                                                             libraries_root,
-                                                                             libraries_interfaces_root,
-                                                                             symbols_tables_root,
-                                                                             external_libraries_root,
-                                                                             external_libraries_interfaces_root,
-                                                                             objects,
-                                                                             external_libraries,
-                                                                             external_libraries_interfaces,
-                                                                             organization,
-                                                                             artifact,
-                                                                             version,
-                                                                             cache)
-
-        self.assertEqual(library, 'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll')
-
-        self.assertEqual(library_interface, 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib')
-
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-
-        new_files = {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'updated-external-library-b.',
-            'external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll': b'object-a.updated-external-library-b.external-library-interface-c.dll',
-            'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib': b'object-a.updated-external-library-b.external-library-interface-c.lib',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'object-a.updated-external-library-b.external-library-interface-c.pbd'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
-
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '09e93c7c7aae2efb94a0f6d12ee5b59c0b7a810989d84f866ef515e8dd0f6e41',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-
-        self.assertEqual(cache, new_cache)
-
-    def test_link_library_using_cache_with_changed_library_interface(self):
-        objects_root                       = 'objects/'
-        libraries_root                     = 'libraries/'
-        libraries_interfaces_root          = 'libraries_interfaces/'
-        symbols_tables_root                = 'symbols_tables/'
-        external_libraries_root            = 'external/libraries'
-        external_libraries_interfaces_root = 'external/libraries_interfaces'
-        file_system = FileSystemMock({
-            objects_root,
-            libraries_root,
-            libraries_interfaces_root,
-            symbols_tables_root,
-            external_libraries_root,
-            external_libraries_interfaces_root
-        }, {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'updated-external-library-interface-c.'
-        })
-        compiler                           = CompilerMock(file_system)
-        objects                            = ['objects/a.obj']
-        external_libraries                 = ['external/libraries/b.dll']
-        external_libraries_interfaces      = ['external/libraries_interfaces/c.lib']
-        cache                              = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.obj':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '8c777213d1130643127d77653c90f5d6784f6f95dac361afb454a3e6db084f4e'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries/interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
-        library, library_interface, symbols_table = link_library_using_cache(file_system,
-                                                                             compiler,
-                                                                             libraries_root,
-                                                                             libraries_interfaces_root,
-                                                                             symbols_tables_root,
-                                                                             external_libraries_root,
-                                                                             external_libraries_interfaces_root,
-                                                                             objects,
-                                                                             external_libraries,
-                                                                             external_libraries_interfaces,
-                                                                             organization,
-                                                                             artifact,
-                                                                             version,
-                                                                             cache)
-
-        self.assertEqual(library, 'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll')
-
-        self.assertEqual(library_interface, 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib')
-
-        self.assertEqual(symbols_table, 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-
-        new_files = {
-            'objects/a.obj':                       b'object-a.',
-            'external/libraries/b.dll':            b'external-library-b.',
-            'external/libraries_interfaces/c.lib': b'updated-external-library-interface-c.',
-            'libraries/org-art-x32-windows-compmock-debug-1.0.0.dll': b'object-a.external-library-b.updated-external-library-interface-c.dll',
-            'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib': b'object-a.external-library-b.updated-external-library-interface-c.lib',
-            'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': b'object-a.external-library-b.updated-external-library-interface-c.pbd'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
-
-        new_cache = {
-            'input': {
-                'objects/a.obj':                       'a6cc476fe402432f09d3e66d73b6382421ee1a855ac6bde79357fc1483878463',
-                'external/libraries/b.dll':            '440602105d9abfce75656e19197e74539add8cb0dd002f4a550d46d7e8c1e837',
-                'external/libraries_interfaces/c.lib': '4655380785da55ddee626b49e92bf336911a4f8ea828b1693ecbf1d12714d8f8'
-            },
-            'output': ('libraries/org-art-x32-windows-compmock-debug-1.0.0.dll', 'libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib', 'symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb')
-        }
+        new_cache = {}
 
         self.assertEqual(cache, new_cache)

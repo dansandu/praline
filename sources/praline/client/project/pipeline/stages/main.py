@@ -19,9 +19,9 @@ program_arguments = [
 ]
 
 
-@stage(requirements=[['external_libraries_root', 'resources_root', 'main_executable', 'test_results'],
-                     ['external_libraries_root', 'resources_root', 'main_executable']],
-       exposed=True, program_arguments=program_arguments)
+@stage(requirements=[['main_executable', 'test_results'], ['main_executable']],
+       exposed=True, 
+       program_arguments=program_arguments)
 def main(file_system: FileSystem, 
          resources: StageResources, 
          cache: Dict[str, Any], 
@@ -29,8 +29,9 @@ def main(file_system: FileSystem,
          configuration: Dict[str, Any], 
          remote_proxy: RemoteProxy,
          progressBarSupplier: ProgressBarSupplier):
-    external_libraries_root = resources['external_libraries_root']
-    resources_root          = resources['resources_root']
+    project_structure       = resources['project_structure']
+    external_libraries_root = project_structure.external_libraries_root
+    resources_root          = project_structure.resources_root
     main_executable         = resources['main_executable']
     arguments               = program_arguments['byStage']['arguments']
 

@@ -6,7 +6,7 @@ from praline.common.file_system import FileSystem, join
 from typing import Any, Dict
 
 
-@stage(requirements=[['project_directory']], exposed=True)
+@stage(exposed=True)
 def clean(file_system: FileSystem, 
           resources: StageResources, 
           cache: Dict[str, Any], 
@@ -14,6 +14,5 @@ def clean(file_system: FileSystem,
           configuration: Dict[str, Any], 
           remote_proxy: RemoteProxy,
           progressBarSupplier: ProgressBarSupplier):
-    target = join(resources['project_directory'], 'target')
-    if file_system.exists(target):
-        file_system.remove_directory_recursively(target)
+    target = join(file_system.get_working_directory(), 'target')
+    file_system.remove_directory_recursively_if_it_exists(target)

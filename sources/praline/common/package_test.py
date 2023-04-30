@@ -1,445 +1,202 @@
-import logging
-from os.path import dirname, normpath
-from praline.common.package import (clean_up_package, get_matching_packages, get_package,
-                                    get_package_dependencies_from_archive,
-                                    get_package_dependencies_from_pralinefile, get_package_dependencies_recursively,
-                                    get_package_extracted_contents, get_package_metadata,
-                                    get_packages_from_directory, get_version, get_wildcard,
-                                    InvalidPackageContentsError, InvalidPackageNameError, pack, packages_match, 
-                                    split_package, unpack)
-from praline.common.testing.file_system_mock import FileSystemMock
-from unittest import TestCase
+from praline.common import (Architecture, ArtifactManifest, ArtifactVersion, ArtifactType, ArtifactDependency, 
+                            ArtifactLoggingLevel, Compiler, ExportedSymbols, Mode, DependencyScope, 
+                            DependencyVersion, Platform)
+from praline.common.package import (InvalidManifestFileError, get_matching_packages, read_artifact_manifest, 
+                                    split_package_version, write_artifact_manifest, get_packages_from_directory,
+                                    get_package_dependencies_from_archive)
+from praline.common.testing.file_system_mock import ArchiveMock, FileSystemMock
+
 import pickle
+from os.path import normpath
+from unittest import TestCase
 
 
 class PackageTest(TestCase):
-    def test_get_package(self):
-        package = get_package('my_organization', 'my_artifact', 'x32', 'windows', 'msvc', 'debug', '1.0.0')
+    def test_write_artifact_manifest(self):
+        file_system = FileSystemMock(
+            directories={
+                'target'
+            }
+        )
 
-        self.assertEqual(package, 'my_organization-my_artifact-x32-windows-msvc-debug-1.0.0.tar.gz')
-
-    def test_get_package_metadata(self):
-        package = get_package_metadata('path/my_organization-my_artifact-x32-windows-msvc-debug-1.0.0.tar.gz')
-
-        self.assertEqual(package['name'], 'my_organization-my_artifact-x32-windows-msvc-debug-1.0.0.tar.gz')
-        self.assertEqual(package['organization'], 'my_organization')
-        self.assertEqual(package['artifact'], 'my_artifact')
-        self.assertEqual(package['architecture'], 'x32')
-        self.assertEqual(package['platform'], 'windows')
-        self.assertEqual(package['compiler'], 'msvc')
-        self.assertEqual(package['mode'], 'debug')
-        self.assertEqual(package['version'], (1, 0, 0))
-
-    def test_get_package_metadata_invalid_name(self):
-        package = 'my_organization-34my_artifact-x32-windows-msvc-debug-1.0.0.tar.gz'
-
-        self.assertRaises(InvalidPackageNameError, get_package_metadata, package)
-
-        metadata = get_package_metadata(package, none_on_error=True)
-
-        self.assertIsNone(metadata)
-
-    def test_get_package_dependencies_from_pralinefile(self):
-        pralinefile = {
-            'organization': 'my_org',
-            'artifact': 'my_art',
-            'version': '1.0.0',
-            'dependencies': [
-                {
-                    'organization': 'other_org',
-                    'artifact': 'other_art',
-                    'version': '2.3.4'
-                },
-                {
-                    'organization': 'another_org',
-                    'artifact': 'another_art',
-                    'version': '6.32.1',
-                    'scope': 'test'
-                }
+        expected_artifact_manifest = ArtifactManifest(
+            organization='org',
+            artifact='art',
+            version=ArtifactVersion.from_string('7.5.2'),
+            mode=Mode.debug,
+            architecture=Architecture.x64,
+            platform=Platform.linux,
+            compiler=Compiler.gcc,
+            exported_symbols=ExportedSymbols.explicit,
+            artifact_type=ArtifactType.library,
+            artifact_logging_level=ArtifactLoggingLevel.debug,
+            dependencies=[
+                ArtifactDependency(organization='org2',
+                                   artifact='art2',
+                                   version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
+                                   scope=DependencyScope.main)
             ]
-        }
-        architecture          = 'x32'
-        platform              = 'windows'
-        compiler              = 'msvc'
-        mode                  = 'debug'
-    
-        dependencies = get_package_dependencies_from_pralinefile(pralinefile, architecture, platform, compiler, mode)
+        )
 
-        expected_dependencies = ['other_org-other_art-x32-windows-msvc-debug-2.3.4.tar.gz', 'another_org-another_art-x32-windows-msvc-debug-6.32.1.tar.gz']
+        manifest_file = normpath('target/.manifest')
 
-        self.assertEqual(dependencies, expected_dependencies)
+        write_artifact_manifest(file_system, manifest_file, expected_artifact_manifest)
 
-    def test_pack(self):
-        file_system = FileSystemMock({'path/to'}, {
-            'a.txt': b'a-contents',
-            'b.txt': b'b-contents',
-            'c.txt': b'c-contents'
-        })
-        package_path  = 'path/to/package.tar.gz'
-        package_files = [('a.txt', 'a.txt'), ('b.txt', 'other/b.txt')]
-        cache         = {}
+        self.assertIn(manifest_file, file_system.files)
 
-        pack(file_system, package_path, package_files, cache)
+        artifact_manifest = pickle.loads(file_system.files[manifest_file])
 
-        expected_files = {
-            'a.txt': b'a-contents',
-            'b.txt': b'b-contents',
-            'c.txt': b'c-contents',
-            'path/to/package.tar.gz': pickle.dumps({'a.txt': b'a-contents', 'other/b.txt': b'b-contents'})
-        }
+        self.assertEqual(artifact_manifest, expected_artifact_manifest)
 
-        self.assertEqual(file_system.files, {normpath(p): d for p, d in expected_files.items()})
+    def test_read_artifact_manifest(self):
+        expected_artifact_manifest = ArtifactManifest(
+            organization='org',
+            artifact='art',
+            version=ArtifactVersion.from_string('7.5.2'),
+            mode=Mode.debug,
+            architecture=Architecture.x64,
+            platform=Platform.linux,
+            compiler=Compiler.gcc,
+            exported_symbols=ExportedSymbols.explicit,
+            artifact_type=ArtifactType.library,
+            artifact_logging_level=ArtifactLoggingLevel.debug,
+            dependencies=[
+                ArtifactDependency(organization='org2',
+                                   artifact='art2',
+                                   version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
+                                   scope=DependencyScope.main)
+            ]
+        )
 
-        self.assertEqual(file_system.directories, {normpath('path/to')})
+        package_path = normpath(f'target/{expected_artifact_manifest.get_package_file_name()}')
 
-        expected_cache = {
-            'a.txt': 'b3bc691c7cf43c01885b2e0ee2cf34b2dc7e482d9074de78bf4950344aade4be',
-            'b.txt': 'eb214d6536a9bbba4599c5bb566c609fc35e02a1d7c71cccfb5ebaa4575e2288'
-        }
+        file_system = FileSystemMock(
+            files={
+                package_path: ArchiveMock({
+                    '.manifest': pickle.dumps(expected_artifact_manifest)
+                })
+            },
+            directories={
+                'target'
+            }
+        )
 
-        self.assertEqual(cache, expected_cache)
+        artifact_manifest = read_artifact_manifest(file_system, package_path)
 
-    def test_unpack(self):
-        archive = pickle.dumps({
-            'resources/org/art/app.config': b'app-config',
-            'headers/org/art/inc.hpp': b'inc-hpp',
-            'libraries/org-art-x32-windows-msvc-debug-1.0.0.dll': b'library-dll',
-            'libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib': b'library-interface-lib',
-            'symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb': b'symbols-tables-pdb',
-            'executables/org-art-x32-windows-msvc-debug-1.0.0.exe': b'executable-exe'
-        })
-        package_path = 'org-art-x32-windows-msvc-debug-1.0.0.tar.gz'
-        extraction_path = 'external'
-        file_system = FileSystemMock({extraction_path}, {package_path: archive})
-        
-        contents = unpack(file_system, package_path, extraction_path)
+        self.assertEqual(artifact_manifest, expected_artifact_manifest)
 
-        expected_contents = {
-            'resources': ['external/resources/org/art/app.config'],
-            'headers': ['external/headers/org/art/inc.hpp'],
-            'libraries': ['external/libraries/org-art-x32-windows-msvc-debug-1.0.0.dll'],
-            'libraries_interfaces': ['external/libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib'],
-            'symbols_tables': ['external/symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb'],
-            'executables': ['external/executables/org-art-x32-windows-msvc-debug-1.0.0.exe']
-        }
+    def test_read_invalid_manifest_file(self):
+        package_path = normpath('target/org-art-x64-windows-msvc-release-2.13.9.tar.gz')
 
-        self.assertEqual({root: [normpath(p) for p in files] for root, files in contents.items()},
-                         {root: [normpath(p) for p in files] for root, files in expected_contents.items()})
+        file_system = FileSystemMock(
+            files={
+                package_path: ArchiveMock({
+                    '.manifest': pickle.dumps("Not a manifest file!")
+                })
+            },
+            directories={
+                'target'
+            }
+        )
 
-        expected_files = {
-            'org-art-x32-windows-msvc-debug-1.0.0.tar.gz': archive,
-            'external/resources/org/art/app.config': b'app-config',
-            'external/headers/org/art/inc.hpp': b'inc-hpp',
-            'external/libraries/org-art-x32-windows-msvc-debug-1.0.0.dll': b'library-dll',
-            'external/libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib': b'library-interface-lib',
-            'external/symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb': b'symbols-tables-pdb',
-            'external/executables/org-art-x32-windows-msvc-debug-1.0.0.exe': b'executable-exe'
-        }
+        self.assertRaises(InvalidManifestFileError, read_artifact_manifest, file_system, package_path)
 
-        self.assertEqual(file_system.files, {normpath(p): d for p, d in expected_files.items()})
+    def test_split_package_version(self):
+        identifier, version = split_package_version(
+            'org-art-x64-windows-msvc-release-12.4.0.SNAPSHOT20210125115010123456.tar.gz')
 
-        expected_directories = {
-            'external/resources/org/art',
-            'external/headers/org/art',
-            'external/libraries',
-            'external/libraries_interfaces',
-            'external/symbols_tables',
-            'external/executables'
-        }
-
-        self.assertEqual(file_system.directories, {normpath(p) for p in expected_directories})
-
-    def test_clean_up_package(self):
-        archive = pickle.dumps({
-            'resources/org/art/app.config': b'app-config',
-            'headers/org/art/inc.hpp': b'inc-hpp',
-            'libraries/org-art-x32-windows-msvc-debug-1.0.0.dll': b'library-dll',
-            'libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib': b'library-interface-lib',
-            'symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb': b'symbols-tables-pdb',
-            'executables/org-art-x32-windows-msvc-debug-1.0.0.exe': b'executable-exe'
-        })
-        package_path = 'org-art-x32-windows-msvc-debug-1.0.0.tar.gz'
-        file_system = FileSystemMock({
-            'external/resources/org/other_art',
-            'external/resources/org/art',
-            'external/headers/org/art',
-            'external/libraries',
-            'external/libraries_interfaces',
-            'external/symbols_tables',
-            'external/executables'
-        }, {
-            package_path: archive,
-            'external/resources/org/other_art/app.config': b'app-config',
-            'external/resources/org/art/app.config': b'app-config',
-            'external/headers/org/art/inc.hpp': b'inc-hpp',
-            'external/libraries/org-art-x32-windows-msvc-debug-1.0.0.dll': b'library-dll',
-            'external/libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib': b'library-interface-lib',
-            'external/symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb': b'symbols-tables-pdb',
-            'external/executables/org-art-x32-windows-msvc-debug-1.0.0.exe': b'executable-exe'
-        })
-        extraction_path = 'external'
-
-        logging_level = 'default'
-
-        exported_symbols = 'explicit'
-
-        clean_up_package(file_system, package_path, extraction_path, logging_level, exported_symbols)
-
-        expected_files = {
-            'external/resources/org/other_art/app.config': b'app-config'
-        }
-
-        self.assertEqual(file_system.files, {normpath(p): d for p, d in expected_files.items()})
-
-        expected_directories = {
-            'external/resources/org/other_art',
-            'external/headers/org',
-            'external/libraries',
-            'external/libraries_interfaces',
-            'external/symbols_tables',
-            'external/executables'
-        }
-
-        self.assertEqual(file_system.directories, {normpath(p) for p in expected_directories})
-
-    def test_get_package_extracted_contents(self):
-        package_path    = 'workspace/juice/target/external/packages/org-art-x32-windows-msvc-debug-1.0.0.tar.gz'
-        extraction_path = 'workspace/juice/target/external'
-        archive = pickle.dumps({
-            'resources/org/art/app.config': b'app-config',
-            'headers/org/art/inc.hpp': b'inc-hpp',
-            'libraries/org-art-x32-windows-msvc-debug-1.0.0.dll': b'library-dll',
-            'libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib': b'library-interface-lib',
-            'symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb': b'symbols-tables-pdb',
-            'executables/org-art-x32-windows-msvc-debug-1.0.0.exe': b'executable-exe'
-        })
-        file_system = FileSystemMock({dirname(package_path)}, {package_path: archive})
-
-        contents = get_package_extracted_contents(file_system, package_path, extraction_path)
-
-        expected_contents = {
-            'resources': ['workspace/juice/target/external/resources/org/art/app.config'],
-            'headers': ['workspace/juice/target/external/headers/org/art/inc.hpp'],
-            'libraries': ['workspace/juice/target/external/libraries/org-art-x32-windows-msvc-debug-1.0.0.dll'],
-            'libraries_interfaces': ['workspace/juice/target/external/libraries_interfaces/org-art-x32-windows-msvc-debug-1.0.0.lib'],
-            'symbols_tables': ['workspace/juice/target/external/symbols_tables/org-art-x32-windows-msvc-debug-1.0.0.pdb'],
-            'executables': ['workspace/juice/target/external/executables/org-art-x32-windows-msvc-debug-1.0.0.exe']
-        }
-
-        self.assertEqual({root: [normpath(p) for p in files] for root, files in contents.items()},
-                         {root: [normpath(p) for p in files] for root, files in expected_contents.items()})
-
-    def test_split_package(self):
-        package = 'other_org-other_art-x64-linux-gcc-release-5.2.2.tar.gz'
-
-        identifier, version = split_package(package)
-
-        self.assertEqual(identifier, 'other_org-other_art-x64-linux-gcc-release')
-
-        self.assertEqual(version, '5.2.2')
-
-    def test_get_version(self):
-        self.assertEqual(get_version('234.1.120'), (234, 1, 120))
-
-        self.assertEqual(get_version('2.+4.+5'), (2, 4, 5))
-
-        self.assertEqual(get_version('1.5.+2'), (1, 5, 2))
-
-    def test_get_wildcard(self):
-        self.assertEqual(get_wildcard('5.0.0'), (False, False, False))
-
-        self.assertEqual(get_wildcard('7.+6.+3'), (False, True, True))
-
-        self.assertEqual(get_wildcard('8.4.+0'), (False, False, True))
-
-    def test_packages_match(self):
-        self.assertTrue(packages_match('org-art-x32-windows-msvc-debug-1.0.0.tar.gz',
-                                       'org-art-x32-windows-msvc-debug-1.0.0.tar.gz'))
-
-        self.assertTrue(packages_match('org-art-x32-windows-msvc-debug-1.22.5.tar.gz',
-                                       'org-art-x32-windows-msvc-debug-1.+0.+0.tar.gz'))
-
-        self.assertTrue(packages_match('org-art-x32-windows-msvc-debug-1.0.12.tar.gz',
-                                       'org-art-x32-windows-msvc-debug-1.0.+0.tar.gz'))
-
-        self.assertFalse(packages_match('org-art-x32-windows-msvc-debug-2.0.0.tar.gz',
-                                        'org-art-x32-windows-msvc-debug-1.+0.+0.tar.gz'))
-
-        self.assertFalse(packages_match('org-art-x32-windows-msvc-debug-1.2.0.tar.gz',
-                                        'org-art-x32-windows-msvc-debug-1.0.+0.tar.gz'))
-
-        self.assertFalse(packages_match('other_art-art-x32-windows-msvc-debug-1.0.0.tar.gz',
-                                        'org-art-x32-windows-msvc-debug-1.0.0.tar.gz'))
-
-        self.assertFalse(packages_match('org-art-x32-windows-msvc-release-1.22.5.tar.gz',
-                                        'org-art-x32-windows-msvc-debug-1.+0.+0.tar.gz'))
-
-    def test_get_packages_from_directory(self):
-        directory   = 'packages'
-        file_system = FileSystemMock({directory}, {
-            f'{directory}/org-art-x32-windows-msvc-debug-1.0.0.tar.gz': b'',
-            f'{directory}/other_org-other_art-x64-linux-gcc-release-5.2.2.tar.gz': b'',
-            f'{directory}/some_other_file.txt': b'',
-            'another_org-another_art-x32-darwin-clang-debug-2.1.0.tar.gz': b''
-        })
-
-        packages = get_packages_from_directory(file_system, directory)
-
-        expected_packages = [
-            'org-art-x32-windows-msvc-debug-1.0.0.tar.gz',
-            'other_org-other_art-x64-linux-gcc-release-5.2.2.tar.gz'
-        ]
-
-        self.assertEqual(packages, expected_packages)
-
-    def test_get_package_dependencies_from_archive(self):
-        archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: my_org
-            artifact: my_art
-            version: 1.0.0
-            dependencies:
-            - organization: some_org
-              artifact: some_art
-              version: 7.0.1
-            - organization: test_org
-              artifact: test_art
-              version: 2.2.2
-              scope: test
-            - organization: another_org
-              artifact: another_art
-              version: 1.2.3
-            """
-        })
-        directory    = 'packages'
-        package_path = f'{directory}/my_org-my_art-x32-windows-msvc-debug-1.0.0.tar.gz'
-        file_system  = FileSystemMock({directory}, {package_path: archive})
-        scope        = 'main'
-
-        dependencies = get_package_dependencies_from_archive(file_system, package_path, scope)
-
-        expected_dependencies = [
-            'some_org-some_art-x32-windows-msvc-debug-7.0.1.tar.gz',
-            'another_org-another_art-x32-windows-msvc-debug-1.2.3.tar.gz'
-        ]
-
-        self.assertEqual(dependencies, expected_dependencies)
+        self.assertEqual(identifier, 'org-art-x64-windows-msvc-release')
+        self.assertEqual(version, '12.4.0.SNAPSHOT20210125115010123456')
 
     def test_get_matching_packages(self):
-        package = 'org-art-x32-windows-msvc-debug-1.+1.+0.tar.gz'
+        dependency = 'org-art-x64-linux-gcc-debug-12.+4.+0.SNAPSHOT.tar.gz'
 
         candidates = [
-            'org-art-x32-windows-msvc-debug-1.0.1.tar.gz',
-            'some_org-some_art-x32-windows-msvc-debug-7.0.1.tar.gz',
-            'org-art-x32-windows-msvc-debug-1.1.4.tar.gz',
-            'org-art-x32-windows-msvc-debug-1.2.4.tar.gz',
-            'another_org-another_art-x32-windows-msvc-debug-1.2.3.tar.gz',
-            'org-art-x32-windows-msvc-debug-1.2.5.tar.gz'
-        ]
-        
-        packages = get_matching_packages(package, candidates)
-
-        expected_packages = [
-            'org-art-x32-windows-msvc-debug-1.2.5.tar.gz',
-            'org-art-x32-windows-msvc-debug-1.2.4.tar.gz',
-            'org-art-x32-windows-msvc-debug-1.1.4.tar.gz'
+            'org-art-x64-linux-gcc-debug-12.4.0.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.1.SNAPSHOT20230120115015000003.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.1.tar.gz',
+            'or2-ar2-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000005.tar.gz',
+            'or2-ar2-x64-linux-gcc-debug-12.4.0.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000001.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000002.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.tar.gz',
+            'org-art-x64-linux-gcc-debug-13.5.0.tar.gz',
         ]
 
-        self.assertEqual(packages, expected_packages)
-
-    def test_get_package_dependencies_recursively(self):
-        chocolate_archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: candyorg
-            artifact: chocolate
-            version: 1.0.0
-            dependencies:
-            - organization: candyorg
-              artifact: popsicle
-              version: 1.+0.+0
-            - organization: testorg
-              artifact: testing
-              version: 2.5.0
-              scope: test
-            """
-        })
-
-        chocolate_package = 'candyorg-chocolate-x32-windows-msvc-debug-1.0.0.tar.gz'
-
-        chocolate_dependencies = [
-            'candyorg-popsicle-x32-windows-msvc-debug-1.+0.+0.tar.gz',
-            'testorg-testing-x32-windows-msvc-debug-2.5.0.tar.gz'
+        expected_matching_packages = [
+            'org-art-x64-linux-gcc-debug-12.5.0.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000002.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000001.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.1.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.1.SNAPSHOT20230120115015000003.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz',
         ]
 
-        popsicle_1_0_0_archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: candyorg
-            artifact: popsicle
-            version: 1.0.0
-            """
-        })
+        matching_packages = get_matching_packages(dependency, candidates)
 
-        popsicle_1_1_0_archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: candyorg
-            artifact: popsicle
-            version: 1.1.0
-            dependencies:
-            - organization: candyorg
-              artifact: icecream
-              version: 1.0.0
-            - organization: testorg
-              artifact: testing
-              version: 2.4.0
-              scope: test
-            """
-        })
+        self.assertEqual(matching_packages, expected_matching_packages)
 
-        icecream_archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: candyorg
-            artifact: popsicle
-            version: 1.0.0
-            dependencies:
-            - organization: testorg
-              artifact: testing
-              version: 2.4.0
-              scope: test
-            """
-        })
+    def test_get_packages_from_directory(self):
+        file_system = FileSystemMock(
+            files={
+                'packages/org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz': b'',
+                'packages/org-art-x64-linux-gcc-debug-12.4.0.tar.gz': b'',
+                'packages/not-a-package.tar.gz': b'',
+            },
+            directories={'packages'}
+        )
 
-        testing_2_5_0_archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: testorg
-            artifact: testing
-            version: 2.5.0
-            """
-        })
+        packages = get_packages_from_directory(file_system, 'packages')
 
-        testing_2_4_0_archive = pickle.dumps({
-            'Pralinefile': b"""\
-            organization: testorg
-            artifact: testing
-            version: 2.4.0
-            """
-        })
-
-        repository    = 'packages'
-        file_system  = FileSystemMock({repository}, {
-            f'{repository}/candyorg-chocolate-x32-windows-msvc-debug-1.0.0.tar.gz': chocolate_archive,
-            f'{repository}/candyorg-popsicle-x32-windows-msvc-debug-1.0.0.tar.gz': popsicle_1_0_0_archive,
-            f'{repository}/candyorg-popsicle-x32-windows-msvc-debug-1.1.0.tar.gz': popsicle_1_1_0_archive,
-            f'{repository}/candyorg-icecream-x32-windows-msvc-debug-1.0.0.tar.gz': icecream_archive,
-            f'{repository}/testorg-testing-x32-windows-msvc-debug-2.5.0.tar.gz': testing_2_5_0_archive,
-            f'{repository}/testorg-testing-x32-windows-msvc-debug-2.4.0.tar.gz': testing_2_4_0_archive
-        })
-
-        dependencies = get_package_dependencies_recursively(file_system, chocolate_package, chocolate_dependencies, repository)
-
-        expected_dependencies = {
-            'candyorg-popsicle-x32-windows-msvc-debug-1.1.0.tar.gz',
-            'candyorg-icecream-x32-windows-msvc-debug-1.0.0.tar.gz',
-            'testorg-testing-x32-windows-msvc-debug-2.5.0.tar.gz'
+        expected_packages = {
+            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.tar.gz'
         }
 
-        self.assertEqual(set(dependencies), expected_dependencies)
+        self.assertEqual(set(packages), expected_packages)
+
+    def test_get_package_dependencies_from_archive(self):
+        artifact_manifest = ArtifactManifest(
+            organization='org',
+            artifact='art',
+            version=ArtifactVersion.from_string('7.5.2'),
+            mode=Mode.debug,
+            architecture=Architecture.x64,
+            platform=Platform.linux,
+            compiler=Compiler.gcc,
+            exported_symbols=ExportedSymbols.explicit,
+            artifact_type=ArtifactType.library,
+            artifact_logging_level=ArtifactLoggingLevel.debug,
+            dependencies=[
+                ArtifactDependency(organization='org2',
+                                   artifact='art2',
+                                   version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
+                                   scope=DependencyScope.main),
+                ArtifactDependency(organization='org3',
+                                   artifact='art3',
+                                   version=DependencyVersion.from_string('5.0.9'),
+                                   scope=DependencyScope.test)
+            ]
+        )
+
+        package_path = "packages/org-art-x64-linux-gcc-debug-7.5.2.tar.gz"
+
+        file_system = FileSystemMock(
+            directories={
+                'packages'
+            }, 
+            files={
+                package_path: ArchiveMock({'.manifest': pickle.dumps(artifact_manifest)})
+            }
+        )
+
+        package_dependencies = get_package_dependencies_from_archive(file_system, package_path)
+
+        expected_package_dependencies = {
+            "org2-art2-x64-linux-gcc-debug-1.2.4.SNAPSHOT.tar.gz",
+            "org3-art3-x64-linux-gcc-debug-5.0.9.tar.gz",
+        }
+
+        self.assertEqual(set(package_dependencies), expected_package_dependencies)

@@ -2,12 +2,17 @@ from os.path import normpath
 from praline.client.project.pipeline.stages.format_main_sources import format_main_sources
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
+
+from typing import Dict, List
 from unittest import TestCase
 
 
-class FormatMainSourcesTest(TestCase):
+class FormatMainSourcesStageTest(TestCase):
     def test_format_main_sources(self):
-        def on_execute(command, add_to_library_path):
+        def on_execute(command: List[str], 
+                       add_to_library_path: List[str], 
+                       interactive: bool, 
+                       add_to_env: Dict[str, str]):
             return True
 
         file_system = FileSystemMock({'project/sources/org/art'}, {

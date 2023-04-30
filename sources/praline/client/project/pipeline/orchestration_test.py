@@ -1,9 +1,11 @@
-from os.path import normpath
-from praline.client.project.pipeline.orchestration import create_pipeline, invoke_stage, CyclicStagesError, MultipleSuppliersError, UnsatisfiableStageError
+from praline.client.project.pipeline.orchestration import (create_pipeline, invoke_stage, CyclicStagesError, 
+                                                           MultipleSuppliersError, UnsatisfiableStageError)
 from praline.client.project.pipeline.stages.stage import Stage
 from praline.common.testing.file_system_mock import FileSystemMock
 from unittest import TestCase
+
 import pickle
+from os.path import normpath
 
 
 class OrchestrationTest(TestCase):
@@ -29,7 +31,7 @@ class OrchestrationTest(TestCase):
         file_system       = FileSystemMock()
         program_arguments = {'global': {}, 'byStage': {}}
         configuration     = {}
-        pipeline          = create_pipeline('F', stages, file_system, program_arguments, configuration)
+        pipeline          = create_pipeline(file_system, configuration, program_arguments, 'F', stages)
 
         self.assertEqual(pipeline, [(0, 'C'), (0, 'E'), (0, 'B'), (1, 'D'), (0, 'F')])
 
@@ -52,7 +54,8 @@ class OrchestrationTest(TestCase):
         program_arguments = {'global': {}, 'byStage': {}}
         configuration     = {}
 
-        self.assertRaises(CyclicStagesError, create_pipeline, 'C', stages, file_system, program_arguments, configuration)
+        self.assertRaises(CyclicStagesError, 
+                          create_pipeline, file_system, configuration, program_arguments, 'C', stages)
 
     def test_create_pipeline_with_multiple_suppliers(self):
         do_nothing = lambda f, r, c, a, cfg, rp, pb: None
@@ -66,7 +69,8 @@ class OrchestrationTest(TestCase):
         program_arguments = {'global': {}, 'byStage': {}}
         configuration     = {}
 
-        self.assertRaises(MultipleSuppliersError, create_pipeline, 'C', stages, file_system, program_arguments, configuration)
+        self.assertRaises(MultipleSuppliersError, 
+                          create_pipeline, file_system, configuration, program_arguments, 'C', stages)
 
     def test_create_pipeline_with_no_suppliers(self):
         do_nothing = lambda f, r, c, a, cfg, rp, pb: None
@@ -80,7 +84,8 @@ class OrchestrationTest(TestCase):
         program_arguments = {'global': {}, 'byStage': {}}
         configuration     = {}
 
-        self.assertRaises(UnsatisfiableStageError, create_pipeline, 'C', stages, file_system, program_arguments, configuration)
+        self.assertRaises(UnsatisfiableStageError, 
+                          create_pipeline, file_system, configuration, program_arguments, 'C', stages)
 
     def test_invoke_stage(self):
         #
@@ -146,11 +151,12 @@ class OrchestrationTest(TestCase):
             'global': {},
             'byStage': {'C': { 'some-argument': 'some_value' }}
         }
-        invoke_stage('A', stages, file_system, program_arguments, None, None)
+        invoke_stage(file_system, None, program_arguments, None, 'A', stages)
 
         cache_path = normpath('my/project/target/cache.pickle')
 
-        self.assertEqual(pickle.loads(file_system.files[cache_path]), {'C': {'c': 'c_value'}, 'D': {'d': 'd_value'}, 'G': {'g': 'g_value'}})
+        self.assertEqual(pickle.loads(file_system.files[cache_path]), 
+                         {'C': {'c': 'c_value'}, 'D': {'d': 'd_value'}, 'G': {'g': 'g_value'}})
 
     def test_invoke_stage_with_cycles(self):
         #
@@ -172,7 +178,8 @@ class OrchestrationTest(TestCase):
         file_system = FileSystemMock()
         program_arguments = {'global': {}, 'byStage': {}}
 
-        self.assertRaises(CyclicStagesError, invoke_stage, 'A', stages, file_system, program_arguments, None, None)
+        self.assertRaises(CyclicStagesError, 
+                          invoke_stage, file_system, None, program_arguments, None, 'A', stages)
 
     def test_invoke_stage_with_unsatisfiable_disabled_stage(self):
         do_nothing = lambda f, r, c, a, cfg, rp, pb: None
@@ -187,7 +194,8 @@ class OrchestrationTest(TestCase):
         file_system = FileSystemMock()
         program_arguments = {'global': {}, 'byStage': {}}
 
-        self.assertRaises(UnsatisfiableStageError, invoke_stage, 'A', stages, file_system, program_arguments, None, None)
+        self.assertRaises(UnsatisfiableStageError, 
+                          invoke_stage, file_system, None, program_arguments, None, 'A', stages)
 
     def test_invoke_stage_with_unsatisfiable_nonexistent_stage(self):
         do_nothing = lambda f, r, c, a, cfg, rp, pb: None
@@ -201,4 +209,5 @@ class OrchestrationTest(TestCase):
         file_system = FileSystemMock()
         program_arguments = {'global': {}, 'byStage': {}}
 
-        self.assertRaises(UnsatisfiableStageError, invoke_stage, 'A', stages, file_system, program_arguments, None, None)
+        self.assertRaises(UnsatisfiableStageError, 
+                          invoke_stage, file_system, None, program_arguments, None, 'A', stages)

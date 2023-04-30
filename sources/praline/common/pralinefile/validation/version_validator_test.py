@@ -8,7 +8,7 @@ class VersionValidatorTest(TestCase):
         pralinefile = {
             'organization': 'candyco',
             'artifact': 'chocolaterie',
-            'version': '10.1.31',
+            'version': '0.1.31.SNAPSHOT',
             'dependencies': [
                 {
                     'organization': 'candyco',
@@ -17,9 +17,10 @@ class VersionValidatorTest(TestCase):
                 }
             ]
         }
+
         validate_version(pralinefile)
 
-    def test_valid_version_with_bugfix_wildcard(self):
+    def test_valid_version_with_patch_wildcard(self):
         pralinefile = {
             'organization': 'candyco',
             'artifact': 'chocolaterie',
@@ -28,27 +29,28 @@ class VersionValidatorTest(TestCase):
                 {
                     'organization': 'candyco',
                     'artifact': 'chocolate',
-                    'version': '1.1.+0'
+                    'version': '1.1.+0.SNAPSHOT'
                 }
             ]
         }
+        
         validate_version(pralinefile)
 
-    def test_invalid_version_with_minor_wildcard(self):
+    def test_valid_version_with_minor_wildcard(self):
         pralinefile = {
             'organization': 'candyco',
             'artifact': 'chocolaterie',
-            'version': '10.1.31',
+            'version': '1.3.36',
             'dependencies': [
                 {
                     'organization': 'candyco',
                     'artifact': 'chocolate',
-                    'version': '3.+9.111'
+                    'version': '1.+1.0.SNAPSHOT'
                 }
             ]
         }
-
-        self.assertRaises(PralinefileValidationError, validate_version, pralinefile)
+        
+        validate_version(pralinefile)
 
     def test_invalid_version_with_major_wildcard(self):
         pralinefile = {
@@ -66,11 +68,11 @@ class VersionValidatorTest(TestCase):
 
         self.assertRaises(PralinefileValidationError, validate_version, pralinefile)
 
-    def test_invalid_version_numbers(self):
+    def test_invalid_version_wildcard(self):
         pralinefile = {
             'organization': 'candyco',
             'artifact': 'chocolaterie',
-            'version': '0.1.31'
+            'version': '0.1.+31'
         }
 
         self.assertRaises(PralinefileValidationError, validate_version, pralinefile)
@@ -84,7 +86,7 @@ class VersionValidatorTest(TestCase):
                 {
                     'organization': 'candyco',
                     'artifact': 'chocolate',
-                    'version': '0.9.111'
+                    'version': '0.9'
                 }
             ]
         }

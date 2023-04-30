@@ -90,10 +90,13 @@ int main(const int argumentsCount, const char* const* const arguments)
 
 
 def can_run_unit_tests(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
-    return not program_arguments['global']['skip_unit_tests'] and any(f for f in file_system.files_in_directory('sources') if f.endswith('.test.cpp'))
+    return (not program_arguments['global']['skip_unit_tests'] and 
+            any(f for f in file_system.files_in_directory('sources') if f.endswith('.test.cpp')))
 
 
-@stage(requirements=[['pralinefile', 'test_sources_root']], output=['test_sources'], predicate=can_run_unit_tests)
+@stage(requirements=[['project_structure']], 
+       output=['test_sources'], 
+       predicate=can_run_unit_tests)
 def load_test_sources(file_system: FileSystem, 
                       resources: StageResources, 
                       cache: Dict[str, Any], 
@@ -101,9 +104,15 @@ def load_test_sources(file_system: FileSystem,
                       configuration: Dict[str, Any], 
                       remote_proxy: RemoteProxy,
                       progressBarSupplier: ProgressBarSupplier):
-    pralinefile            = resources['pralinefile']
-    test_sources_root      = resources['test_sources_root']
-    test_executable_source = join(test_sources_root, pralinefile['organization'], pralinefile['artifact'], 'executable.test.cpp')
+    artifact_manifest = configuration['artifact_manifest']
+    project_structure = resources['project_structure']
+    sources_root      = project_structure.sources_root
+
+    test_executable_source = join(sources_root,
+                                  artifact_manifest.organization,
+                                  artifact_manifest.artifact, 
+                                  'executable.test.cpp')
+    
     file_system.create_file_if_missing(test_executable_source, test_executable_contents)
 
-    resources['test_sources'] = [f for f in file_system.files_in_directory(test_sources_root) if f.endswith('.test.cpp')]
+    resources['test_sources'] = [f for f in file_system.files_in_directory(sources_root) if f.endswith('.test.cpp')]

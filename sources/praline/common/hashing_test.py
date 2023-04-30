@@ -1,7 +1,8 @@
-from praline.common.hashing import hash_archive, hash_binary, hash_file, key_delta, delta, DeltaType, DeltaItem, progression_resolution
-from praline.common.testing.file_system_mock import FileSystemMock
+from praline.common.hashing import (hash_archive, hash_binary, hash_file, key_delta, delta, DeltaType, DeltaItem, 
+                                    progression_resolution)
+from praline.common.testing.file_system_mock import ArchiveMock, FileSystemMock
+
 from unittest import TestCase
-import pickle
 
 
 class HashingTest(TestCase):
@@ -31,12 +32,14 @@ class HashingTest(TestCase):
         self.assertEqual(new_cache, {'a': 'new_a', 'b': 'new_b', 'c': 'new_c'})
 
     def test_hash_archive(self):
-        file_system = FileSystemMock(files={
-            'archive.tar.gz': pickle.dumps({
-                'path/to/file.txt': b'file-contents',
-                'another_path/to/another_file.txt': b'another-file-contents'
-            })
-        })
+        file_system = FileSystemMock(
+            files={
+                'archive.tar.gz': ArchiveMock({
+                    'path/to/file.txt': b'file-contents',
+                    'another_path/to/another_file.txt': b'another-file-contents'
+                })
+            }
+        )
 
         hash_code = hash_archive(file_system, 'archive.tar.gz')
 
@@ -50,7 +53,7 @@ class HashingTest(TestCase):
         deltas = {d for d in delta(keys, key_hasher, cache, new_cache)}
 
         expected_deltas = set({
-            DeltaItem('a', DeltaType.Modified),
+            DeltaItem('a', DeltaType.Added),
             DeltaItem('b', DeltaType.Modified),
             DeltaItem('c', DeltaType.UpToDate),
             DeltaItem('d', DeltaType.Removed),

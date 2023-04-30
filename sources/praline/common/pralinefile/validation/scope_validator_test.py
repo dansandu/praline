@@ -20,6 +20,21 @@ class ScopeValidatorTest(TestCase):
         }
         validate_scope(pralinefile)
 
+    def test_default_scope(self):
+        pralinefile = {
+            'organization': 'candyco',
+            'artifact': 'chocolaterie',
+            'version': '1.5.0',
+            'dependencies': [
+                {
+                    'organization': 'sugarco',
+                    'artifact': 'chocolate',
+                    'version': '1.0.0'
+                }
+            ]
+        }
+        validate_scope(pralinefile)
+
     def test_invalid_scope(self):
         pralinefile = {
             'organization': 'candyco',

@@ -18,6 +18,7 @@ def format_test_sources(file_system: FileSystem,
                         remote_proxy: RemoteProxy,
                         progressBarSupplier: ProgressBarSupplier):
     test_sources = resources['test_sources']
+    clang_format = resources['clang_format_executable']
     hasher       = lambda f: hash_file(file_system, f)
     new_cache    = {}
 
@@ -25,10 +26,9 @@ def format_test_sources(file_system: FileSystem,
     with progressBarSupplier.create(resolution) as progress_bar:
         for item in delta(test_sources, hasher, cache, new_cache):
             test_source = item.key
-            if item.delta_type == DeltaType.Modified:
+            if item.delta_type in [DeltaType.Added, DeltaType.Modified]:
                 progress_bar.update_summary(test_source)
-                clang_format_executable = resources['clang_format_executable']
-                file_system.execute_and_fail_on_bad_return([clang_format_executable, '-i', '-style=file', test_source])
+                file_system.execute_and_fail_on_bad_return([clang_format, '-i', '-style=file', test_source])
             progress_bar.advance()
 
     resources['formatted_test_sources'] = test_sources

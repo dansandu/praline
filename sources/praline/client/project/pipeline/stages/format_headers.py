@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
-from praline.common.hashing import hash_file, delta, DeltaType, progression_resolution
+from praline.common.hashing import DeltaType, delta, hash_file, progression_resolution
 from typing import Any, Dict
 
 
@@ -17,18 +17,18 @@ def format_headers(file_system: FileSystem,
                    configuration: Dict[str, Any], 
                    remote_proxy: RemoteProxy,
                    progressBarSupplier: ProgressBarSupplier):
-    headers   = resources['headers']
-    hasher    = lambda f: hash_file(file_system, f)
-    new_cache = {}
+    headers      = resources['headers']
+    clang_format = resources['clang_format_executable']
+    hasher       = lambda f: hash_file(file_system, f)
+    new_cache    = {}
 
     resolution = progression_resolution(headers, cache)
     with progressBarSupplier.create(resolution) as progress_bar:
         for item in delta(headers, hasher, cache, new_cache):
             header = item.key
-            if item.delta_type == DeltaType.Modified:
+            if item.delta_type in [DeltaType.Added, DeltaType.Modified]:
                 progress_bar.update_summary(header)
-                clang_format_executable = resources['clang_format_executable']
-                file_system.execute_and_fail_on_bad_return([clang_format_executable, '-i', '-style=file', header])
+                file_system.execute_and_fail_on_bad_return([clang_format, '-i', '-style=file', header])
             progress_bar.advance()
 
     resources['formatted_headers'] = headers
