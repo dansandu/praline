@@ -22,9 +22,10 @@ class ProgressBarMock:
 
 
 class ProgressBarSupplierMock:
-    def __init__(self, test_case: TestCase, expected_resolution: int):
+    def __init__(self, test_case: TestCase, expected_resolution: int, header_length: int = 10):
         self.test_case = test_case
         self.expected_resolution = expected_resolution
+        self.header_length = header_length
 
     def create(self, resolution: int):
         self.test_case.assertEqual(resolution, self.expected_resolution)

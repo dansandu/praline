@@ -1,6 +1,6 @@
 from praline.common import (Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform,
                             get_artifact_logging_level_code)
-from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, CompilerSupplier, YieldDescriptor
+from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
 from praline.common.file_system import basename, FileSystem, join
 from typing import List
 
@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ClangYieldDescriptor(YieldDescriptor):    
+class ClangYieldDescriptor(IYieldDescriptor):    
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         return super().get_object(sources_root, objects_root, source) + '.o'
 
@@ -60,7 +60,7 @@ class ClangCompiler(ICompiler):
         if file_system.which('clang++') == None:
             raise CompilerInstantionError(f"the clang compiler could not find the clang++ executable in the PATH")
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return ClangYieldDescriptor()
 
     def preprocess(self,
@@ -116,11 +116,11 @@ class ClangCompiler(ICompiler):
                                                         [f'-l{basename(lib)[3:-6]}' for lib in external_libraries])
 
 
-class ClangCompilerSupplier(CompilerSupplier):
+class ClangCompilerSupplier(ICompilerSupplier):
     def get_name(self) -> Compiler:
         return Compiler.clang
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return ClangYieldDescriptor()
 
     def instantiate_compiler(self, file_system: FileSystem, artifact_manifest: ArtifactManifest) -> ICompiler:

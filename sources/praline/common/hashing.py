@@ -4,7 +4,7 @@ from praline.common.tracing import trace
 from dataclasses import dataclass
 from enum import Enum
 from hashlib import sha3_256
-from typing import Any, Callable, Dict, List, Tuple, Generator
+from typing import Callable, Dict, Generator, List
 
 
 @trace
@@ -31,19 +31,6 @@ def hash_archive(file_system: FileSystem, archive_path: str):
 
 def hash_binary(data: bytes) -> str:
     return sha3_256(data).hexdigest()
-
-
-@trace
-def key_delta(keys: List[str], key_hasher: Callable[[str],str], cache: Dict[str, str]) -> Tuple[List[str], List[str], Dict[str, Any]]:
-    updated   = []
-    removed   = [key for key in cache if key not in keys]
-    new_cache = {}
-    for key in keys:
-        key_hash = key_hasher(key)
-        if key not in cache or cache[key] != key_hash:
-            updated.append(key)
-        new_cache[key] = key_hash
-    return (updated, removed, new_cache)
 
 
 class DeltaType(Enum):

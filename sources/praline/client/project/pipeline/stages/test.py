@@ -4,6 +4,7 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
+
 from typing import Any, Dict
 
 
@@ -13,14 +14,17 @@ program_arguments = [
         'action': 'store',
         'nargs': REMAINDER,
         'dest': 'arguments',
-        'help': 'Forward arguments to the underlying executable being run. Be warned that all proceeding arguments are forwarded and no longer used by praline!',
+        'help': "Forward arguments to the underlying executable being run. Be warned that all proceeding arguments "
+            "are forwarded and are no longer used by praline!",
         'default': []
     }
 ]
 
 
-@stage(requirements=[['project_structure', 'test_executable']], output=['test_results'],
-       exposed=True, program_arguments=program_arguments)
+@stage(requirements=[['project_structure', 'test_executable']], 
+       output=['test_results'],
+       exposed=True, 
+       program_arguments=program_arguments)
 def test(file_system: FileSystem, 
          resources: StageResources, 
          cache: Dict[str, Any], 

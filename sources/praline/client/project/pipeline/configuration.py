@@ -1,5 +1,5 @@
 from praline.common import ArtifactDependency, ArtifactManifest
-from praline.common.compiling.compiler import ICompiler, intantiate_compiler
+from praline.common.compiling.compiler import CompilerWrapper, intantiate_compiler
 from praline.common.file_system import FileSystem
 
 from typing import Any, Dict, Tuple
@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 
 def get_artifact_manifest_and_compiler(file_system: FileSystem, 
                                        program_arguments: Dict[str, Any], 
-                                       pralinefile: Dict[str, Any]) -> Tuple[ArtifactManifest, ICompiler]:
+                                       pralinefile: Dict[str, Any]) -> Tuple[ArtifactManifest, CompilerWrapper]:
     organization = pralinefile['organization']
     artifact     = pralinefile['artifact']
     version      = pralinefile['version']

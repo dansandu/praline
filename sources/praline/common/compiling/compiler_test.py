@@ -1,8 +1,6 @@
 from os.path import normpath
 from praline.common import ProjectStructure
-from praline.common.compiling.compiler import (
-    ICompiler, compile_using_cache, link_executable_using_cache, link_library_using_cache, YieldDescriptor,
-)
+from praline.common.compiling.compiler import ICompiler, IYieldDescriptor, CompilerWrapper
 from praline.common.file_system import join
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
@@ -11,7 +9,7 @@ from typing import List
 from unittest import TestCase
 
 
-class YieldDescriptorMock(YieldDescriptor):
+class YieldDescriptorMock(IYieldDescriptor):
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         return super().get_object(sources_root, objects_root, source) + '.obj'
 
@@ -32,7 +30,7 @@ class CompilerMock(ICompiler):
     def __init__(self, file_system):
         self.file_system = file_system
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return YieldDescriptorMock()
 
     def preprocess(self,
@@ -136,7 +134,7 @@ class CompilerTest(TestCase):
             }
         )
 
-        compiler = CompilerMock(file_system)
+        compiler = CompilerWrapper(file_system, CompilerMock(file_system))
         headers  = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
         sources  = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
         cache    = {
@@ -147,13 +145,11 @@ class CompilerTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
-        objects = compile_using_cache(file_system,
-                                      self.project_structure,
-                                      compiler,
-                                      headers,
-                                      sources,
-                                      cache,
-                                      progress_bar_supplier)
+        objects = compiler.compile_using_cache(self.project_structure,
+                                               headers,
+                                               sources,
+                                               cache,
+                                               progress_bar_supplier)
 
         expected_objects = {'target/objects/a.obj', 'target/objects/b.obj', 'target/objects/d.obj'}
 
@@ -199,20 +195,18 @@ class CompilerTest(TestCase):
             }
         )
 
-        compiler                      = CompilerMock(file_system)
+        compiler                      = CompilerWrapper(file_system, CompilerMock(file_system))
         objects                       = ['target/objects/a.obj']
         external_libraries            = ['target/external/libraries/b.dll']
         external_libraries_interfaces = ['target/external/libraries_interfaces/c.lib']
         cache                         = {}
 
-        executable, symbols_table = link_executable_using_cache(file_system,
-                                                                self.project_structure,
-                                                                compiler,
-                                                                self.artifact_identifier,
-                                                                objects,
-                                                                external_libraries,
-                                                                external_libraries_interfaces,
-                                                                cache)
+        executable, symbols_table = compiler.link_executable_using_cache(self.project_structure,
+                                                                         self.artifact_identifier,
+                                                                         objects,
+                                                                         external_libraries,
+                                                                         external_libraries_interfaces,
+                                                                         cache)
 
         self.assertEqual(normpath(executable), 
                          normpath('target/executables/org-art-x32-windows-compmock-debug-1.0.0.exe'))
@@ -253,20 +247,18 @@ class CompilerTest(TestCase):
             }
         )
 
-        compiler                      = CompilerMock(file_system)
+        compiler                      = CompilerWrapper(file_system, CompilerMock(file_system))
         objects                       = ['target/objects/a.obj']
         external_libraries            = ['target/external/libraries/b.dll']
         external_libraries_interfaces = ['target/external/libraries_interfaces/c.lib']
         cache                         = {}
 
-        library, library_interface, symbols_table = link_library_using_cache(file_system,
-                                                                             self.project_structure,
-                                                                             compiler,
-                                                                             self.artifact_identifier,
-                                                                             objects,
-                                                                             external_libraries,
-                                                                             external_libraries_interfaces,
-                                                                             cache)
+        library, library_interface, symbols_table = compiler.link_library_using_cache(self.project_structure,
+                                                                                      self.artifact_identifier,
+                                                                                      objects,
+                                                                                      external_libraries,
+                                                                                      external_libraries_interfaces,
+                                                                                      cache)
 
         self.assertEqual(normpath(library), 
                          normpath('target/libraries/org-art-x32-windows-compmock-debug-1.0.0.dll'))
@@ -274,7 +266,7 @@ class CompilerTest(TestCase):
         self.assertEqual(normpath(library_interface), 
                          normpath('target/libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib'))
 
-        self.assertEqual(normpath(symbols_table), 
+        self.assertEqual(normpath(symbols_table),
                          normpath('target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb'))
 
         new_files = {

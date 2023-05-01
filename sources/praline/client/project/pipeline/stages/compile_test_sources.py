@@ -2,7 +2,6 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.compiling.compiler import compile_using_cache
 from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
@@ -19,21 +18,18 @@ def compile_test_sources(file_system: FileSystem,
                          remote_proxy: RemoteProxy,
                          progressBarSupplier: ProgressBarSupplier):
     if resources.activation == 0:
-        headers           = resources['formatted_headers']
+        headers           = resources['formatted_headers'] + resources['external_headers']
         sources           = resources['formatted_test_sources']
     elif resources.activation == 1:
-        headers           = resources['headers']
+        headers           = resources['headers'] + resources['external_headers']
         sources           = resources['test_sources']
-
 
     project_structure = resources['project_structure']
 
     compiler = configuration['compiler']
 
-    resources['test_objects'] = compile_using_cache(file_system,
-                                                    project_structure,
-                                                    compiler,
-                                                    headers,
-                                                    sources,
-                                                    cache,
-                                                    progressBarSupplier)
+    resources['test_objects'] = compiler.compile_using_cache(project_structure,
+                                                             headers,
+                                                             sources,
+                                                             cache,
+                                                             progressBarSupplier)

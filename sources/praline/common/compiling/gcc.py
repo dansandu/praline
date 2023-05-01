@@ -1,6 +1,6 @@
 from praline.common import (Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform,
                             get_artifact_logging_level_code)
-from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, CompilerSupplier, YieldDescriptor
+from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
 from praline.common.file_system import basename, FileSystem, join
 from typing import List
 
@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class GccYieldDescriptor(YieldDescriptor):    
+class GccYieldDescriptor(IYieldDescriptor):    
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         return super().get_object(sources_root, objects_root, source) + '.o'
 
@@ -60,7 +60,7 @@ class GccCompiler(ICompiler):
         if file_system.which('g++') == None:
             raise CompilerInstantionError(f"the gcc compiler could not find the g++ executable in the PATH")
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return GccYieldDescriptor()
 
     def preprocess(self,
@@ -113,11 +113,11 @@ class GccCompiler(ICompiler):
                                                         [f'-l{basename(lib)[3:-3]}' for lib in external_libraries])
 
 
-class GccCompilerSupplier(CompilerSupplier):
+class GccCompilerSupplier(ICompilerSupplier):
     def get_name(self) -> Compiler:
         return Compiler.gcc
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return GccYieldDescriptor()
 
     def instantiate_compiler(self, file_system: FileSystem, artifact_manifest: ArtifactManifest) -> ICompiler:

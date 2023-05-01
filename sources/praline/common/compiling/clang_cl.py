@@ -1,6 +1,6 @@
 from praline.common import (Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform, 
                             get_artifact_logging_level_code)
-from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, CompilerSupplier, YieldDescriptor
+from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
 from praline.common.file_system import FileSystem, join
 from typing import List
 
@@ -33,7 +33,7 @@ def get_environment_file(architecture: Architecture) -> str:
     return fr"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\{batfile}"
 
 
-class ClangClYieldDescriptor(YieldDescriptor):
+class ClangClYieldDescriptor(IYieldDescriptor):
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
         return super().get_object(sources_root, objects_root, source) + '.obj'
 
@@ -93,7 +93,7 @@ class ClangClCompiler(ICompiler):
         if artifact_manifest.exported_symbols == ExportedSymbols.all:
             raise CompilerInstantionError(f"the clang-cl compiler does not support currently exporting all symbols")
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return ClangClYieldDescriptor()
 
     def preprocess(self,
@@ -179,11 +179,11 @@ class ClangClCompiler(ICompiler):
                         "export -- use PRALINE_EXPORT to export symbols")
 
 
-class ClangClCompilerSupplier(CompilerSupplier):
+class ClangClCompilerSupplier(ICompilerSupplier):
     def get_name(self) -> Compiler:
         return Compiler.clang_cl
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
+    def get_yield_descriptor(self) -> IYieldDescriptor:
         return ClangClYieldDescriptor()
 
     def instantiate_compiler(self, file_system: FileSystem, artifact_manifest: ArtifactManifest) -> ICompiler:

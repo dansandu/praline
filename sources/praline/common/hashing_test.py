@@ -1,4 +1,4 @@
-from praline.common.hashing import (hash_archive, hash_binary, hash_file, key_delta, delta, DeltaType, DeltaItem, 
+from praline.common.hashing import (DeltaItem, DeltaType, delta, hash_archive, hash_binary, hash_file, 
                                     progression_resolution)
 from praline.common.testing.file_system_mock import ArchiveMock, FileSystemMock
 
@@ -21,15 +21,6 @@ class HashingTest(TestCase):
 
         self.assertEqual(hash_value, '62e404dfe29153db02cd492c1360eb1677a262ef1efe140083a7d9a0d893371e')
 
-    def test_key_delta(self):
-        keys       = ['a', 'b', 'c']
-        key_hasher = lambda x: f'new_{x}'
-        cache      = {'b': 'old_b', 'c': 'new_c', 'd': 'new_d'}
-        updated, removed, new_cache = key_delta(keys, key_hasher, cache)
-
-        self.assertEqual(updated, ['a', 'b'])
-        self.assertEqual(removed, ['d'])
-        self.assertEqual(new_cache, {'a': 'new_a', 'b': 'new_b', 'c': 'new_c'})
 
     def test_hash_archive(self):
         file_system = FileSystemMock(

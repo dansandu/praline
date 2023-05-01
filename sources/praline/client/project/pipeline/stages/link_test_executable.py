@@ -2,7 +2,6 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.compiling.compiler import link_executable_using_cache
 from praline.common.file_system import FileSystem, normalized_path
 from typing import Any, Dict
 
@@ -32,11 +31,9 @@ def link_test_executable(file_system: FileSystem,
         objects.remove(normalized_path(main_executable_object))
 
     (resources['test_executable'], 
-     resources['test_executable_symbols_table']) = link_executable_using_cache(file_system,
-                                                                               project_structure,
-                                                                               compiler,
-                                                                               artifact_identifier,
-                                                                               objects,
-                                                                               external_libraries,
-                                                                               external_libraries_interfaces,
-                                                                               cache)
+     resources['test_executable_symbols_table']) = compiler.link_executable_using_cache(project_structure,
+                                                                                        artifact_identifier,
+                                                                                        objects,
+                                                                                        external_libraries,
+                                                                                        external_libraries_interfaces,
+                                                                                        cache)

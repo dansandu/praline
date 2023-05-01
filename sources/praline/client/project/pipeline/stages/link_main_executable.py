@@ -3,7 +3,6 @@ from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common import ArtifactType
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.compiling.compiler import link_executable_using_cache
 from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
@@ -32,11 +31,9 @@ def link_main_executable(file_system: FileSystem,
     artifact_identifier           = artifact_manifest.get_artifact_identifier()
 
     (resources['main_executable'], 
-     resources['main_executable_symbols_table']) = link_executable_using_cache(file_system,
-                                                                               project_structure,
-                                                                               compiler,
-                                                                               artifact_identifier,
-                                                                               main_objects,
-                                                                               external_libraries,
-                                                                               external_libraries_interfaces,
-                                                                               cache)
+     resources['main_executable_symbols_table']) = compiler.link_executable_using_cache(project_structure,
+                                                                                        artifact_identifier,
+                                                                                        main_objects,
+                                                                                        external_libraries,
+                                                                                        external_libraries_interfaces,
+                                                                                        cache)

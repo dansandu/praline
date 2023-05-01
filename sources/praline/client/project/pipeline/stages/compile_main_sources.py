@@ -2,7 +2,6 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.compiling.compiler import compile_using_cache
 from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
@@ -20,29 +19,25 @@ def compile_main_sources(file_system: FileSystem,
                          remote_proxy: RemoteProxy,
                          progressBarSupplier: ProgressBarSupplier):    
     if resources.activation == 0:
-        headers           = resources['formatted_headers']
+        headers           = resources['formatted_headers'] + resources['external_headers']
         sources           = resources['formatted_main_sources']
         executable_source = resources['formatted_main_executable_source']
     elif resources.activation == 1:
-        headers           = resources['headers']
+        headers           = resources['headers'] + resources['external_headers']
         sources           = resources['main_sources']
         executable_source = resources['main_executable_source']
 
     project_structure = resources['project_structure']
+    compiler          = configuration['compiler']
 
-    compiler = configuration['compiler']
-
-    yield_descriptor = compiler.get_yield_descriptor()
-
-    resources['main_objects'] = compile_using_cache(file_system,
-                                                    project_structure,
-                                                    compiler,
-                                                    headers,
-                                                    sources,
-                                                    cache,
-                                                    progressBarSupplier)
+    resources['main_objects'] = compiler.compile_using_cache(project_structure,
+                                                             headers,
+                                                             sources,
+                                                             cache,
+                                                             progressBarSupplier)
 
     if executable_source:
+        yield_descriptor = compiler.get_yield_descriptor()
         resources['main_executable_object'] = yield_descriptor.get_object(project_structure.sources_root, 
                                                                           project_structure.objects_root,
                                                                           executable_source)

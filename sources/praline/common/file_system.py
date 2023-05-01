@@ -12,6 +12,7 @@ import tarfile
 from logging import getLogger
 from typing import Any, IO, List, Dict
 
+
 logger = getLogger(__name__)
 
 
@@ -45,7 +46,11 @@ def common_path(paths: List[str]) -> str:
 
 class FileSystem:
     @trace
-    def execute(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False, add_to_env: Dict[str, str] = {}) -> None:
+    def execute(self, 
+                command: List[str], 
+                add_to_library_path: List[str] = [], 
+                interactive: bool = False, 
+                add_to_env: Dict[str, str] = {}):
         environment_copy = dict(os.environ)
         if add_to_library_path:
             if sys.platform == 'linux' or sys.platform == 'darwin':
@@ -66,15 +71,28 @@ class FileSystem:
             process.wait()
             return process.returncode
         else:
-            process = subprocess.Popen(command, shell=(os.name == 'nt'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment_copy)
+            process = subprocess.Popen(command, 
+                                       shell=(os.name == 'nt'), 
+                                       stdout=subprocess.PIPE, 
+                                       stderr=subprocess.PIPE, 
+                                       env=environment_copy)
             stdout, stderror = process.communicate()
             return process.returncode, stdout, stderror
 
-    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False, add_to_env: Dict[str, str] = {}) -> None:
+    def execute_and_fail_on_bad_return(self, 
+                                       command: List[str], 
+                                       add_to_library_path: List[str] = [], 
+                                       interactive: bool = False, 
+                                       add_to_env: Dict[str, str] = {}):
         if interactive:
-            status = self.execute(command, add_to_library_path=add_to_library_path, interactive=True, add_to_env=add_to_env)
+            status = self.execute(command, 
+                                  add_to_library_path=add_to_library_path, 
+                                  interactive=True, 
+                                  add_to_env=add_to_env)
         else:
-            status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path, add_to_env=add_to_env)
+            status, stdout, stderror = self.execute(command, 
+                                                    add_to_library_path=add_to_library_path, 
+                                                    add_to_env=add_to_env)
             if stdout:
                 logger.info(stdout.decode())
             if stderror:
