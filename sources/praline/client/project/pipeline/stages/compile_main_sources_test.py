@@ -1,9 +1,12 @@
+from praline.client.project.pipeline.stages.stage import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_main_sources import compile_main_sources
 from praline.common import ProjectStructure
 from praline.common.compiling.compiler import IYieldDescriptor
 from praline.common.progress_bar import ProgressBarSupplier
+from praline.common.testing import project_structure_dummy
 
+from os.path import join
 from unittest import TestCase
 from typing import Any, Dict, List
 
@@ -32,135 +35,130 @@ class CompilerWrapperMock:
                             sources: List[str],
                             cache: Dict[str, Any],
                             progress_bar_supplier: ProgressBarSupplier) -> List[str]:
-        self.test_case.assertEqual(set(headers), set(self.expected_headers))
+        self.test_case.assertCountEqual(headers, self.expected_headers)
         return [self.sources_to_objects[source] for source in sources]
 
 
 class CompileMainSourcesStageTest(TestCase):
-    def setUp(self):
-        self.project_structure = ProjectStructure(
-            project_directory='project',
-            resources_root='project/resources',
-            sources_root='project/sources',
-            target_root='project/target',
-            objects_root='project/target/objects',
-            executables_root='project/target/executables',
-            libraries_root='project/target/libraries',
-            libraries_interfaces_root='project/target/libraries_interfaces',
-            symbols_tables_root='project/target/symbols_tables',
-            external_root='project/target/external',
-            external_packages_root='project/target/external/packages',
-            external_headers_root='project/target/external/headers',
-            external_executables_root='project/target/external/executables',
-            external_libraries_root='project/target/external/libraries',
-            external_libraries_interfaces_root='project/target/external/libraries_interfaces',
-            external_symbols_tables_root='project/target/external/symbols_tables'
-        )
-
     def test_with_formatted_executable(self):
+        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
+        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.cpp')
+        object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
+
+        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
+        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.cpp')
+        object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
+
+        header_c = join(project_structure_dummy.external_headers_root, 'org', 'art', 'c.hpp')
+
+        source_executable = join(project_structure_dummy.sources_root, 'org', 'art', 'executable.cpp')
+        object_executable = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
+
         resources = StageResources(
             stage='compile_main_sources',
             activation=0,
             resources={
-                'project_structure': self.project_structure,
+                'project_structure': project_structure_dummy,
                 'formatted_headers': [
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
+                    header_a,
+                    header_b,
                 ],
                 'formatted_main_sources': [
-                    'project/sources/org/art/a.cpp',
-                    'project/sources/org/art/b.cpp',
-                    'project/sources/org/art/executable.cpp',
+                    source_a,
+                    source_b,
+                    source_executable,
                 ],
-                'formatted_main_executable_source': 'project/sources/org/art/executable.cpp',
+                'formatted_main_executable_source': source_executable,
                 'external_headers': [
-                    'project/target/external/headers/org/art/c.hpp'
+                    header_c,
                 ]
             },
             constrained_output=['main_objects', 'main_executable_object']
         )
 
-        configuration = {
-            'compiler': CompilerWrapperMock(
-                self,
-                expected_headers=[
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
-                    'project/target/external/headers/org/art/c.hpp'
-                ],
-                sources_to_objects={
-                    'project/sources/org/art/a.cpp': 'project/target/objects/org-art-a.obj',
-                    'project/sources/org/art/b.cpp': 'project/target/objects/org-art-b.obj',
-                    'project/sources/org/art/executable.cpp': 'project/target/objects/org-art-executable.obj',
-                }
-            )
-        }
-        
-        compile_main_sources(None, resources, None, None, configuration, None, None)
+        compiler = CompilerWrapperMock(
+            self,
+            expected_headers=[
+                header_a,
+                header_b,
+                header_c,
+            ],
+            sources_to_objects={
+                source_a: object_a,
+                source_b: object_b,
+                source_executable: object_executable,
+            }
+        )
 
-        self.assertIn('main_objects', resources)
+        stage_arguments = StageArguments(compiler=compiler, resources=resources)
+        
+        compile_main_sources(stage_arguments)
 
         expected_objects = {
-            'project/target/objects/org-art-a.obj',
-            'project/target/objects/org-art-b.obj',
-            'project/target/objects/org-art-executable.obj',
+            object_a,
+            object_b,
+            object_executable,
         }
 
-        self.assertEqual(set(resources['main_objects']), expected_objects)
+        self.assertCountEqual(resources['main_objects'], expected_objects)
 
-        self.assertIn('main_executable_object', resources)
-
-        self.assertEqual(resources['main_executable_object'], 'project/target/objects/org-art-executable.obj')
+        self.assertEqual(resources['main_executable_object'], object_executable)
 
     def test_without_executable(self):
+        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
+        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.cpp')
+        object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
+
+        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
+        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.cpp')
+        object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
+
+        header_c = join(project_structure_dummy.external_headers_root, 'org', 'art', 'c.hpp')
+
         resources = StageResources(
             stage='compile_main_sources',
             activation=1,
             resources={
-                'project_structure': self.project_structure,
+                'project_structure': project_structure_dummy,
                 'headers': [
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
+                    header_a,
+                    header_b,
                 ],
                 'main_sources': [
-                    'project/sources/org/art/a.cpp',
-                    'project/sources/org/art/b.cpp',
+                    source_a,
+                    source_b,
                 ],
                 'main_executable_source': None,
                 'external_headers': [
-                    'project/target/external/headers/org/art/c.hpp'
+                    header_c,
                 ]
             },
             constrained_output=['main_objects', 'main_executable_object']
         )
 
-        configuration = {
-            'compiler': CompilerWrapperMock(
-                self,
-                expected_headers=[
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
-                    'project/target/external/headers/org/art/c.hpp'
-                ],
-                sources_to_objects={
-                    'project/sources/org/art/a.cpp': 'project/target/objects/org-art-a.obj',
-                    'project/sources/org/art/b.cpp': 'project/target/objects/org-art-b.obj',
-                }
-            )
-        }
+        compiler = CompilerWrapperMock(
+            self,
+            expected_headers=[
+                header_a,
+                header_b,
+                header_c,
+            ],
+            sources_to_objects={
+                source_a: object_a,
+                source_b: object_b,
+            }
+        )
         
-        compile_main_sources(None, resources, None, None, configuration, None, None)
+        stage_arguments = StageArguments(compiler=compiler, resources=resources)
 
-        self.assertIn('main_objects', resources)
+        compile_main_sources(stage_arguments)
 
         expected_objects = {
-            'project/target/objects/org-art-a.obj',
-            'project/target/objects/org-art-b.obj',
+            object_a,
+            object_b,
         }
 
-        self.assertEqual(set(resources['main_objects']), expected_objects)
-
-        self.assertIn('main_executable_object', resources)
+        self.assertCountEqual(resources['main_objects'], expected_objects)
 
         self.assertEqual(resources['main_executable_object'], None)
  

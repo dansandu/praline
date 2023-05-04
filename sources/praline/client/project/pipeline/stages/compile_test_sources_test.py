@@ -1,11 +1,14 @@
+from praline.client.project.pipeline.stages.stage import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_test_sources import compile_test_sources
 from praline.common import ProjectStructure
 from praline.common.compiling.compiler import IYieldDescriptor
 from praline.common.progress_bar import ProgressBarSupplier
+from praline.common.testing import project_structure_dummy
 
-from unittest import TestCase
+from os.path import join
 from typing import Any, Dict, List
+from unittest import TestCase
 
 
 class YieldDescriptorMock:
@@ -37,116 +40,112 @@ class CompilerWrapperMock:
 
 
 class CompileTestSourcesStageTest(TestCase):
-    def setUp(self):
-        self.project_structure = ProjectStructure(
-            project_directory='project',
-            resources_root='project/resources',
-            sources_root='project/sources',
-            target_root='project/target',
-            objects_root='project/target/objects',
-            executables_root='project/target/executables',
-            libraries_root='project/target/libraries',
-            libraries_interfaces_root='project/target/libraries_interfaces',
-            symbols_tables_root='project/target/symbols_tables',
-            external_root='project/target/external',
-            external_packages_root='project/target/external/packages',
-            external_headers_root='project/target/external/headers',
-            external_executables_root='project/target/external/executables',
-            external_libraries_root='project/target/external/libraries',
-            external_libraries_interfaces_root='project/target/external/libraries_interfaces',
-            external_symbols_tables_root='project/target/external/symbols_tables'
-        )
-
     def test_with_formatted_sources(self):
+        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
+        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.test.cpp')
+        object_a = join(project_structure_dummy.objects_root, 'org-art-a.test.obj')
+
+        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
+        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.test.cpp')
+        object_b = join(project_structure_dummy.objects_root, 'org-art-b.test.obj')
+
+        header_c = join(project_structure_dummy.sources_root, 'org', 'art', 'c.hpp')
+
         resources = StageResources(
             stage='compile_test_sources',
             activation=0,
             resources={
-                'project_structure': self.project_structure,
+                'project_structure': project_structure_dummy,
                 'formatted_headers': [
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
+                    header_a,
+                    header_b,
                 ],
                 'formatted_test_sources': [
-                    'project/sources/org/art/a.test.cpp',
-                    'project/sources/org/art/b.test.cpp',
+                    source_a,
+                    source_b,
                 ],
                 'external_headers': [
-                    'project/target/external/headers/org/art/c.hpp'
+                    header_c,
                 ]
             },
             constrained_output=['test_objects']
         )
 
-        configuration = {
-            'compiler': CompilerWrapperMock(
-                self,
-                expected_headers=[
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
-                    'project/target/external/headers/org/art/c.hpp'
-                ],
-                sources_to_objects={
-                    'project/sources/org/art/a.test.cpp': 'project/target/objects/org-art-a.test.obj',
-                    'project/sources/org/art/b.test.cpp': 'project/target/objects/org-art-b.test.obj',
-                }
-            )
-        }
-        
-        compile_test_sources(None, resources, None, None, configuration, None, None)
+        compiler = CompilerWrapperMock(
+            self,
+            expected_headers=[
+                header_a,
+                header_b,
+                header_c,
+            ],
+            sources_to_objects={
+                source_a: object_a,
+                source_b: object_b,
+            }
+        )
 
-        self.assertIn('test_objects', resources)
+        stage_arguments = StageArguments(compiler=compiler, resources=resources)
+        
+        compile_test_sources(stage_arguments)
 
         expected_objects = {
-            'project/target/objects/org-art-a.test.obj',
-            'project/target/objects/org-art-b.test.obj',
+            object_a,
+            object_b,
         }
 
         self.assertEqual(set(resources['test_objects']), expected_objects)
 
     def test_without_formatted_sources(self):
+        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
+        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.test.cpp')
+        object_a = join(project_structure_dummy.objects_root, 'org-art-a.test.obj')
+
+        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
+        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.test.cpp')
+        object_b = join(project_structure_dummy.objects_root, 'org-art-b.test.obj')
+
+        header_c = join(project_structure_dummy.sources_root, 'org', 'art', 'c.hpp')
+
         resources = StageResources(
             stage='compile_test_sources',
             activation=1,
             resources={
-                'project_structure': self.project_structure,
+                'project_structure': project_structure_dummy,
                 'headers': [
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
+                    header_a,
+                    header_b,
                 ],
                 'test_sources': [
-                    'project/sources/org/art/a.test.cpp',
-                    'project/sources/org/art/b.test.cpp',
+                    source_a,
+                    source_b,
                 ],
                 'external_headers': [
-                    'project/target/external/headers/org/art/c.hpp'
+                    header_c,
                 ]
             },
             constrained_output=['test_objects']
         )
 
-        configuration = {
-            'compiler': CompilerWrapperMock(
-                self,
-                expected_headers=[
-                    'project/sources/org/art/a.hpp',
-                    'project/sources/org/art/b.hpp',
-                    'project/target/external/headers/org/art/c.hpp'
-                ],
-                sources_to_objects={
-                    'project/sources/org/art/a.test.cpp': 'project/target/objects/org-art-a.test.obj',
-                    'project/sources/org/art/b.test.cpp': 'project/target/objects/org-art-b.test.obj',
-                }
-            )
-        }
-        
-        compile_test_sources(None, resources, None, None, configuration, None, None)
+        compiler = CompilerWrapperMock(
+            self,
+            expected_headers=[
+                header_a,
+                header_b,
+                header_c,
+            ],
+            sources_to_objects={
+                source_a: object_a,
+                source_b: object_b,
+            }
+        )
 
-        self.assertIn('test_objects', resources)
+        stage_arguments = StageArguments(compiler=compiler, resources=resources)
+        
+        compile_test_sources(stage_arguments)
 
         expected_objects = {
-            'project/target/objects/org-art-a.test.obj',
-            'project/target/objects/org-art-b.test.obj',
+            object_a,
+            object_b,
         }
 
-        self.assertEqual(set(resources['test_objects']), expected_objects)
+        self.assertCountEqual(resources['test_objects'], expected_objects)

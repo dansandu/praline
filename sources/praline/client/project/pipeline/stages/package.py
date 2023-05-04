@@ -1,11 +1,6 @@
-from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import stage
+from praline.client.project.pipeline.stages.stage import StageArguments, stage
 from praline.common.package import manifest_file_name, pack, write_artifact_manifest
-from praline.client.repository.remote_proxy import RemoteProxy
-from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem, join, relative_path
-
-from typing import Any, Dict
+from praline.common.file_system import join, relative_path
 
 
 @stage(requirements=[['project_structure', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table', 'test_results'],
@@ -21,19 +16,15 @@ from typing import Any, Dict
                      ['project_structure', 'resources',           'headers', 'test_results'],
                      ['project_structure', 'resources',           'headers']],
        output=['package'], exposed=True)
-def package(file_system: FileSystem, 
-            resources: StageResources, 
-            cache: Dict[str, Any], 
-            program_arguments: Dict[str, Any], 
-            configuration: Dict[str, Any], 
-            remote_proxy: RemoteProxy,
-            progressBarSupplier: ProgressBarSupplier):
-    artifact_manifest  = configuration['artifact_manifest']
+def package(arguments: StageArguments):
+    file_system       = arguments.file_system
+    artifact_manifest = arguments.artifact_manifest
+    resources         = arguments.resources
+
     project_structure  = resources['project_structure']
-    resource_files     = resources['resources']
-    resources_root     = project_structure.resources_root
-    headers_root       = project_structure.sources_root
-    target_root        = join(project_structure.project_directory, 'target')
+    project_root       = project_structure.project_directory
+    sources_root       = project_structure.sources_root
+    target_root        = project_structure.target_root
     manifest_file_path = join(target_root, manifest_file_name)
 
     write_artifact_manifest(file_system, manifest_file_path, artifact_manifest)
@@ -43,9 +34,9 @@ def package(file_system: FileSystem,
     else:
         headers = resources['headers']
 
-    package_files = [(path, join('resources', relative_path(path, resources_root))) for path in resource_files]
+    package_files = [(path, relative_path(path, project_root)) for path in resources['resources']]
 
-    package_files.extend((path, join('headers', relative_path(path, headers_root))) for path in headers)
+    package_files.extend((path, join('headers', relative_path(path, sources_root))) for path in headers)
 
     package_files.append((manifest_file_path, manifest_file_name))
 
@@ -66,13 +57,15 @@ def package(file_system: FileSystem,
         package_files.append((main_library, relative_path(main_library, target_root)))
 
         if main_library_interface:
-            package_files.append((main_library_interface, relative_path(main_library_interface, target_root)))
+            package_files.append((main_library_interface, 
+                                  relative_path(main_library_interface, target_root)))
         if main_library_symbols_table:
             package_files.append((main_library_symbols_table,
                                   relative_path(main_library_symbols_table, target_root)))
     
     package_path = join(project_structure.external_packages_root, 
                         artifact_manifest.get_package_file_name_and_instantiate_snapshot())
+
     pack(file_system, package_path, package_files)
 
     resources['package'] = package_path

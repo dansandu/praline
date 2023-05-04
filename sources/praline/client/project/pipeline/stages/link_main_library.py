@@ -1,16 +1,13 @@
-from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.stage import stage
-from praline.client.repository.remote_proxy import RemoteProxy
+from praline.client.project.pipeline.stages.stage import StageArguments, StagePredicateArguments, stage
 from praline.common import ArtifactType
-from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem, join
-from typing import Any, Dict
+from praline.common.file_system import join
 
 
-def has_non_executable_sources(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
-    sources_root = join(file_system.get_working_directory(), 'sources')
-    files        = file_system.files_in_directory(sources_root)
-    return (configuration['artifact_manifest'].artifact_type == ArtifactType.library and 
+def has_non_executable_sources(arguments: StagePredicateArguments):
+    sources_root = join(arguments.file_system.get_working_directory(), 'sources')
+    files        = arguments.file_system.files_in_directory(sources_root)
+    return (arguments.artifact_manifest.artifact_type == ArtifactType.library and 
             any(f.endswith('.cpp') and not f.endswith('.test.cpp') for f in files))
 
 
@@ -18,15 +15,12 @@ def has_non_executable_sources(file_system: FileSystem, program_arguments: Dict[
        output=['main_library', 'main_library_interface', 'main_library_symbols_table'],
        predicate=has_non_executable_sources, 
        cacheable=True)
-def link_main_library(file_system: FileSystem, 
-                      resources: StageResources, 
-                      cache: Dict[str, Any], 
-                      program_arguments: Dict[str, Any], 
-                      configuration: Dict[str, Any], 
-                      remote_proxy: RemoteProxy,
-                      progressBarSupplier: ProgressBarSupplier):
-    artifact_manifest             = configuration['artifact_manifest']
-    compiler                      = configuration['compiler']
+def link_main_library(arguments: StageArguments):
+    artifact_manifest = arguments.artifact_manifest
+    compiler          = arguments.compiler
+    resources         = arguments.resources
+    cache             = arguments.cache
+
     project_structure             = resources['project_structure']
     main_objects                  = resources['main_objects']
     external_libraries            = resources['external_libraries']

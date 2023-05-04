@@ -1,15 +1,17 @@
-from os.path import normpath
 from praline.client.project.pipeline.stages.setup_project import setup_project, IllformedProjectError
+from praline.client.project.pipeline.stages.stage import StageArguments
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             Compiler, ExportedSymbols, Mode, Platform)
+from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
+
+from os.path import join
 from unittest import TestCase
 
 
 class SetupProjectStageTest(TestCase):
     def setUp(self):
-        self.configuration = {
-            'artifact_manifest': ArtifactManifest(organization='my_organization',
+        self.artifact_manifest = ArtifactManifest(organization='my_organization',
                                                   artifact='my_artifact',
                                                   version=ArtifactVersion.from_string('0.0.0'),
                                                   mode=Mode.debug,
@@ -19,110 +21,95 @@ class SetupProjectStageTest(TestCase):
                                                   exported_symbols=ExportedSymbols.explicit,
                                                   artifact_type=ArtifactType.executable,
                                                   artifact_logging_level=ArtifactLoggingLevel.debug,
-                                                  dependencies=[]) 
-        }
+                                                  dependencies=[])
+        
+        self.resources_full = join('project', 'resources', 'my_organization', 'my_artifact')
+
+        self.sources_full = join('project', 'sources', 'my_organization', 'my_artifact')
 
     def test_project_setup(self):
         file_system = FileSystemMock(
             directories={
-                'my/project',
+                'project',
             },
-            working_directory='my/project'
+            working_directory='project'
         )
 
         resources = {}
 
-        setup_project(file_system, resources, None, None, self.configuration, None, None)
+        stage_arguments = StageArguments(file_system=file_system, 
+                                         artifact_manifest=self.artifact_manifest, 
+                                         resources=resources)
 
-        expected_directories = {
-            'my/project/resources/my_organization/my_artifact',
-            'my/project/sources/my_organization/my_artifact',
-            'my/project/target/objects',
-            'my/project/target/executables',
-            'my/project/target/libraries',
-            'my/project/target/libraries_interfaces',
-            'my/project/target/symbols_tables',
-            'my/project/target/external/packages',
-            'my/project/target/external/headers',
-            'my/project/target/external/executables',
-            'my/project/target/external/libraries',
-            'my/project/target/external/libraries_interfaces',
-            'my/project/target/external/symbols_tables',
-        }
-
-        self.assertEqual(file_system.directories, {normpath(p) for p in expected_directories})
-
-        self.assertIn('project_structure', resources)
-
-        expected_project_structure = {
-            'project_directory': 'my/project',
-            'resources_root': 'my/project/resources',
-            'sources_root': 'my/project/sources',
-            'objects_root': 'my/project/target/objects',
-            'executables_root': 'my/project/target/executables',
-            'libraries_root': 'my/project/target/libraries',
-            'libraries_interfaces_root': 'my/project/target/libraries_interfaces',
-            'symbols_tables_root': 'my/project/target/symbols_tables',
-            'external_root': 'my/project/target/external',
-            'external_packages_root': 'my/project/target/external/packages',
-            'external_headers_root': 'my/project/target/external/headers',
-            'external_executables_root': 'my/project/target/external/executables',
-            'external_libraries_root': 'my/project/target/external/libraries',
-            'external_libraries_interfaces_root': 'my/project/target/external/libraries_interfaces',
-            'external_symbols_tables_root': 'my/project/target/external/symbols_tables',
-        }
+        setup_project(stage_arguments)
 
         project_structure = resources['project_structure']
 
-        for key, path in expected_project_structure.items():
-            self.assertEqual(normpath(getattr(project_structure, key)), normpath(path))
+        self.assertEqual(project_structure, project_structure_dummy)
+
+        self.assertTrue(file_system.is_directory(self.resources_full))
+
+        self.assertTrue(file_system.is_directory(self.sources_full))
+
+        for path in vars(project_structure_dummy).values():
+            self.assertTrue(file_system.is_directory(path))
 
     def test_invalid_project_resources(self):        
         file_system = FileSystemMock(
             directories={
-                'my/project/resources/my_organization/my_artifact',
-                'my/project/sources/my_organization/my_artifact'
+                self.resources_full,
+                self.sources_full,
             },
             files={
-                'my/project/resources/my_organization/somefile': b''
+                join('project', 'resources', 'my_organization', 'somefile'): b''
             },
-            working_directory='my/project'
+            working_directory='project'
         )
 
         resources = {}
 
-        self.assertRaises(IllformedProjectError, 
-                          setup_project, file_system, resources, None, None, self.configuration, None, None)
+        stage_arguments = StageArguments(file_system=file_system, 
+                                         artifact_manifest=self.artifact_manifest, 
+                                         resources=resources)
+
+        self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
 
     def test_invalid_project_sources(self):
         file_system = FileSystemMock(
             directories={
-                'my/project/resources/my_organization/my_artifact',
-                'my/project/sources/my_organization/my_artifact'
+                self.resources_full,
+                self.sources_full,
             }, 
             files={
-                'my/project/sources/somefile': b''
+                join('project', 'sources', 'somefile'): b''
             },
-            working_directory='my/project'
+            working_directory='project'
         )
 
         resources = {}
 
-        self.assertRaises(IllformedProjectError, 
-                          setup_project, file_system, resources, None, None, self.configuration, None, None)
+        stage_arguments = StageArguments(file_system=file_system, 
+                                         artifact_manifest=self.artifact_manifest, 
+                                         resources=resources)
+
+        self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
 
     def test_valid_project_with_hidden_file(self):
         file_system = FileSystemMock(
             directories={
-                'my/project/resources/my_organization/my_artifact',
-                'my/project/sources/my_organization/my_artifact'
+                self.resources_full,
+                self.sources_full,
             },
             files={
-                'my/project/sources/.hidden': b''
+                join('project', 'sources', '.hidden'): b'',
             },
-            working_directory='my/project'
+            working_directory='project'
         )
 
         resources = {}
 
-        setup_project(file_system, resources, None, None, self.configuration, None, None)
+        stage_arguments = StageArguments(file_system=file_system, 
+                                         artifact_manifest=self.artifact_manifest, 
+                                         resources=resources)
+
+        setup_project(stage_arguments)

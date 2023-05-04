@@ -1,10 +1,6 @@
-from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import stage
-from praline.client.repository.remote_proxy import RemoteProxy
+from praline.client.project.pipeline.stages.stage import StageArguments, stage
 from praline.common import ArtifactType
-from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem, join
-from typing import Any, Dict
+from praline.common.file_system import join
 
 
 main_executable_contents = """\
@@ -23,14 +19,12 @@ class ExecutableFileWithLibraryError(Exception):
 
 
 @stage(requirements=[['project_structure']], output=['main_sources', 'main_executable_source'])
-def load_main_sources(file_system: FileSystem, 
-                      resources: StageResources, 
-                      cache: Dict[str, Any], 
-                      program_arguments: Dict[str, Any], 
-                      configuration: Dict[str, Any], 
-                      remote_proxy: RemoteProxy,
-                      progressBarSupplier: ProgressBarSupplier):
-    artifact_manifest = configuration['artifact_manifest']
+def load_main_sources(arguments: StageArguments):
+    file_system       = arguments.file_system
+    artifact_manifest = arguments.artifact_manifest
+    resources         = arguments.resources
+
+    
     project_structure = resources['project_structure']
     main_executable_source = join(project_structure.sources_root, 
                                   artifact_manifest.organization, 

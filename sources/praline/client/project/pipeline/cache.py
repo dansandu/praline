@@ -1,6 +1,7 @@
+from praline.common.file_system import FileSystem
+
 import pickle
 from logging import getLogger
-from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
 

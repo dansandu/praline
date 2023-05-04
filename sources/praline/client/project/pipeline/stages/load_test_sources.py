@@ -1,8 +1,6 @@
-from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import stage
-from praline.client.repository.remote_proxy import RemoteProxy
-from praline.common.progress_bar import ProgressBarSupplier
+from praline.client.project.pipeline.stages.stage import StageArguments, StagePredicateArguments, stage
 from praline.common.file_system import FileSystem, join
+
 from typing import Any, Dict
 
 
@@ -89,25 +87,21 @@ int main(const int argumentsCount, const char* const* const arguments)
 """
 
 
-def can_run_unit_tests(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
-    return (not program_arguments['global']['skip_unit_tests'] and 
-            any(f for f in file_system.files_in_directory('sources') if f.endswith('.test.cpp')))
+def can_run_unit_tests(arguments: StagePredicateArguments):
+    return (not arguments.program_arguments['global']['skip_unit_tests'] and 
+            any(f for f in arguments.file_system.files_in_directory('sources') if f.endswith('.test.cpp')))
 
 
 @stage(requirements=[['project_structure']], 
        output=['test_sources'], 
        predicate=can_run_unit_tests)
-def load_test_sources(file_system: FileSystem, 
-                      resources: StageResources, 
-                      cache: Dict[str, Any], 
-                      program_arguments: Dict[str, Any], 
-                      configuration: Dict[str, Any], 
-                      remote_proxy: RemoteProxy,
-                      progressBarSupplier: ProgressBarSupplier):
-    artifact_manifest = configuration['artifact_manifest']
+def load_test_sources(arguments: StageArguments):
+    file_system       = arguments.file_system
+    artifact_manifest = arguments.artifact_manifest
+    resources         = arguments.resources
+
     project_structure = resources['project_structure']
     sources_root      = project_structure.sources_root
-
     test_executable_source = join(sources_root,
                                   artifact_manifest.organization,
                                   artifact_manifest.artifact, 

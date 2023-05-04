@@ -1,29 +1,26 @@
-from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import stage
-from praline.client.repository.remote_proxy import RemoteProxy
+from praline.client.project.pipeline.stages.stage import StageArguments, StagePredicateArguments, stage
 from praline.common import ArtifactType
-from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem
-from typing import Any, Dict
+
+from os.path import join
 
 
-def has_executable(file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any]):
-    return configuration['artifact_manifest'].artifact_type == ArtifactType.executable
+def has_executable(arguments: StagePredicateArguments):
+    sources_root = join(arguments.file_system.get_working_directory(), 'sources')
+    files        = arguments.file_system.files_in_directory(sources_root)
+    return (arguments.artifact_manifest.artifact_type == ArtifactType.executable and 
+            any(f.endswith('.cpp') and not f.endswith('.test.cpp') for f in files))
 
 
 @stage(requirements=[['project_structure', 'main_objects', 'external_libraries', 'external_libraries_interfaces']],
        output=['main_executable', 'main_executable_symbols_table'], 
        predicate=has_executable, 
        cacheable=True)
-def link_main_executable(file_system: FileSystem, 
-                         resources: StageResources, 
-                         cache: Dict[str, Any], 
-                         program_arguments: Dict[str, Any], 
-                         configuration: Dict[str, Any], 
-                         remote_proxy: RemoteProxy,
-                         progressBarSupplier: ProgressBarSupplier):
-    artifact_manifest             = configuration['artifact_manifest']
-    compiler                      = configuration['compiler']
+def link_main_executable(arguments: StageArguments):
+    artifact_manifest = arguments.artifact_manifest
+    compiler          = arguments.compiler
+    resources         = arguments.resources
+    cache             = arguments.cache
+    
     project_structure             = resources['project_structure']
     main_objects                  = resources['main_objects']
     external_libraries            = resources['external_libraries']

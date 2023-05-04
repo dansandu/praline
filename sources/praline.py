@@ -35,15 +35,14 @@ if __name__ == '__main__':
 
         (artifact_manifest, compiler) = get_artifact_manifest_and_compiler(file_system, program_arguments, pralinefile)
         
-        configuration['artifact_manifest'] = artifact_manifest
-        configuration['compiler']          = compiler
-
         stage = program_arguments['global']['running_stage']
 
-        invoke_stage(file_system, 
-                     configuration, 
-                     program_arguments, 
-                     remote_proxy, 
+        invoke_stage(file_system,
+                     configuration,
+                     program_arguments,
+                     remote_proxy,
+                     artifact_manifest,
+                     compiler,
                      stage, 
                      registered_stages)
 

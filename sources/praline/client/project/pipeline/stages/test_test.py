@@ -1,19 +1,20 @@
 from praline.client.project.pipeline.stages.test import test
-from praline.common import ProjectStructure
+from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
+from os.path import join
 from typing import Dict, List
 from unittest import TestCase
 
 
 class TestStageTest(TestCase):
     def test_main(self):
-        executables_root        = 'project/target/executables'
-        external_libraries_root = 'project/target/external/libraries'
-
-        test_executable        = 'project/target/executables/test.exe'
-        test_program_arguments = ['test', 'program', 'arguments']
+        executables_root        = join('project', 'target', 'executables')
+        external_libraries_root = join('project', 'target', 'external', 'libraries')
+        test_executable         = join('project', 'target', 'executables', 'test.exe')
+        test_program_arguments  = ['test', 'program', 'arguments']
 
         header_length = 101
 
@@ -39,24 +40,7 @@ class TestStageTest(TestCase):
         )
 
         resources = {
-            'project_structure': ProjectStructure(
-                project_directory='project',
-                resources_root='project/resources',
-                sources_root='project/sources',
-                target_root='project/target',
-                objects_root='project/target/objects',
-                executables_root=executables_root,
-                libraries_root='project/target/libraries',
-                libraries_interfaces_root='project/target/libraries_interfaces',
-                symbols_tables_root='project/target/symbols_tables',
-                external_root='project/target/external',
-                external_packages_root='project/target/external/packages',
-                external_headers_root='project/target/external/headers',
-                external_executables_root='project/target/external/executables',
-                external_libraries_root=external_libraries_root,
-                external_libraries_interfaces_root='project/target/external/libraries_interfaces',
-                external_symbols_tables_root='project/target/external/symbols_tables'
-            ),
+            'project_structure': project_structure_dummy,
             'test_executable': test_executable
         }
 
@@ -68,6 +52,12 @@ class TestStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, 0, header_length)
 
-        test(file_system, resources, None, program_arguments, None, None, progress_bar_supplier)
+        stage_arguments = StageArguments(file_system=file_system, 
+                                         program_arguments=program_arguments, 
+                                         resources=resources,
+                                         progress_bar_supplier=progress_bar_supplier)
+        
+        test(stage_arguments)
 
-        self.assertIn('test_results', resources)
+        self.assertEqual(resources['test_results'], 'success')
+ 

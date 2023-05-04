@@ -1,10 +1,6 @@
-from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import stage
-from praline.client.repository.remote_proxy import RemoteProxy
+from praline.client.project.pipeline.stages.stage import StageArguments, stage
 from praline.common import ProjectStructure
-from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem, join
-from typing import Any, Dict
 
 
 class IllformedProjectError(Exception):
@@ -13,25 +9,23 @@ class IllformedProjectError(Exception):
 
 def check_unique(file_system: FileSystem, root: str, organization: str, artifact: str):
     if len(file_system.list_directory(root)) != 1:
-        raise IllformedProjectError(f"'{root}' directory must only contain the '{organization}' organization directory")
+        raise IllformedProjectError(
+            f"'{root}' directory must only contain the '{organization}' organization directory")
     if len(file_system.list_directory(join(root, organization))) != 1:
-        raise IllformedProjectError(f"'{join(root, organization)}' directory must only contain the '{artifact}' artifact directory")
+        raise IllformedProjectError(
+            f"'{join(root, organization)}' directory must only contain the '{artifact}'  artifact directory")
 
 
 @stage(output=['project_structure'])
-def setup_project(file_system: FileSystem, 
-                  resources: StageResources, 
-                  cache: Dict[str, Any], 
-                  program_arguments: Dict[str, Any], 
-                  configuration: Dict[str, Any], 
-                  remote_proxy: RemoteProxy,
-                  progressBarSupplier: ProgressBarSupplier):
-    
+def setup_project(arguments: StageArguments):
+    file_system       = arguments.file_system
+    artifact_manifest = arguments.artifact_manifest
+    resources         = arguments.resources
+
     project_directory = file_system.get_working_directory()
     target_root       = join(project_directory, 'target')
     external_root     = join(target_root, 'external')
 
-    artifact_manifest = configuration['artifact_manifest']
     organization      = artifact_manifest.organization
     artifact          = artifact_manifest.artifact
 
@@ -39,6 +33,7 @@ def setup_project(file_system: FileSystem,
     sources_root   = join(project_directory, 'sources')
 
     directories = {
+        'project_directory'         : project_directory,
         'resources_root'            : resources_root,
         'sources_root'              : sources_root,
         'target_root'               : target_root,
@@ -64,7 +59,5 @@ def setup_project(file_system: FileSystem,
 
     check_unique(file_system, resources_root, organization, artifact)
     check_unique(file_system, sources_root, organization, artifact)
-
-    directories['project_directory'] = project_directory
 
     resources['project_structure'] = ProjectStructure(**directories)

@@ -2,15 +2,16 @@ from praline.common.hashing import (DeltaItem, DeltaType, delta, hash_archive, h
                                     progression_resolution)
 from praline.common.testing.file_system_mock import ArchiveMock, FileSystemMock
 
+from os.path import join
 from unittest import TestCase
 
 
 class HashingTest(TestCase):
     def test_hash_file(self):
         directory   = 'my'
-        file_name   = 'my/file'
+        file_name   = join('my', 'file')
         binary      = b'secretvalue'
-        file_system = FileSystemMock({directory}, {file_name: binary})
+        file_system = FileSystemMock(directories={directory}, files={file_name: binary})
         hash_value  = hash_file(file_system, file_name)
 
         self.assertEqual(hash_value, '3734c3023573321d4f7912cfeda42eb8fa74d1c3fb2f8f08147ac66ee14a5bba')
@@ -26,15 +27,15 @@ class HashingTest(TestCase):
         file_system = FileSystemMock(
             files={
                 'archive.tar.gz': ArchiveMock({
-                    'path/to/file.txt': b'file-contents',
-                    'another_path/to/another_file.txt': b'another-file-contents'
+                    'file.txt': b'file-contents',
+                    'another_file.txt': b'another-file-contents'
                 })
             }
         )
 
         hash_code = hash_archive(file_system, 'archive.tar.gz')
 
-        self.assertEqual(hash_code, 'de53e4f349df70285ef8acc48135f45d842be16094fbcd09bcea189b2adfb2c8')
+        self.assertEqual(hash_code, '2e4da9991e3832d955681d3d99599f1e44dfe266e5709d4c9561b4a813902313')
 
     def test_delta(self):
         keys       = ['a', 'b', 'c']

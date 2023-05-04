@@ -1,4 +1,6 @@
-from praline.client.project.pipeline.stage_resources import StageResources, ResourceNotPresentError, ResourceOverriddenError, UndeclaredResourceSuppliedError
+from praline.client.project.pipeline.stage_resources import (StageResources, ResourceNotPresentError, 
+                                                             ResourceOverriddenError, UndeclaredResourceSuppliedError)
+
 from unittest import TestCase
 
 

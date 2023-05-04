@@ -7,7 +7,7 @@ from praline.common.package import (InvalidManifestFileError, get_matching_packa
 from praline.common.testing.file_system_mock import ArchiveMock, FileSystemMock
 
 import pickle
-from os.path import normpath
+from os.path import join
 from unittest import TestCase
 
 
@@ -38,7 +38,7 @@ class PackageTest(TestCase):
             ]
         )
 
-        manifest_file = normpath('target/.manifest')
+        manifest_file = join('target', '.manifest')
 
         write_artifact_manifest(file_system, manifest_file, expected_artifact_manifest)
 
@@ -68,7 +68,7 @@ class PackageTest(TestCase):
             ]
         )
 
-        package_path = normpath(f'target/{expected_artifact_manifest.get_package_file_name()}')
+        package_path = join('target', expected_artifact_manifest.get_package_file_name())
 
         file_system = FileSystemMock(
             files={
@@ -86,7 +86,7 @@ class PackageTest(TestCase):
         self.assertEqual(artifact_manifest, expected_artifact_manifest)
 
     def test_read_invalid_manifest_file(self):
-        package_path = normpath('target/org-art-x64-windows-msvc-release-2.13.9.tar.gz')
+        package_path = join('target', 'org-art-x64-windows-msvc-release-2.13.9.tar.gz')
 
         file_system = FileSystemMock(
             files={
@@ -141,9 +141,9 @@ class PackageTest(TestCase):
     def test_get_packages_from_directory(self):
         file_system = FileSystemMock(
             files={
-                'packages/org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz': b'',
-                'packages/org-art-x64-linux-gcc-debug-12.4.0.tar.gz': b'',
-                'packages/not-a-package.tar.gz': b'',
+                join('packages', 'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz'): b'',
+                join('packages', 'org-art-x64-linux-gcc-debug-12.4.0.tar.gz'): b'',
+                join('packages', 'not-a-package.tar.gz'): b'',
             },
             directories={'packages'}
         )
@@ -155,7 +155,7 @@ class PackageTest(TestCase):
             'org-art-x64-linux-gcc-debug-12.4.0.tar.gz'
         }
 
-        self.assertEqual(set(packages), expected_packages)
+        self.assertCountEqual(packages, expected_packages)
 
     def test_get_package_dependencies_from_archive(self):
         artifact_manifest = ArtifactManifest(
@@ -181,7 +181,7 @@ class PackageTest(TestCase):
             ]
         )
 
-        package_path = "packages/org-art-x64-linux-gcc-debug-7.5.2.tar.gz"
+        package_path = join('packages', 'org-art-x64-linux-gcc-debug-7.5.2.tar.gz')
 
         file_system = FileSystemMock(
             directories={
@@ -199,4 +199,4 @@ class PackageTest(TestCase):
             "org3-art3-x64-linux-gcc-debug-5.0.9.tar.gz",
         }
 
-        self.assertEqual(set(package_dependencies), expected_package_dependencies)
+        self.assertCountEqual(package_dependencies, expected_package_dependencies)
