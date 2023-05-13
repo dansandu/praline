@@ -1,3 +1,4 @@
+from praline.common import get_duplicates
 from praline.common.pralinefile.validation.validator import validator, PralinefileValidationError
 from typing import Any, Dict
 
@@ -6,12 +7,12 @@ from typing import Any, Dict
 def validate_unique_dependencies(pralinefile: Dict[str, Any]):
     dependencies = pralinefile.get('dependencies', [])
 
-    def artifacts_match(a, b):
-        return a.get('organization', '') == b.get('organization', '') and a.get('artifact', '') == b.get('artifact', '')
+    def duplicate_artifact(a, b):
+        return (a.get('organization', 'a') == b.get('organization', 'b') and 
+                a.get('artifact', 'a') == b.get('artifact', 'b'))
 
-    if any(artifacts_match(pralinefile, dependency) for dependency in dependencies):
-        raise PralinefileValidationError(f"pralinefile cannot have itself as a dependency")
+    if any(duplicate_artifact(pralinefile, dependency) for dependency in dependencies):
+        raise PralinefileValidationError(f"Pralinefile cannot have itself as a dependency")
     
-    duplicates = [(i, j) for i in range(len(dependencies)) for j in range(i + 1, len(dependencies)) if artifacts_match(dependencies[i], dependencies[j])]
-    for duplicate in duplicates:
-        raise PralinefileValidationError(f"pralinefile cannot have duplicate dependencies -- dependency {dependencies[duplicate[0]]} is in conflict with dependency {dependencies[duplicate[1]]}")
+    if get_duplicates(dependencies, lambda a, b: duplicate_artifact(a, b)):
+        raise PralinefileValidationError(f"Pralinefile cannot have duplicate dependencies")

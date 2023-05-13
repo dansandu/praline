@@ -1,39 +1,68 @@
-from os.path import normpath
 from praline.client.project.pipeline.stages.load_test_sources import load_test_sources, test_executable_contents
+from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
+                            Compiler, ExportedSymbols, Mode, Platform)
+from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
+
+from os.path import join
 from unittest import TestCase
 
 
-class LoadTestSourcesTest(TestCase):
+class LoadTestSourcesStageTest(TestCase):
     def test_load_test_sources(self):
-        file_system = FileSystemMock({'project/sources/org/art'}, {
-            'project/sources/org/art/math.hpp': b'',
-            'project/sources/org/art/math.cpp': b'',
-            'project/sources/org/art/math.test.cpp': b''
-        })
+        header_math = join('project', 'sources', 'org', 'art', 'math.hpp')
+        source_math = join('project', 'sources', 'org', 'art', 'math.cpp')
+        test_math   = join('project', 'sources', 'org', 'art', 'math.test.cpp')
+        test_main   = join('project', 'sources', 'org', 'art', 'executable.test.cpp')
+
+
+        file_system = FileSystemMock(
+            directories={
+                join('project', 'sources', 'org', 'art'),
+            },
+            files={
+                header_math: b'',
+                source_math: b'',
+                test_math: b'',
+            },
+            working_directory='project',
+        )
 
         resources = {
-            'test_sources_root': 'project/sources',
-            'pralinefile': {
-                'organization': 'org',
-                'artifact': 'art'
-            }
+            'project_structure': project_structure_dummy
         }
 
-        load_test_sources(file_system, resources, None, None, None, None, None)
+        artifact_manifest = ArtifactManifest(organization='org',
+                                             artifact='art',
+                                             version=ArtifactVersion.from_string('5.35.5.SNAPSHOT'),
+                                             mode=Mode.debug,
+                                             architecture=Architecture.arm,
+                                             platform=Platform.linux,
+                                             compiler=Compiler.gcc,
+                                             exported_symbols=ExportedSymbols.explicit,
+                                             artifact_type=ArtifactType.library,
+                                             artifact_logging_level=ArtifactLoggingLevel.debug,
+                                             dependencies=[])      
+        
+        stage_arguments = StageArguments(file_system=file_system, 
+                                         artifact_manifest=artifact_manifest, 
+                                         resources=resources)
+
+        load_test_sources(stage_arguments)
 
         expected_test_sources = {
-            'project/sources/org/art/math.test.cpp',
-            'project/sources/org/art/executable.test.cpp'
+            test_math,
+            test_main,
         }
 
-        self.assertEqual({normpath(p) for p in resources['test_sources']}, {normpath(p) for p in expected_test_sources})
+        self.assertCountEqual(resources['test_sources'], expected_test_sources)
 
         expected_files = {
-            'project/sources/org/art/math.hpp': b'',
-            'project/sources/org/art/math.cpp': b'',
-            'project/sources/org/art/math.test.cpp': b'',
-            'project/sources/org/art/executable.test.cpp': test_executable_contents.encode('utf-8')
+            header_math: b'',
+            source_math: b'',
+            test_math: b'',
+            test_main: test_executable_contents.encode('utf-8')
         }
 
-        self.assertEqual(file_system.files, {normpath(p): d for p, d in expected_files.items()})
+        self.assertEqual(file_system.files, expected_files)

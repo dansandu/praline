@@ -7,7 +7,7 @@ class ArtifactValidatorTest(TestCase):
     def test_valid_artifact(self):
         pralinefile = {
             'organization': 'candyco',
-            'artifact': 'my_artifact',
+            'artifact': 'my_artifact3',
             'version': '1.5.0'
         }
 

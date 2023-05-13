@@ -1,27 +1,42 @@
-from os.path import normpath
 from praline.client.project.pipeline.stages.load_resources import load_resources
+from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
+
+from os.path import join
 from unittest import TestCase
 
 
-class LoadResourcesTest(TestCase):
+class LoadResourcesStageTest(TestCase):
     def test_load_resources_stage(self):
-        file_system = FileSystemMock({
-            'project/resources/org/art',
-            'project/sources/org/art'
-        }, {
-            'project/resources/org/art/app.config': b'',
-            'project/resources/org/art/locale.rsx': b'',
-            'project/sources/org/art/main.cpp': b'',
-        })
+        app_config = join('project', 'resources', 'org', 'art', 'app.config')
+        locale     = join('project', 'resources', 'org', 'art', 'locale.rsx')
 
-        resources = {'resources_root': 'project/resources'}
+        file_system = FileSystemMock(
+            directories={
+                join('project', 'resources', 'org', 'art'),
+                join('project', 'sources', 'org', 'art'),
+            }, 
+            files={
+                app_config: b'',
+                locale: b'',
+                join('project', 'sources', 'org', 'art', 'math.cpp'): b'',
+            },
+            working_directory='project',
+        )
 
-        load_resources(file_system, resources, None, None, None, None, None)
-
-        expected_resources = {
-            'project/resources/org/art/app.config',
-            'project/resources/org/art/locale.rsx'
+        resources = {
+            'project_structure': project_structure_dummy,
         }
 
-        self.assertEqual({normpath(p) for p in resources['resources']}, {normpath(p) for p in expected_resources})
+        stage_arguments = StageArguments(file_system=file_system,
+                                         resources=resources)
+
+        load_resources(stage_arguments)
+
+        expected_resources = {
+            app_config,
+            locale,
+        }
+
+        self.assertCountEqual(resources['resources'], expected_resources)

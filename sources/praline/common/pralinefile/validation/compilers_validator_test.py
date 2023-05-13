@@ -44,7 +44,7 @@ class CompilersValidatorTest(TestCase):
         
         self.assertRaises(PralinefileValidationError, validate_compilers, pralinefile)
 
-    def test_valid_unset_compilers_field(self):
+    def test_valid_default_compilers(self):
         pralinefile = {
             'organization': 'candyco',
             'artifact': 'chocolaterie',

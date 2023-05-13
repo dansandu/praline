@@ -1,9 +1,10 @@
+from praline.common.file_system import FileSystem
+from praline.common.tracing import trace
+
 from dataclasses import dataclass
 from enum import Enum
 from hashlib import sha3_256
-from praline.common.file_system import FileSystem
-from praline.common.tracing import trace
-from typing import Any, Callable, Dict, List, Tuple, Generator
+from typing import Callable, Dict, Generator, List
 
 
 @trace
@@ -32,20 +33,8 @@ def hash_binary(data: bytes) -> str:
     return sha3_256(data).hexdigest()
 
 
-@trace
-def key_delta(keys: List[str], key_hasher: Callable[[str],str], cache: Dict[str, str]) -> Tuple[List[str], List[str], Dict[str, Any]]:
-    updated   = []
-    removed   = [key for key in cache if key not in keys]
-    new_cache = {}
-    for key in keys:
-        key_hash = key_hasher(key)
-        if key not in cache or cache[key] != key_hash:
-            updated.append(key)
-        new_cache[key] = key_hash
-    return (updated, removed, new_cache)
-
-
 class DeltaType(Enum):
+    Added    = 0
     Modified = 1
     UpToDate = 2
     Removed  = 3
@@ -58,23 +47,28 @@ class DeltaItem:
 
 
 @trace
-def delta(keys: List[str], key_hasher: Callable[[str],str], cache: Dict[str, str], new_cache: Dict[str, str]) -> Generator[DeltaItem, None, None]:
+def delta(keys: List[str], 
+          key_hasher: Callable[[str],str], 
+          cache: Dict[str, str], 
+          new_cache: Dict[str, str]) -> Generator[DeltaItem, None, None]:
     for key in cache:
         if key not in keys:
             yield DeltaItem(key, DeltaType.Removed)
     
     for key in keys:
         new_cache[key] = key_hash = key_hasher(key)
-        if key not in cache or cache[key] != key_hash:
+        if key not in cache:
+            yield DeltaItem(key, DeltaType.Added)
+        elif cache[key] != key_hash:
             yield DeltaItem(key, DeltaType.Modified)
         else:
             yield DeltaItem(key, DeltaType.UpToDate)
 
 
 def progression_resolution(keys: List[str], cache: Dict[str, str]):
-    modified_or_update_to_date_count = len(keys)
+    added_modified_or_update_to_date_count = len(keys)
     removed_count = 0
     for key in cache:
         if key not in keys:
             removed_count += 1
-    return modified_or_update_to_date_count + removed_count
+    return added_modified_or_update_to_date_count + removed_count

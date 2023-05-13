@@ -1,20 +1,24 @@
-from logging import getLogger
-from praline.common.compiling.compiler import Compiler, logging_level_code
-from praline.common.compiling.yield_descriptor import YieldDescriptor
-from praline.common.file_system import basename, directory_name, FileSystem, relative_path, get_separator, join
+from praline.common import (Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform,
+                            get_artifact_logging_level_code)
+from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
+from praline.common.file_system import basename, FileSystem, join
 from typing import List
 
+import logging
 
-class DarwinClangYieldDescriptor(YieldDescriptor):
+
+logger = logging.getLogger(__name__)
+
+
+class ClangYieldDescriptor(IYieldDescriptor):    
     def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
-        name = relative_path(source, sources_root).replace(get_separator(), '-').replace('.cpp', '.o')
-        return join(objects_root, name)
+        return super().get_object(sources_root, objects_root, source) + '.o'
 
-    def get_executable(self, executables_root: str, name: str) -> str:
+    def get_executable(self, executables_root, name: str) -> str:
         return join(executables_root, f'{name}.out')
 
-    def get_library(self, libraries_root: str, name: str) -> str:
-        return join(libraries_root, f'lib{name}.dylib')
+    def get_library(self, libraries_root, name: str) -> str:
+        return join(libraries_root,  f"lib{name}.dylib")
 
     def get_library_interface(self, libraries_interfaces_root: str, name: str) -> str:
         return None
@@ -23,44 +27,41 @@ class DarwinClangYieldDescriptor(YieldDescriptor):
         return None
 
 
-class DarwinClangCompiler(Compiler):
-    def __init__(self, file_system: FileSystem, architecture: str, platform: str, mode: str, logging_level: str, exported_symbols: str):
-        self.file_system      = file_system
-        self.architecture     = architecture
-        self.platform         = platform
-        self.mode             = mode
-        self.logging_level    = logging_level
-        self.exported_symbols = exported_symbols
+class ClangCompiler(ICompiler):
+    def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest):
+        self.file_system       = file_system
+        self.artifact_manifest = artifact_manifest
+        logging_level_code     = get_artifact_logging_level_code(artifact_manifest.artifact_logging_level)
 
-        visibility = 'hidden' if self.exported_symbols == 'explicit' else 'default'
+        if artifact_manifest.exported_symbols == ExportedSymbols.explicit:
+            visibility = 'hidden'
+        elif artifact_manifest.exported_symbols == ExportedSymbols.all:
+            visibility = 'default'
+        else:
+            raise RuntimeError(f"unrecognized exported symbols '{artifact_manifest.exported_symbols}'")
 
         self.flags = [f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++17',
                       '-Werror', '-Wall', '-Wextra',
                       '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
                       '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
-                      f'-DPRALINE_LOGGING_LEVEL={logging_level_code(self.logging_level, self.mode)}']
+                      f'-DPRALINE_LOGGING_LEVEL={logging_level_code}']
         
-        if self.mode == 'debug':
+        if artifact_manifest.mode == Mode.debug:
             self.flags.append('-g')
-        elif self.mode == 'release':
+        elif artifact_manifest.mode == Mode.release:
             self.flags.append('-O3')            
         else:
-            raise RuntimeError(f"unrecognized compiler mode '{self.mode}'")
+            raise RuntimeError(f"unrecognized mode '{artifact_manifest.mode}'")
 
-    def get_name(self) -> str:
-        return 'clang'
+        if artifact_manifest.platform != Platform.darwin:
+            raise CompilerInstantionError(
+                f"the clang compiler cannot be used on the '{artifact_manifest.platform}' platform")
+        
+        if file_system.which('clang++') == None:
+            raise CompilerInstantionError(f"the clang compiler could not find the clang++ executable in the PATH")
 
-    def get_architecture(self) -> str:
-        return self.architecture
-
-    def get_platform(self) -> str:
-        return self.platform
-
-    def get_mode(self) -> str:
-        return self.mode
-
-    def matches(self) -> bool:
-        return self.file_system.which('clang++') != None and self.platform == 'darwin'
+    def get_yield_descriptor(self) -> IYieldDescriptor:
+        return ClangYieldDescriptor()
 
     def preprocess(self,
                    headers_root: str,
@@ -70,7 +71,7 @@ class DarwinClangCompiler(Compiler):
         status, stdout, stderror = self.file_system.execute(['clang++', '-E', '-P', source] + self.flags + 
                                                             [f'-I{headers_root}', f'-I{external_headers_root}'])
         if stderror:
-            getLogger(__name__).error(stderror.decode())
+            logger.error(stderror.decode())
         if status != 0:
             raise RuntimeError(f"failed preprocessing source {source} -- process exited with status code {status}")
         return stdout
@@ -80,7 +81,7 @@ class DarwinClangCompiler(Compiler):
                 external_headers_root: str,
                 headers: List[str],
                 source: str,
-                object_: str) -> None:
+                object_: str):
         self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', object_, '-c', source] + self.flags + 
                                                         [f'-I{headers_root}', f'-I{external_headers_root}'])
 
@@ -91,12 +92,14 @@ class DarwinClangCompiler(Compiler):
                         external_libraries: List[str],
                         external_libraries_interfaces: List[str],
                         executable: str,
-                        symbols_table: str) -> None:
+                        symbols_table: str):
         self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', executable,
                                                          '-rpath', '@executable_path/../libraries',
                                                          '-rpath', '@executable_path/../external/libraries'] +
-                                                        self.flags + objects + [f'-L{external_libraries_root}'] +
-                                                        [f'-l{basename(external_library)[3:-6]}' for external_library in external_libraries])
+                                                        self.flags + objects + 
+                                                        [f'-L{external_libraries_root}'] +
+                                                        [f'-l{basename(lib)[3:-6]}' for lib in external_libraries])
+
 
     def link_library(self,
                      external_libraries_root: str,
@@ -106,10 +109,19 @@ class DarwinClangCompiler(Compiler):
                      external_libraries_interfaces: List[str],
                      library: str,
                      library_interface: str,
-                     symbols_table: str) -> None:
-        self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] +
-                                                        self.flags + objects + [f'-L{external_libraries_root}'] +
-                                                        [f'-l{basename(external_library)[3:-6]}' for external_library in external_libraries])
+                     symbols_table: str):
+        self.file_system.execute_and_fail_on_bad_return(['clang++', '-o', library, '-shared', '-install_name', 
+                                                         f'@rpath/{basename(library)}'] + self.flags + objects + 
+                                                        [f'-L{external_libraries_root}'] +
+                                                        [f'-l{basename(lib)[3:-6]}' for lib in external_libraries])
 
-    def get_yield_descriptor(self) -> YieldDescriptor:
-        return DarwinClangYieldDescriptor()
+
+class ClangCompilerSupplier(ICompilerSupplier):
+    def get_name(self) -> Compiler:
+        return Compiler.clang
+
+    def get_yield_descriptor(self) -> IYieldDescriptor:
+        return ClangYieldDescriptor()
+
+    def instantiate_compiler(self, file_system: FileSystem, artifact_manifest: ArtifactManifest) -> ICompiler:
+        return ClangCompiler(file_system, artifact_manifest)

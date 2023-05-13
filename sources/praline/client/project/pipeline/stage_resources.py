@@ -18,15 +18,12 @@ class UndeclaredResourceSuppliedError(Exception):
     pass
 
 
-@dataclass(frozen=True, repr=False)
+@dataclass(frozen=True)
 class StageResources:
     stage: str
     activation: int
     resources: Dict[str, Any]
     constrained_output: List[str]
-
-    def __repr__(self):
-        return str(self.resources)
 
     def __str__(self):
         return str(self.resources)

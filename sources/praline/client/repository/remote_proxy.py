@@ -1,8 +1,11 @@
+from praline.common import ArtifactManifest
 from praline.common.file_system import basename, FileSystem
-from praline.common.package import get_package, get_package_dependencies_from_pralinefile
 from praline.common.tracing import trace
-from typing import Any, Dict
+from typing import Dict
+
+import pickle
 import requests
+import base64
 
 
 class RemoteProxy:
@@ -10,7 +13,7 @@ class RemoteProxy:
         self.file_system       = file_system
         self.remote_repository = remote_repository.rstrip('/')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'RemoteProxy({self.remote_repository})'
 
     @trace
@@ -32,15 +35,9 @@ class RemoteProxy:
             raise RuntimeError(f"request failed with status code {response.status_code}: {response.text}")
 
     @trace
-    def solve_dependencies(self, pralinefile: Dict[str, Any], architecture: str, platform: str, compiler: str, mode: str) -> Dict[str, str]:
-        package_dependencies = get_package_dependencies_from_pralinefile(pralinefile, architecture, platform, compiler, mode)
-        if not package_dependencies:
-            return {}
-
-        payload = {
-            'package': get_package(pralinefile['organization'], pralinefile['artifact'], architecture, platform, compiler, mode, pralinefile['version']),
-            'dependencies': package_dependencies
-        }
+    def solve_dependencies(self, artifact_manifest: ArtifactManifest) -> Dict[str, str]:
+        blob = base64.b32encode(pickle.dumps(artifact_manifest)).decode()
+        payload = { 'artifact_manifest': blob }
         response = requests.get(f'{self.remote_repository}/solve-dependencies', json=payload)
         if response.status_code != 200:
             raise RuntimeError(f"request failed with status code {response.status_code}: {response.text}")

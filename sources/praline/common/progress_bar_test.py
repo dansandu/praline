@@ -31,13 +31,13 @@ class ProgressBarTest(TestCase):
 
             "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
 
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                \033[34mshort/text\033[0m               ",
+            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                \033[34mshort_text\033[0m               ",
 
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                \033[34mshort/text\033[0m               ",
+            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                \033[34mshort_text\033[0m               ",
 
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% \033[34m...ng/to/display/inside/the/progress/bar\033[0m",
+            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% \033[34m...ng_to_display_inside_the_progress_bar\033[0m",
 
-            "\rstage ██████████████████████████████████████████████████ 100.00% \033[34m...ng/to/display/inside/the/progress/bar\033[0m",
+            "\rstage ██████████████████████████████████████████████████ 100.00% \033[34m...ng_to_display_inside_the_progress_bar\033[0m",
 
             "\rstage ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \n",
 
@@ -46,13 +46,13 @@ class ProgressBarTest(TestCase):
         with progress_bar_supplier.create(resolution=2) as progress_bar:
             self.assertEqual(file_system.stdout.getvalue(), expected_lines[0])
 
-            progress_bar.update_summary("short/text")
+            progress_bar.update_summary("short_text")
             self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines[:2]))
 
             progress_bar.advance()
             self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines[:3]))
 
-            progress_bar.update_summary("long/path/to/file/too/long/to/display/inside/the/progress/bar")
+            progress_bar.update_summary("long_path_to_file_too_long_to_display_inside_the_progress_bar")
             self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines[:4]))
 
             progress_bar.advance()

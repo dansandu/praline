@@ -1,22 +1,36 @@
-from os.path import normpath
 from praline.client.project.pipeline.stages.clean import clean
+from praline.client.project.pipeline.stages.stage import StageArguments
 from praline.common.testing.file_system_mock import FileSystemMock
 from unittest import TestCase
+
+from os.path import join
 
 
 class CleanStageTest(TestCase):
     def test_clean_stage_with_target_folder(self):
-        file_system = FileSystemMock({'my/project/target'})
-        resources   = {'project_directory': 'my/project'}
+        file_system = FileSystemMock(
+            directories={
+                join('project', 'target'), 
+            },
+            working_directory='project',
+        )
 
-        clean(file_system, resources, None, None, None, None, None)
+        stage_arguments = StageArguments(file_system=file_system)
 
-        self.assertEqual(file_system.directories, {normpath('my/project')})
+        clean(stage_arguments)
+
+        self.assertEqual(file_system.directories, {'project'})
 
     def test_clean_stage_without_target_folder(self):
-        file_system       = FileSystemMock({'my/project'})
-        resources         = {'project_directory': 'my/project'}
+        file_system = FileSystemMock(
+            directories={
+                'project'
+            },
+            working_directory='project',
+        )
 
-        clean(file_system, resources, None, None, None, None, None)
+        stage_arguments = StageArguments(file_system=file_system)
 
-        self.assertEqual(file_system.directories, {normpath('my/project')})
+        clean(stage_arguments)
+
+        self.assertEqual(file_system.directories, {'project'})

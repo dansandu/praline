@@ -1,29 +1,41 @@
-from os.path import normpath
 from praline.client.project.pipeline.stages.load_headers import load_headers
-from praline.common.progress_bar import ProgressBarSupplier
+from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
+
+from os.path import join
 from unittest import TestCase
 
 
-class LoadHeadersTest(TestCase):
+class LoadHeadersStageTest(TestCase):
     def test_load_headers_stage(self):
-        file_system = FileSystemMock({
-            'project/resources/org/art/',
-            'project/sources/org/art'
-        }, {
-            'project/resources/org/art/precomp.hpp': b'',
-            'project/sources/org/art/main.hpp': b'',
-            'project/sources/org/art/inc.hpp': b'',
-            'project/sources/org/art/main.cpp': b''
-        })
+        file_system = FileSystemMock(
+            directories={
+                join('project', 'resources', 'org', 'art'),
+                join('project', 'sources', 'org', 'art'),
+            },
+            files={
+                join('project', 'resources', 'org', 'art', 'precomp.hpp'): b'',
+                join('project', 'sources', 'org', 'art', 'a.hpp'): b'',
+                join('project', 'sources', 'org', 'art', 'a.cpp'): b'',
+                join('project', 'sources', 'org', 'art', 'b.hpp'): b'',
+                join('project', 'sources', 'org', 'art', 'b.cpp'): b'',
+                join('project', 'sources', 'org', 'art', 'executable.cpp'): b'',
+            }
+        )
 
-        resources = {'headers_root': 'project/sources'}
-
-        load_headers(file_system, resources, None, None, None, None, None)
-
-        expected_headers = {
-            'project/sources/org/art/main.hpp',
-            'project/sources/org/art/inc.hpp'
+        resources = {
+            'project_structure': project_structure_dummy
         }
 
-        self.assertEqual({normpath(p) for p in resources['headers']}, {normpath(p) for p in expected_headers})
+        stage_arguments = StageArguments(file_system=file_system,
+                                         resources=resources)
+
+        load_headers(stage_arguments)
+
+        expected_headers = {
+            join('project', 'sources', 'org', 'art', 'a.hpp'): b'',
+            join('project', 'sources', 'org', 'art', 'b.hpp'): b'',
+        }
+
+        self.assertCountEqual(resources['headers'], expected_headers)

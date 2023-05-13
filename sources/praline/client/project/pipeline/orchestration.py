@@ -1,9 +1,11 @@
 from praline.client.project.pipeline.cache import Cache
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import Stage
+from praline.client.project.pipeline.stages.stage import Stage, StageArguments, StagePredicateArguments
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common import ArtifactManifest
 from praline.common.algorithm.graph.instance_traversal import multiple_instance_depth_first_traversal
 from praline.common.algorithm.graph.simple_traversal import root_last_traversal
+from praline.common.compiling.compiler import CompilerWrapper
 from praline.common.file_system import FileSystem, join
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.tracing import trace
@@ -35,11 +37,14 @@ def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]):
 
 
 @trace(parameters=[])
-def create_pipeline(target_stage: str,
-                    stages: Dict[str, Stage],
-                    file_system: FileSystem,
+def create_pipeline(file_system: FileSystem,
+                    configuration: Dict[str, Any],
                     program_arguments: Dict[str, Any],
-                    configuration: Dict[str, Any]) -> List[str]:    
+                    remote_proxy: RemoteProxy,
+                    artifact_manifest: ArtifactManifest,
+                    compiler: CompilerWrapper,
+                    target_stage: str,
+                    stages: Dict[str, Stage]) -> List[str]:    
     def on_cycle(cycle: List[str]):
         raise CyclicStagesError(f"cyclic dependencies for stages {cycle}")
 
@@ -51,17 +56,25 @@ def create_pipeline(target_stage: str,
             for requirement in requirements:
                 suppliers = [stage.name for stage in stages.values() if requirement in stage.output]
                 if not suppliers:
-                    raise UnsatisfiableStageError(f"stage '{stage_name}' cannot be satisfied because no stage supplies resource '{requirement}'")
+                    raise UnsatisfiableStageError(
+                        f"stage '{stage_name}' cannot be satisfied because no stage supplies resource '{requirement}'")
                 elif len(suppliers) > 1:
-                    raise MultipleSuppliersError(f"resource '{requirement}' is supplied by multiple stages: {', '.join(suppliers)}")
+                    raise MultipleSuppliersError(
+                        f"resource '{requirement}' is supplied by multiple stages: {', '.join(suppliers)}")
                 elif suppliers[0] not in required_stages:
                     required_stages.append(suppliers[0])
             required_stages_set.append(required_stages)
         return required_stages_set
 
     def validator(stage: str, subtree: Dict[str, List[str]]):
-        stage_program_arguments = get_stage_program_arguments(stage, program_arguments)
-        return stages[stage].predicate(file_system, stage_program_arguments, configuration)
+        stage_program_arguments   = get_stage_program_arguments(stage, program_arguments)
+        stage_predicate_arguments = StagePredicateArguments(file_system,
+                                                            configuration,
+                                                            stage_program_arguments,
+                                                            remote_proxy,
+                                                            artifact_manifest,
+                                                            compiler)
+        return stages[stage].predicate(stage_predicate_arguments)
 
     trees = multiple_instance_depth_first_traversal(target_stage, visitor, validator, on_cycle)
     if trees:
@@ -74,28 +87,59 @@ def create_pipeline(target_stage: str,
 
 
 @trace
-def invoke_stage(target_stage: str, stages: Dict[str, Stage], file_system: FileSystem, program_arguments: Dict[str, Any], configuration: Dict[str, Any], remote_proxy: RemoteProxy) -> None:
+def invoke_stage(file_system: FileSystem,
+                 configuration: Dict[str, Any],
+                 program_arguments: Dict[str, Any],
+                 remote_proxy: RemoteProxy,
+                 artifact_manifest: ArtifactManifest,
+                 compiler: CompilerWrapper,
+                 target_stage: str,
+                 stages: Dict[str, Stage]):
     resources = {}
-    pipeline = create_pipeline(target_stage, stages, file_system, program_arguments, configuration)
-    project_directory = file_system.get_working_directory()
-    cache_path = join(project_directory, 'target', 'cache.pickle')
+    pipeline  = create_pipeline(file_system, 
+                                configuration, 
+                                program_arguments, 
+                                remote_proxy, 
+                                artifact_manifest,
+                                compiler,
+                                target_stage, 
+                                stages)
 
     progress_bar_header_length = max(len(stage_name) for _, stage_name in pipeline)
 
     for activation, stage_name in pipeline:
         stage = stages[stage_name]
-        stage_resources = StageResources(stage_name, activation, {resource : resources[resource] for resource in stage.requirements[activation]}, stage.output)
+        stage_resources = {resource : resources[resource] for resource in stage.requirements[activation]}
+        stage_resources_wrapper = StageResources(stage_name, activation, stage_resources, stage.output)
         stage_program_arguments = get_stage_program_arguments(stage_name, program_arguments)
         
         progress_bar_header   = stage_name.replace('_', ' ')
         progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_length)
         if stage.cacheable:
+            cache_path = join(file_system.get_working_directory(), 'target', 'cache.pickle')
             with Cache(file_system, cache_path) as cache:
                 cache[stage_name] = stage_cache = cache.get(stage_name, {})
-                stage.invoker(file_system, stage_resources, stage_cache, stage_program_arguments, configuration, remote_proxy, progress_bar_supplier)
+                arguments = StageArguments(file_system=file_system,
+                                           configuration=configuration,
+                                           program_arguments=stage_program_arguments,
+                                           remote_proxy=remote_proxy,
+                                           artifact_manifest=artifact_manifest,
+                                           compiler=compiler,
+                                           resources=stage_resources_wrapper,
+                                           cache=stage_cache,
+                                           progress_bar_supplier=progress_bar_supplier)
+                stage.invoker(arguments)
         else:
-            stage.invoker(file_system, stage_resources, None, stage_program_arguments, configuration, remote_proxy, progress_bar_supplier)
+            arguments = StageArguments(file_system=file_system,
+                                       configuration=configuration,
+                                       program_arguments=stage_program_arguments,
+                                       remote_proxy=remote_proxy,
+                                       artifact_manifest=artifact_manifest,
+                                       compiler=compiler,
+                                       resources=stage_resources_wrapper,
+                                       progress_bar_supplier=progress_bar_supplier)
+            stage.invoker(arguments)
         for resource in stage.output:
-            if resource not in stage_resources:
+            if resource not in stage_resources_wrapper:
                 raise ResourceNotSuppliedError(f"stage '{stage_name}' didn't supply resource '{resource}'")
-        resources.update(stage_resources.resources)
+        resources.update(stage_resources_wrapper.resources)

@@ -1,3 +1,6 @@
+from praline.common import Architecture, Platform
+from praline.common.tracing import trace, INFO
+
 import os
 import os.path
 import platform
@@ -5,8 +8,8 @@ import shutil
 import subprocess
 import sys
 import tarfile
+
 from logging import getLogger
-from praline.common.tracing import trace, INFO
 from typing import Any, IO, List, Dict
 
 
@@ -43,7 +46,11 @@ def common_path(paths: List[str]) -> str:
 
 class FileSystem:
     @trace
-    def execute(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False, add_to_env: Dict[str, str] = {}) -> None:
+    def execute(self, 
+                command: List[str], 
+                add_to_library_path: List[str] = [], 
+                interactive: bool = False, 
+                add_to_env: Dict[str, str] = {}):
         environment_copy = dict(os.environ)
         if add_to_library_path:
             if sys.platform == 'linux' or sys.platform == 'darwin':
@@ -64,15 +71,28 @@ class FileSystem:
             process.wait()
             return process.returncode
         else:
-            process = subprocess.Popen(command, shell=(os.name == 'nt'), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment_copy)
+            process = subprocess.Popen(command, 
+                                       shell=(os.name == 'nt'), 
+                                       stdout=subprocess.PIPE, 
+                                       stderr=subprocess.PIPE, 
+                                       env=environment_copy)
             stdout, stderror = process.communicate()
             return process.returncode, stdout, stderror
 
-    def execute_and_fail_on_bad_return(self, command: List[str], add_to_library_path: List[str] = [], interactive: bool = False, add_to_env: Dict[str, str] = {}) -> None:
+    def execute_and_fail_on_bad_return(self, 
+                                       command: List[str], 
+                                       add_to_library_path: List[str] = [], 
+                                       interactive: bool = False, 
+                                       add_to_env: Dict[str, str] = {}):
         if interactive:
-            status = self.execute(command, add_to_library_path=add_to_library_path, interactive=True, add_to_env=add_to_env)
+            status = self.execute(command, 
+                                  add_to_library_path=add_to_library_path, 
+                                  interactive=True, 
+                                  add_to_env=add_to_env)
         else:
-            status, stdout, stderror = self.execute(command, add_to_library_path=add_to_library_path, add_to_env=add_to_env)
+            status, stdout, stderror = self.execute(command, 
+                                                    add_to_library_path=add_to_library_path, 
+                                                    add_to_env=add_to_env)
             if stdout:
                 logger.info(stdout.decode())
             if stderror:
@@ -82,7 +102,7 @@ class FileSystem:
             raise RuntimeError(f"command exited with return code {status}")
 
     def exists(self, path: str) -> bool:
-        return os.path.exists(path)
+        return path != None and os.path.exists(path)
 
     def is_file(self, path: str) -> bool:
         return os.path.isfile(path)
@@ -122,9 +142,17 @@ class FileSystem:
     def remove_directory_recursively(self, directory: str) -> None:
         shutil.rmtree(directory)
 
+    def remove_directory_recursively_if_it_exists(self, directory: str) -> None:
+        if self.exists(directory):
+            self.remove_directory_recursively(directory)
+
     @trace
     def remove_file(self, path) -> None:
         os.remove(path)
+
+    def remove_file_if_it_exists(self, path) -> None:
+        if self.exists(path):
+            self.remove_file(path)
 
     def which(self, thing: str) -> str:
         directories = os.environ["PATH"].split(os.pathsep)
@@ -142,14 +170,21 @@ class FileSystem:
     def get_architecture(self) -> str:
         m = platform.machine()
         if m == 'i386':
-            return 'x32'
+            return Architecture.x32
         elif m == 'AMD64' or m == 'x86_64':
-            return 'x64'
+            return Architecture.x64
         else:
-            raise RuntimeError(f"unrecognized architecture {m}")
+            raise RuntimeError(f"unrecognized architecture '{m}'")
 
     def get_platform(self) -> str:
-        return str(platform.system()).lower()
+        if sys.platform == 'win32':
+            return Platform.windows
+        elif sys.platform == 'linux':
+            return Platform.linux
+        elif sys.platform == 'darwin':
+            return Platform.darwin
+        else:
+            raise RuntimeError(f"unrecognized platform '{sys.platform}'")
 
     def open_tarfile(self, path: str, mode: str):
         return tarfile.open(path, mode)

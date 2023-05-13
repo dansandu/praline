@@ -1,101 +1,71 @@
-from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import stage
-from praline.client.repository.remote_proxy import RemoteProxy
-from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem, join
+from praline.client.project.pipeline.stages.stage import StageArguments, stage
+from praline.common.file_system import join
 from praline.common.hashing import delta, DeltaType, progression_resolution
-from praline.common.package import clean_up_package, get_package_extracted_contents, unpack
-from typing import Any, Dict
+from praline.common.package import clean_up_package, get_package_contents, unpack
 
 
-@stage(requirements=[['project_directory', 'pralinefile', 'compiler']],
-       output=['external_resources_root', 'external_headers_root', 'external_executables_root', 'external_libraries_root', 'external_libraries_interfaces_root', 'external_symbols_tables_root',
-               'external_resources', 'external_headers', 'external_executables', 'external_libraries', 'external_libraries_interfaces', 'external_symbols_tables'],
+@stage(requirements=[['project_structure']],
+       output=['external_resources', 'external_headers', 'external_executables', 'external_libraries', 
+               'external_libraries_interfaces', 'external_symbols_tables'],
        cacheable=True, exposed=True)
-def pull_dependencies(file_system: FileSystem, 
-                      resources: StageResources, 
-                      cache: Dict[str, Any], 
-                      program_arguments: Dict[str, Any], 
-                      configuration: Dict[str, Any], 
-                      remote_proxy: RemoteProxy,
-                      progressBarSupplier: ProgressBarSupplier):
-    project_directory      = resources['project_directory']
-    external_root          = join(project_directory, 'target', 'external')
-    external_packages_root = join(external_root, 'packages')
+def pull_dependencies(arguments: StageArguments):
+    file_system           = arguments.file_system
+    resources             = arguments.resources
+    artifact_manifest     = arguments.artifact_manifest
+    remote_proxy          = arguments.remote_proxy
+    cache                 = arguments.cache
+    progress_bar_supplier = arguments.progress_bar_supplier
 
-    resources['external_resources_root']            = external_resources_root            = join(external_root, 'resources')
-    resources['external_headers_root']              = external_headers_root              = join(external_root, 'headers')
-    resources['external_executables_root']          = external_executables_root          = join(external_root, 'executables')
-    resources['external_libraries_root']            = external_libraries_root            = join(external_root, 'libraries')
-    resources['external_libraries_interfaces_root'] = external_libraries_interfaces_root = join(external_root, 'libraries_interfaces')
-    resources['external_symbols_tables_root']       = external_symbols_tables_root       = join(external_root, 'symbols_tables')
-
-    file_system.create_directory_if_missing(external_packages_root)
-    file_system.create_directory_if_missing(external_resources_root)
-    file_system.create_directory_if_missing(external_headers_root)
-    file_system.create_directory_if_missing(external_executables_root)
-    file_system.create_directory_if_missing(external_libraries_root)
-    file_system.create_directory_if_missing(external_libraries_interfaces_root)
-    file_system.create_directory_if_missing(external_symbols_tables_root)
-
-    external_resources            = []
-    external_headers              = []
-    external_libraries            = []
-    external_libraries_interfaces = []
-    external_symbols_tables       = []
-    external_executables          = []
+    resources['external_resources']            = external_resources            = []
+    resources['external_headers']              = external_headers              = []
+    resources['external_libraries']            = external_libraries            = []
+    resources['external_libraries_interfaces'] = external_libraries_interfaces = []
+    resources['external_symbols_tables']       = external_symbols_tables       = []
+    resources['external_executables']          = external_executables          = []
 
     def extend_externals(contents):
         external_resources.extend(contents['resources'])
         external_headers.extend(contents['headers'])
+        external_executables.extend(contents['executables'])
         external_libraries.extend(contents['libraries'])
         external_libraries_interfaces.extend(contents['libraries_interfaces'])
         external_symbols_tables.extend(contents['symbols_tables'])
-        external_executables.extend(contents['executables'])
 
-    pralinefile      = resources['pralinefile']
-    compiler         = resources['compiler']
-    logging_level    = program_arguments['global']['logging_level']
-    exported_symbols = program_arguments['global']['exported_symbols']
-    
-    
-    package_hashes = remote_proxy.solve_dependencies(pralinefile,
-                                                     compiler.get_architecture(),
-                                                     compiler.get_platform(),
-                                                     compiler.get_name(),
-                                                     compiler.get_mode())
-    
-    new_cache = {}
+    project_structure = resources['project_structure']
 
+    package_hashes = remote_proxy.solve_dependencies(artifact_manifest)
+
+    external_root = project_structure.external_root
+    
+    new_cache  = {}
     packages   = package_hashes.keys()
     resolution = progression_resolution(packages, cache)
-    with progressBarSupplier.create(resolution) as progress_bar:
+    with progress_bar_supplier.create(resolution) as progress_bar:
         for item in delta(packages, lambda p: package_hashes[p], cache, new_cache):
             package = item.key
             progress_bar.update_summary(package)
-            package_path = join(external_packages_root, package)
-            if item.delta_type == DeltaType.Modified:
-                clean_up_package(file_system, package_path, external_root, logging_level, exported_symbols)
+            package_path = join(project_structure.external_packages_root, package)
+            if item.delta_type == DeltaType.Added:
+                remote_proxy.pull_package(package_path)
+                contents = unpack(file_system, package_path, external_root)
+                extend_externals(contents)
+            elif item.delta_type == DeltaType.Modified:
+                clean_up_package(file_system, package_path, external_root)
                 remote_proxy.pull_package(package_path)
                 contents = unpack(file_system, package_path, external_root)
                 extend_externals(contents)
             elif item.delta_type == DeltaType.UpToDate:
                 if not file_system.exists(package_path):
+                    clean_up_package(file_system, package_path, external_root)
                     remote_proxy.pull_package(package_path)
                     contents = unpack(file_system, package_path, external_root)
+                    extend_externals(contents)
                 else:
-                    contents = get_package_extracted_contents(file_system, package_path, external_root)
-                extend_externals(contents)
+                    contents = get_package_contents(file_system, package_path, external_root)
+                    extend_externals(contents)
             elif item.delta_type == DeltaType.Removed:
-                clean_up_package(file_system, package_path, external_root, logging_level, exported_symbols)
+                clean_up_package(file_system, package_path, external_root)
             progress_bar.advance()
     
-    resources['external_resources']            = external_resources
-    resources['external_headers']              = external_headers
-    resources['external_libraries']            = external_libraries
-    resources['external_libraries_interfaces'] = external_libraries_interfaces
-    resources['external_symbols_tables']       = external_symbols_tables
-    resources['external_executables']          = external_executables
-
     cache.clear()
     cache.update(new_cache)

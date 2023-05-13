@@ -9,7 +9,6 @@ class AllowedFieldsValidatorTest(TestCase):
             'organization': 'candyco',
             'artifact': 'chocolaterie',
             'platforms': ['darwin', 'linux'],
-            'compilers': ['gcc'],
             'modes': ['debug', 'release'],
             'dependencies': [
                 {
@@ -20,6 +19,7 @@ class AllowedFieldsValidatorTest(TestCase):
                 }
             ]
         }
+
         validate_allowed_fields(pralinefile)
 
     def test_unrecognized_field(self):
@@ -39,11 +39,9 @@ class AllowedFieldsValidatorTest(TestCase):
                 {
                     'organization': 'candy',
                     'artifact': 'chocolate',
-                    'compilers': ['gcc', 'clang']
+                    'platforms': ['darwin', 'linux']
                 }
             ]
         }
         
         self.assertRaises(PralinefileValidationError, validate_allowed_fields, pralinefile)
-
-    
