@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages.load_test_sources import load_test_sources, test_executable_contents
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             Compiler, ExportedSymbols, Mode, Platform)
 from praline.common.testing import project_structure_dummy

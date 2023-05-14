@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments, stage
+from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common.package import manifest_file_name, pack, write_artifact_manifest
 from praline.common.file_system import join, relative_path
 

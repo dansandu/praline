@@ -1,5 +1,5 @@
-from praline.client.project.pipeline.stages.stage import stage
-from praline.client.project.pipeline.stages.stage import StageArguments, StagePredicateArguments, stage
+from praline.client.project.pipeline.stages import stage
+from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, stage
 from praline.common import ArtifactType
 from praline.common.file_system import join
 

@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments, stage
+from praline.client.project.pipeline.stages import StageArguments, stage
 
 
 @stage(requirements=[['project_structure', 'main_executable_object', 'main_objects', 'test_objects', 

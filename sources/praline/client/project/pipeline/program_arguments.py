@@ -1,5 +1,5 @@
 from argparse import ArgumentParser, REMAINDER
-from praline.client.project.pipeline.stages.stage import Stage
+from praline.client.project.pipeline.stages import Stage
 from praline.common import Architecture, ArtifactLoggingLevel, ArtifactType, Compiler, ExportedSymbols, Mode, Platform
 from typing import Any, Dict
 

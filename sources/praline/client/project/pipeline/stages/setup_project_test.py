@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages.setup_project import setup_project, IllformedProjectError
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             Compiler, ExportedSymbols, Mode, Platform)
 from praline.common.testing import project_structure_dummy
