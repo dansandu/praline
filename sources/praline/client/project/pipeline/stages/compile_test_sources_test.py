@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_test_sources import compile_test_sources
 from praline.common import ProjectStructure

@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments, stage
+from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common import ProjectStructure
 from praline.common.file_system import FileSystem, join
 

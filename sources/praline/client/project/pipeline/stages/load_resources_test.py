@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages.load_resources import load_resources
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
 

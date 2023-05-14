@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages.format_test_sources import format_test_sources
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 

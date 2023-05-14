@@ -1,9 +1,9 @@
 from praline.client.project.pipeline.stages.clean import clean
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing.file_system_mock import FileSystemMock
-from unittest import TestCase
 
 from os.path import join
+from unittest import TestCase
 
 
 class CleanStageTest(TestCase):

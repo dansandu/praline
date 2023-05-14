@@ -13,7 +13,7 @@ with open(f"{os.path.dirname(__file__)}/../resources/praline-client.config", 'r'
 from praline.client.project.pipeline.orchestration import invoke_stage
 from praline.client.project.pipeline.configuration import get_artifact_manifest_and_compiler
 from praline.client.project.pipeline.program_arguments import get_program_arguments
-from praline.client.project.pipeline.stages.stage import registered_stages
+from praline.client.project.pipeline.stages import get_stages
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common.pralinefile import read_pralinefile
 from praline.common.file_system import FileSystem, join
@@ -23,7 +23,8 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     try:
         file_system       = FileSystem()
-        program_arguments = get_program_arguments(registered_stages)
+        stages            = get_stages()
+        program_arguments = get_program_arguments(stages)
         remote_proxy      = RemoteProxy(file_system, configuration['remote-repository'])
 
         try:
@@ -44,7 +45,7 @@ if __name__ == '__main__':
                      artifact_manifest,
                      compiler,
                      stage, 
-                     registered_stages)
+                     stages)
 
         exit(0)
     except RuntimeError as exception:

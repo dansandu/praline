@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_main_library import link_main_library
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             Compiler, ExportedSymbols, Mode, Platform, ProjectStructure)

@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.load_clang_format import (
     clang_format_style_file_contents, ClangFormatConfigurationError, load_clang_format
 )

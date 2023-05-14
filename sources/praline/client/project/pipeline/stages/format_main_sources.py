@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments, stage
+from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common.hashing import DeltaType, delta, hash_file, progression_resolution
 
 

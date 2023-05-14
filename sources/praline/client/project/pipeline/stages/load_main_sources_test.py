@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages.stage import StageArguments
+from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.load_main_sources import (load_main_sources, main_executable_contents, 
                                                                       ExecutableFileWithLibraryError)
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 

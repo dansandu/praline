@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.cache import Cache
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.stage import Stage, StageArguments, StagePredicateArguments
+from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateArguments
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common import ArtifactManifest
 from praline.common.algorithm.graph.instance_traversal import multiple_instance_depth_first_traversal

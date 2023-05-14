@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.orchestration import (create_pipeline, invoke_stage, CyclicStagesError, 
                                                            MultipleSuppliersError, UnsatisfiableStageError)
-from praline.client.project.pipeline.stages.stage import Stage, StageArguments
+from praline.client.project.pipeline.stages import Stage, StageArguments
 from praline.common.testing.file_system_mock import FileSystemMock
 
 import pickle
