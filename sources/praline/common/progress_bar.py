@@ -2,17 +2,17 @@ from praline.common.file_system import FileSystem
 from enum import Enum
 
 
-filled_bar_character = '\u2588'
+filled_bar_character = '='
 
-empty_bar_character = '\u2592'
+empty_bar_character = '-'
 
 bar_length = 50
 
 summary_length = 40
 
-completed_summary = 'done'
+success_status = 'done'
 
-cancelled_summary = 'halted'
+failure_status = 'halted'
 
 
 class TextHighlight(Enum):
@@ -83,26 +83,30 @@ class ProgressBar:
         self.display()
     
     def display(self, exiting: bool = False, success: bool = False):
-        if exiting:
-            if success and self.progress == self.resolution:
-                self.progress = self.resolution = 100
-                summary = format_summary(completed_summary, TextHighlight.Green)
-            else:
-                summary = format_summary(cancelled_summary, TextHighlight.Red)
+        if exiting and success:
+            bar = filled_bar_character * bar_length
+            status = f" {TextHighlight.highlight_text(success_status, TextHighlight.Green)} "
+            summary = format_summary('', TextHighlight.No)
             ending = '\n'
         else:
-            summary = format_summary(self.summary, TextHighlight.Blue)
-            ending = ''
+            percentage = self.progress / self.resolution if self.resolution > 0 else 0.0
+            filled_length = min(int(percentage * bar_length), bar_length - 1)
+            bar = filled_length * filled_bar_character + empty_bar_character * (bar_length - filled_length)
 
-        percentage    = self.progress / self.resolution if self.resolution > 0 else 0.0
-        filled_length = round(percentage * bar_length)
-        empty_length  = bar_length - filled_length
-
-        self.file_system.print(f"\r{self.header: <{self.header_length}} {filled_bar_character * filled_length + empty_bar_character * empty_length} {percentage:7.2%} {summary}", end=ending, flush=True)
+            if exiting and not success:
+                status = TextHighlight.highlight_text(failure_status, TextHighlight.Red)
+                summary = format_summary('', TextHighlight.No)
+                ending = '\n'
+            else:
+                status = f"{percentage:6.2%}" if percentage < 0.9999 else "99.99%"
+                summary = format_summary(self.summary, TextHighlight.Blue)
+                ending = ''
+        
+        self.file_system.print(f"\r{self.header: <{self.header_length}} {bar} {status} {summary}", end=ending, flush=True)
 
     def __exit__(self, type, value, traceback):
         self.display(exiting=True, success=type == None)
- 
+
 
 class ProgressBarSupplier:
     def __init__(self, file_system: FileSystem, header: str, header_length: int):
