@@ -3,15 +3,17 @@ from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.testing.file_system_mock import FileSystemMock
 
 
+class InterruptedException(Exception):
+    pass
+
+
 class ProgressBarTest(TestCase):
-    def test_zero_resolution(self):
+    def test_zero_resolution_success(self):
         file_system = FileSystemMock()
 
         expected_lines = [
-
-            "\rstage name   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
-
-            "\rstage name   ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \n",
+            "\rstage name   --------------------------------------------------  0.00%                                         ",
+            "\rstage name   ==================================================  \033[32mdone\033[0m                                          \n",
         ]
 
         progress_bar_supplier = ProgressBarSupplier(file_system, header='stage name', header_length=12)
@@ -22,25 +24,37 @@ class ProgressBarTest(TestCase):
         
         self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines))
 
+    def test_zero_resolution_failure(self):
+        file_system = FileSystemMock()
+
+        expected_lines = [
+            "\rstage name   --------------------------------------------------  0.00%                                         ",
+            "\rstage name   -------------------------------------------------- \033[31mhalted\033[0m                                         \n",
+        ]
+
+        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage name', header_length=12)
+
+        exception_raised = False
+        try:
+            with progress_bar_supplier.create(resolution=0) as progress_bar:
+                self.assertEqual(file_system.stdout.getvalue(), expected_lines[0])
+                raise InterruptedException()
+        except InterruptedException:
+            self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines))
+            exception_raised = True
+        self.assertTrue(exception_raised)
 
     def test_nonzero_resolution(self):
         file_system = FileSystemMock()
         progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
 
         expected_lines = [
-
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
-
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                \033[34mshort_text\033[0m               ",
-
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00%                \033[34mshort_text\033[0m               ",
-
-            "\rstage █████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  50.00% \033[34m...ng_to_display_inside_the_progress_bar\033[0m",
-
-            "\rstage ██████████████████████████████████████████████████ 100.00% \033[34m...ng_to_display_inside_the_progress_bar\033[0m",
-
-            "\rstage ██████████████████████████████████████████████████ 100.00%                   \033[32mdone\033[0m                  \n",
-
+            "\rstage --------------------------------------------------  0.00%                                         ",
+            "\rstage --------------------------------------------------  0.00%                \033[34mshort_text\033[0m               ",
+            "\rstage =========================------------------------- 50.00%                \033[34mshort_text\033[0m               ",
+            "\rstage =========================------------------------- 50.00% \033[34m...ng_to_display_inside_the_progress_bar\033[0m",
+            "\rstage =================================================- 99.99% \033[34m...ng_to_display_inside_the_progress_bar\033[0m",
+            "\rstage ==================================================  \033[32mdone\033[0m                                          \n",
         ]
 
         with progress_bar_supplier.create(resolution=2) as progress_bar:
@@ -65,13 +79,9 @@ class ProgressBarTest(TestCase):
         progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
 
         expected_lines = [
-
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
-
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                                         ",
-
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                  \033[31mhalted\033[0m                 \n",
-
+            "\rstage --------------------------------------------------  0.00%                                         ",
+            "\rstage ==========---------------------------------------- 20.00%                                         ",
+            "\rstage ==================================================  \033[32mdone\033[0m                                          \n",
         ]
 
         with progress_bar_supplier.create(resolution=5) as progress_bar:
@@ -87,18 +97,12 @@ class ProgressBarTest(TestCase):
         progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
 
         expected_lines = [
-
-            "\rstage ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒   0.00%                                         ",
-
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                                         ",
-
-            "\rstage ██████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  20.00%                  \033[31mhalted\033[0m                 \n",
-
+            "\rstage --------------------------------------------------  0.00%                                         ",
+            "\rstage ==========---------------------------------------- 20.00%                                         ",
+            "\rstage ==========---------------------------------------- \033[31mhalted\033[0m                                         \n",
         ]
 
-        class InterruptedException(Exception):
-            pass
-
+        exception_raised = False
         try:
             with progress_bar_supplier.create(resolution=5) as progress_bar:
                 self.assertEqual(file_system.stdout.getvalue(), expected_lines[0])
@@ -109,3 +113,29 @@ class ProgressBarTest(TestCase):
                 raise InterruptedException()
         except InterruptedException:
             self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines))
+            exception_raised = True
+        self.assertTrue(exception_raised)
+
+    def test_last_inch_exception(self):
+        file_system = FileSystemMock()
+        progress_bar_supplier = ProgressBarSupplier(file_system, header='stage', header_length=5)
+
+        expected_lines = [
+            "\rstage --------------------------------------------------  0.00%                                         ",
+            "\rstage =================================================- 99.99%                                         ",
+            "\rstage =================================================- \033[31mhalted\033[0m                                         \n",
+        ]
+
+        exception_raised = False
+        try:
+            with progress_bar_supplier.create(resolution=1) as progress_bar:
+                self.assertEqual(file_system.stdout.getvalue(), expected_lines[0])
+
+                progress_bar.advance()
+                self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines[:2]))
+
+                raise InterruptedException()
+        except InterruptedException:
+            self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines))
+            exception_raised = True
+        self.assertTrue(exception_raised)
