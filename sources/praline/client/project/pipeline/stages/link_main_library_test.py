@@ -64,20 +64,22 @@ class LinkMainLibraryStageTest(TestCase):
         external_library_interface = join(project_structure_dummy.external_libraries_interfaces_root, 
                                           'org-art-b-arm-linux-gcc-debug.0.0.2.lib')
 
-        compiler = CompilerWrapperMock(self,
-                                       expected_artifact_identifier='org-art-arm-linux-gcc-debug-0.5.0.SNAPSHOT',
-                                       expected_objects=[
-                                           object_a,
-                                           object_b,
-                                       ],
-                                       external_libraries=[
-                                           external_library,
-                                       ],
-                                       external_libraries_interfaces=[
-                                           external_library_interface,
-                                       ])
+        compiler = CompilerWrapperMock(
+            self,
+            expected_artifact_identifier='org-art-arm-linux-gcc-debug-0.5.0.SNAPSHOT',
+            expected_objects=[
+                object_a,
+                object_b,
+            ],
+            external_libraries=[
+                external_library,
+            ],
+            external_libraries_interfaces=[
+                external_library_interface,
+            ]
+        )
 
-        resources = StageResources(
+        with StageResources(
             stage='link_main_library',
             activation=0,
             resources={
@@ -98,13 +100,11 @@ class LinkMainLibraryStageTest(TestCase):
                 'main_library_interface', 
                 'main_library_symbols_table'
             ]
-        )
-
-        stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
-                                         compiler=compiler,
-                                         resources=resources)
-        
-        link_main_library(stage_arguments)
+        ) as resources:
+            stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
+                                             compiler=compiler,
+                                             resources=resources)
+            link_main_library(stage_arguments)
 
         self.assertEqual(resources['main_library'], 'org-art-arm-linux-gcc-debug-0.5.0.SNAPSHOT.dll')
 

@@ -18,12 +18,19 @@ class UndeclaredResourceSuppliedError(Exception):
     pass
 
 
+class DeclaredResourceNotSuppliedError(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class StageResources:
     stage: str
     activation: int
     resources: Dict[str, Any]
     constrained_output: List[str]
+
+    def __enter__(self):
+        return self
 
     def __str__(self):
         return str(self.resources)
@@ -43,3 +50,8 @@ class StageResources:
 
     def __contains__(self, resource: str) -> bool:
         return resource in self.resources
+
+    def __exit__(self, type, value, traceback):
+        not_supplied = [resource for resource in self.constrained_output if resource not in self.resources]
+        if not_supplied:
+            raise DeclaredResourceNotSuppliedError(f"stage '{self.stage}' did not supply resource '{not_supplied[0]}' despite declaring it as output")

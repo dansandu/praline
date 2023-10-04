@@ -46,7 +46,15 @@ class FormatHeadersStageTest(TestCase):
 
         clang_format_executable = join('path', 'to', 'clang-format')
 
-        resources = StageResources(
+        cache = {
+            header_vector: '2d5b04a0069bfadaadbce424db26c7a66c13afa3c621326ab0f1303c6a20ad82',
+            header_math: 'stale',
+            header_request: 'stale',
+        }
+
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
+
+        with StageResources(
             stage='format_headers',
             activation=0,
             resources={
@@ -58,22 +66,12 @@ class FormatHeadersStageTest(TestCase):
                 ],
             },
             constrained_output=['formatted_headers']
-        )
-
-        cache = {
-            header_vector: '2d5b04a0069bfadaadbce424db26c7a66c13afa3c621326ab0f1303c6a20ad82',
-            header_math: 'stale',
-            header_request: 'stale',
-        }
-
-        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
-
-        stage_arguments = StageArguments(file_system=file_system,
-                                         resources=resources,
-                                         cache=cache,
-                                         progress_bar_supplier=progress_bar_supplier)
-
-        format_headers(stage_arguments)
+        ) as resources:
+            stage_arguments = StageArguments(file_system=file_system,
+                                             resources=resources,
+                                             cache=cache,
+                                             progress_bar_supplier=progress_bar_supplier)
+            format_headers(stage_arguments)
 
         expected_formatted_headers = {
             header_math,

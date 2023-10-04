@@ -15,7 +15,8 @@ program_arguments = [
 ]
 
 
-@stage(requirements=[['main_executable', 'test_results'], ['main_executable']],
+@stage(requirements=[['project_structure', 'main_executable', 'tests_passed'], 
+                     ['project_structure', 'main_executable']],
        exposed=True, 
        program_arguments=program_arguments)
 def main(arguments: StageArguments):

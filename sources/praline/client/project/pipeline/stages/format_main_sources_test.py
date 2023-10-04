@@ -52,7 +52,6 @@ class FormatMainSourcesStageTest(TestCase):
                 source_vector,
                 source_map,
             ],
-            'main_executable_source': None
         }
 
         cache = {
@@ -78,8 +77,6 @@ class FormatMainSourcesStageTest(TestCase):
 
         self.assertCountEqual(resources['formatted_main_sources'],
                               expected_formatted_main_sources)
-
-        self.assertIsNone(resources['formatted_main_executable_source'])
 
         expected_cache = {
             source_math: '38527a9ac8d06095ec3a63b5409cdf92888fd8ee721a38628b7c83765f52e182',

@@ -16,7 +16,7 @@ program_arguments = [
 
 
 @stage(requirements=[['project_structure', 'test_executable']], 
-       output=['test_results'],
+       output=['tests_passed'],
        exposed=True, 
        program_arguments=program_arguments)
 def test(arguments: StageArguments):
@@ -36,4 +36,4 @@ def test(arguments: StageArguments):
                                                interactive=True,
                                                add_to_env=add_to_env)
     
-    resources['test_results'] = 'success'
+    resources['tests_passed'] = 'success'

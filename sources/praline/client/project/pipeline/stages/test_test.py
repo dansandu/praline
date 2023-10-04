@@ -59,5 +59,5 @@ class TestStageTest(TestCase):
         
         test(stage_arguments)
 
-        self.assertEqual(resources['test_results'], 'success')
+        self.assertEqual(resources['tests_passed'], 'success')
  

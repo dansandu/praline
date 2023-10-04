@@ -55,6 +55,7 @@ class LinkMainExecutableStageTest(TestCase):
 
         object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
         object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
+        object_x = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
 
         external_library = join(project_structure_dummy.external_libraries_root, 
                                 'org-art-a-arm-linux-gcc-debug.0.0.1.dll')
@@ -62,20 +63,23 @@ class LinkMainExecutableStageTest(TestCase):
         external_library_interface = join(project_structure_dummy.external_libraries_interfaces_root, 
                                           'org-art-b-arm-linux-gcc-debug.0.0.2.lib')
 
-        compiler = CompilerWrapperMock(self,
-                                       expected_artifact_identifier='org-art-arm-linux-gcc-debug-0.0.0',
-                                       expected_objects=[
-                                           object_a,
-                                           object_b,
-                                       ],
-                                       external_libraries=[
-                                           external_library,
-                                       ],
-                                       external_libraries_interfaces=[
-                                           external_library_interface,
-                                       ])
+        compiler = CompilerWrapperMock(
+            self,
+            expected_artifact_identifier='org-art-arm-linux-gcc-debug-0.0.0',
+            expected_objects=[
+                object_a,
+                object_b,
+                object_x,
+            ],
+            external_libraries=[
+                external_library,
+            ],
+            external_libraries_interfaces=[
+                external_library_interface,
+            ]
+        )
 
-        resources = StageResources(
+        with StageResources(
             stage='link_main_executable',
             activation=0,
             resources={
@@ -84,6 +88,7 @@ class LinkMainExecutableStageTest(TestCase):
                     object_a,
                     object_b,
                 ],
+                'main_executable_object': object_x,
                 'external_libraries': [
                     external_library,
                 ],
@@ -92,13 +97,11 @@ class LinkMainExecutableStageTest(TestCase):
                 ]
             },
             constrained_output=['main_executable', 'main_executable_symbols_table']
-        )
-
-        stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
-                                         compiler=compiler,
-                                         resources=resources)
-        
-        link_main_executable(stage_arguments)
+        ) as resources:
+            stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
+                                             compiler=compiler,
+                                             resources=resources)
+            link_main_executable(stage_arguments)
 
         self.assertEqual(resources['main_executable'], 'org-art-arm-linux-gcc-debug-0.0.0.exe')
 
