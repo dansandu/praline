@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import DeclaredResourceNotSuppliedError, StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.load_clang_format import (
     clang_format_style_file_contents, ClangFormatConfigurationError, load_clang_format
@@ -28,13 +29,12 @@ class LoadClangFormatStageTest(TestCase):
             'clang-format-executable-path': normalized_executable_path
         }
 
-        resources = {}
-
-        stage_arguments = StageArguments(file_system=file_system,
-                                         configuration=configuration,
-                                         resources=resources)
-        
-        load_clang_format(stage_arguments)
+        with StageResources(stage='load_clang_format', 
+                            activation=0, 
+                            resources={}, 
+                            constrained_output=['clang_format_style_file', 'clang_format_executable']) as resources:
+            stage_arguments = StageArguments(file_system=file_system, configuration=configuration, resources=resources)
+            load_clang_format(stage_arguments)
 
         self.assertEqual(resources['clang_format_executable'], normalized_executable_path)
 
@@ -56,15 +56,16 @@ class LoadClangFormatStageTest(TestCase):
             working_directory='project'
         )
 
-        resources = {}
-
         configuration = {}
-        
-        stage_arguments = StageArguments(file_system=file_system,
-                                         configuration=configuration,
-                                         resources=resources)
-        
-        load_clang_format(stage_arguments)
+
+        with StageResources(stage='load_clang_format', 
+                            activation=0, 
+                            resources={}, 
+                            constrained_output=['clang_format_style_file', 'clang_format_executable']) as resources:
+            stage_arguments = StageArguments(file_system=file_system,
+                                             configuration=configuration,
+                                             resources=resources)
+            load_clang_format(stage_arguments)
 
         self.assertEqual(resources['clang_format_executable'], normalized_executable_path)
 
@@ -89,17 +90,18 @@ class LoadClangFormatStageTest(TestCase):
             on_which=lambda _: None,
         )
 
-        resources = {}
-
         configuration = {
             'clang-format-executable-path': normalized_executable_path
         }
         
-        stage_arguments = StageArguments(file_system=file_system,
-                                         configuration=configuration,
-                                         resources=resources)
-        
-        load_clang_format(stage_arguments)
+        with StageResources(stage='load_clang_format', 
+                            activation=0, 
+                            resources={}, 
+                            constrained_output=['clang_format_style_file', 'clang_format_executable']) as resources:
+            stage_arguments = StageArguments(file_system=file_system,
+                                             configuration=configuration,
+                                             resources=resources)
+            load_clang_format(stage_arguments)
 
         self.assertEqual(resources['clang_format_executable'], normalized_executable_path)
 
@@ -116,12 +118,16 @@ class LoadClangFormatStageTest(TestCase):
             on_which=lambda _: None,
         )
 
-        resources = {}
-
         configuration = {}
         
-        stage_arguments = StageArguments(file_system=file_system,
-                                         configuration=configuration,
-                                         resources=resources)
-
-        self.assertRaises(ClangFormatConfigurationError, load_clang_format, stage_arguments)
+        try:
+            with StageResources(stage='load_clang_format', 
+                                activation=0, 
+                                resources={}, 
+                                constrained_output=['clang_format_style_file', 'clang_format_executable']) as resources:
+                stage_arguments = StageArguments(file_system=file_system,
+                                                 configuration=configuration,
+                                                 resources=resources)
+                self.assertRaises(ClangFormatConfigurationError, load_clang_format, stage_arguments)
+        except DeclaredResourceNotSuppliedError:
+            pass

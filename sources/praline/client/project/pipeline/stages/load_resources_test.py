@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.load_resources import load_resources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing import project_structure_dummy
@@ -25,14 +26,12 @@ class LoadResourcesStageTest(TestCase):
             working_directory='project',
         )
 
-        resources = {
-            'project_structure': project_structure_dummy,
-        }
-
-        stage_arguments = StageArguments(file_system=file_system,
-                                         resources=resources)
-
-        load_resources(stage_arguments)
+        with StageResources(stage='load_resources', 
+                            activation=0, 
+                            resources={'project_structure': project_structure_dummy}, 
+                            constrained_output=['resources']) as resources:
+            stage_arguments = StageArguments(file_system=file_system, resources=resources)
+            load_resources(stage_arguments)
 
         expected_resources = {
             app_config,

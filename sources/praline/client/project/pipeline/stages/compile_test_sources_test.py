@@ -51,7 +51,20 @@ class CompileTestSourcesStageTest(TestCase):
 
         header_c = join(project_structure_dummy.sources_root, 'org', 'art', 'c.hpp')
 
-        resources = StageResources(
+        compiler = CompilerWrapperMock(
+            self,
+            expected_headers=[
+                header_a,
+                header_b,
+                header_c,
+            ],
+            sources_to_objects={
+                source_a: object_a,
+                source_b: object_b,
+            }
+        )
+
+        with StageResources(
             stage='compile_test_sources',
             activation=0,
             resources={
@@ -69,24 +82,9 @@ class CompileTestSourcesStageTest(TestCase):
                 ]
             },
             constrained_output=['test_objects']
-        )
-
-        compiler = CompilerWrapperMock(
-            self,
-            expected_headers=[
-                header_a,
-                header_b,
-                header_c,
-            ],
-            sources_to_objects={
-                source_a: object_a,
-                source_b: object_b,
-            }
-        )
-
-        stage_arguments = StageArguments(compiler=compiler, resources=resources)
-        
-        compile_test_sources(stage_arguments)
+        ) as resources:
+            stage_arguments = StageArguments(compiler=compiler, resources=resources)
+            compile_test_sources(stage_arguments)
 
         expected_objects = {
             object_a,
@@ -106,7 +104,20 @@ class CompileTestSourcesStageTest(TestCase):
 
         header_c = join(project_structure_dummy.sources_root, 'org', 'art', 'c.hpp')
 
-        resources = StageResources(
+        compiler = CompilerWrapperMock(
+            self,
+            expected_headers=[
+                header_a,
+                header_b,
+                header_c,
+            ],
+            sources_to_objects={
+                source_a: object_a,
+                source_b: object_b,
+            }
+        )
+
+        with StageResources(
             stage='compile_test_sources',
             activation=1,
             resources={
@@ -124,24 +135,9 @@ class CompileTestSourcesStageTest(TestCase):
                 ]
             },
             constrained_output=['test_objects']
-        )
-
-        compiler = CompilerWrapperMock(
-            self,
-            expected_headers=[
-                header_a,
-                header_b,
-                header_c,
-            ],
-            sources_to_objects={
-                source_a: object_a,
-                source_b: object_b,
-            }
-        )
-
-        stage_arguments = StageArguments(compiler=compiler, resources=resources)
-        
-        compile_test_sources(stage_arguments)
+        ) as resources:
+            stage_arguments = StageArguments(compiler=compiler, resources=resources)
+            compile_test_sources(stage_arguments)
 
         expected_objects = {
             object_a,

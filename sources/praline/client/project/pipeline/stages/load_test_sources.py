@@ -92,9 +92,7 @@ def can_run_unit_tests(arguments: StagePredicateArguments):
             any(f for f in arguments.file_system.files_in_directory('sources') if f.endswith('.test.cpp')))
 
 
-@stage(requirements=[['project_structure']], 
-       output=['test_sources'], 
-       predicate=can_run_unit_tests)
+@stage(requirements=[['project_structure']], output=['test_sources'], predicate=can_run_unit_tests)
 def load_test_sources(arguments: StageArguments):
     file_system       = arguments.file_system
     artifact_manifest = arguments.artifact_manifest

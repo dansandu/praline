@@ -56,7 +56,6 @@ class LinkTestExecutableStageTest(TestCase):
 
         object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
         object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
-        object_c = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
         object_d = join(project_structure_dummy.objects_root, 'org-art-c.test.obj')
         object_e = join(project_structure_dummy.objects_root, 'org-art-d.test.obj')
         object_f = join(project_structure_dummy.objects_root, 'org-art-executable.test.obj')
@@ -84,7 +83,7 @@ class LinkTestExecutableStageTest(TestCase):
                                            external_library_interface,
                                        ])
 
-        resources = StageResources(
+        with StageResources(
             stage='link_main_library',
             activation=0,
             resources={
@@ -92,14 +91,12 @@ class LinkTestExecutableStageTest(TestCase):
                 'main_objects': [
                     object_a,
                     object_b,
-                    object_c,
                 ],
                 'test_objects': [
                     object_d,
                     object_e,
                     object_f,
                 ],
-                'main_executable_object': object_c,
                 'external_libraries': [
                     external_library,
                 ],
@@ -111,13 +108,11 @@ class LinkTestExecutableStageTest(TestCase):
                 'test_executable', 
                 'test_executable_symbols_table',
             ]
-        )
-
-        stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
-                                         compiler=compiler,
-                                         resources=resources)
-        
-        link_test_executable(stage_arguments)
+        ) as resources:
+            stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
+                                             compiler=compiler,
+                                             resources=resources)
+            link_test_executable(stage_arguments)
 
         self.assertEqual(resources['test_executable'], 'org-art-arm-linux-gcc-debug-1.3.0.test.exe')
 

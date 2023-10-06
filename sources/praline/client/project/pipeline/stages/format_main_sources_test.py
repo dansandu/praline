@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.format_main_sources import format_main_sources
 from praline.common.testing.file_system_mock import FileSystemMock
@@ -45,16 +46,6 @@ class FormatMainSourcesStageTest(TestCase):
 
         clang_format_executable = join('path', 'to', 'clang-format')
 
-        resources = {
-            'clang_format_executable': clang_format_executable,
-            'main_sources': [
-                source_math,
-                source_vector,
-                source_map,
-            ],
-            'main_executable_source': None
-        }
-
         cache = {
             source_vector: '2d5b04a0069bfadaadbce424db26c7a66c13afa3c621326ab0f1303c6a20ad82',
             source_map: 'stale',
@@ -63,12 +54,18 @@ class FormatMainSourcesStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
-        stage_arguments = StageArguments(file_system=file_system,
-                                         resources=resources,
-                                         cache=cache,
-                                         progress_bar_supplier=progress_bar_supplier)
-
-        format_main_sources(stage_arguments)
+        with StageResources(stage='format_main_sources', 
+                            activation=0, 
+                            resources= {
+                                'clang_format_executable': clang_format_executable,
+                                'main_sources': [source_math, source_vector, source_map],
+                            },
+                            constrained_output=['formatted_main_sources']) as resources:
+            stage_arguments = StageArguments(file_system=file_system,
+                                             resources=resources,
+                                             cache=cache,
+                                             progress_bar_supplier=progress_bar_supplier)
+            format_main_sources(stage_arguments)
 
         expected_formatted_main_sources = {
             source_math,
@@ -76,10 +73,7 @@ class FormatMainSourcesStageTest(TestCase):
             source_map,
         }
 
-        self.assertCountEqual(resources['formatted_main_sources'],
-                              expected_formatted_main_sources)
-
-        self.assertIsNone(resources['formatted_main_executable_source'])
+        self.assertCountEqual(resources['formatted_main_sources'], expected_formatted_main_sources)
 
         expected_cache = {
             source_math: '38527a9ac8d06095ec3a63b5409cdf92888fd8ee721a38628b7c83765f52e182',

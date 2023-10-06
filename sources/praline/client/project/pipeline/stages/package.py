@@ -3,17 +3,17 @@ from praline.common.package import manifest_file_name, pack, write_artifact_mani
 from praline.common.file_system import join, relative_path
 
 
-@stage(requirements=[['project_structure', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table', 'test_results'],
+@stage(requirements=[['project_structure', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
                      ['project_structure', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table'],
-                     ['project_structure', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table', 'test_results'],
+                     ['project_structure', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
                      ['project_structure', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table'],
-                     ['project_structure', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'test_results'],
+                     ['project_structure', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
                      ['project_structure', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
-                     ['project_structure', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'test_results'],
+                     ['project_structure', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
                      ['project_structure', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
-                     ['project_structure', 'resources', 'formatted_headers', 'test_results'],
+                     ['project_structure', 'resources', 'formatted_headers', 'tests_passed'],
                      ['project_structure', 'resources', 'formatted_headers'],
-                     ['project_structure', 'resources',           'headers', 'test_results'],
+                     ['project_structure', 'resources',           'headers', 'tests_passed'],
                      ['project_structure', 'resources',           'headers']],
        output=['package'], exposed=True)
 def package(arguments: StageArguments):

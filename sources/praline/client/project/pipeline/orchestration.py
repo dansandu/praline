@@ -9,6 +9,7 @@ from praline.common.compiling.compiler import CompilerWrapper
 from praline.common.file_system import FileSystem, join
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.tracing import trace
+
 from typing import Any, Dict, List
 
 
@@ -23,9 +24,6 @@ class CyclicStagesError(Exception):
 class UnsatisfiableStageError(Exception):
     pass
 
-
-class ResourceNotSuppliedError(Exception):
-    pass
 
 
 def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]):
@@ -95,7 +93,7 @@ def invoke_stage(file_system: FileSystem,
                  compiler: CompilerWrapper,
                  target_stage: str,
                  stages: Dict[str, Stage]):
-    resources = {}
+    global_resources = {}
     pipeline  = create_pipeline(file_system, 
                                 configuration, 
                                 program_arguments, 
@@ -109,37 +107,33 @@ def invoke_stage(file_system: FileSystem,
 
     for activation, stage_name in pipeline:
         stage = stages[stage_name]
-        stage_resources = {resource : resources[resource] for resource in stage.requirements[activation]}
-        stage_resources_wrapper = StageResources(stage_name, activation, stage_resources, stage.output)
+        local_resources = {resource : global_resources[resource] for resource in stage.requirements[activation]}
         stage_program_arguments = get_stage_program_arguments(stage_name, program_arguments)
-        
-        progress_bar_header   = stage_name.replace('_', ' ')
-        progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_length)
-        if stage.cacheable:
-            cache_path = join(file_system.get_working_directory(), 'target', 'cache.pickle')
-            with Cache(file_system, cache_path) as cache:
-                cache[stage_name] = stage_cache = cache.get(stage_name, {})
+        with StageResources(stage_name, activation, local_resources, stage.output) as stage_resources:        
+            progress_bar_header   = stage_name.replace('_', ' ')
+            progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_length)
+            if stage.cacheable:
+                cache_path = join(file_system.get_working_directory(), 'target', 'cache.pickle')
+                with Cache(file_system, cache_path) as cache:
+                    cache[stage_name] = stage_cache = cache.get(stage_name, {})
+                    arguments = StageArguments(file_system=file_system,
+                                               configuration=configuration,
+                                               program_arguments=stage_program_arguments,
+                                               remote_proxy=remote_proxy,
+                                               artifact_manifest=artifact_manifest,
+                                               compiler=compiler,
+                                               resources=stage_resources,
+                                               cache=stage_cache,
+                                               progress_bar_supplier=progress_bar_supplier)
+                    stage.invoker(arguments)
+            else:
                 arguments = StageArguments(file_system=file_system,
                                            configuration=configuration,
                                            program_arguments=stage_program_arguments,
                                            remote_proxy=remote_proxy,
                                            artifact_manifest=artifact_manifest,
                                            compiler=compiler,
-                                           resources=stage_resources_wrapper,
-                                           cache=stage_cache,
+                                           resources=stage_resources,
                                            progress_bar_supplier=progress_bar_supplier)
                 stage.invoker(arguments)
-        else:
-            arguments = StageArguments(file_system=file_system,
-                                       configuration=configuration,
-                                       program_arguments=stage_program_arguments,
-                                       remote_proxy=remote_proxy,
-                                       artifact_manifest=artifact_manifest,
-                                       compiler=compiler,
-                                       resources=stage_resources_wrapper,
-                                       progress_bar_supplier=progress_bar_supplier)
-            stage.invoker(arguments)
-        for resource in stage.output:
-            if resource not in stage_resources_wrapper:
-                raise ResourceNotSuppliedError(f"stage '{stage_name}' didn't supply resource '{resource}'")
-        resources.update(stage_resources_wrapper.resources)
+            global_resources.update(stage_resources.resources)

@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.format_test_sources import format_test_sources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing.file_system_mock import FileSystemMock
@@ -45,11 +46,6 @@ class FormatTestSourcesStageTest(TestCase):
 
         clang_format_executable = join('path', 'to', 'clang-format')
 
-        resources = {
-            'clang_format_executable': clang_format_executable,
-            'test_sources': file_system.files.keys()
-        }
-
         cache = {
             source_vector: '2d5b04a0069bfadaadbce424db26c7a66c13afa3c621326ab0f1303c6a20ad82',
             source_map: 'stale',
@@ -58,12 +54,18 @@ class FormatTestSourcesStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
-        stage_arguments = StageArguments(file_system=file_system,
-                                         resources=resources,
-                                         cache=cache,
-                                         progress_bar_supplier=progress_bar_supplier)
-
-        format_test_sources(stage_arguments)
+        with StageResources(stage='format_test_sources', 
+                            activation=0, 
+                            resources= {
+                                'clang_format_executable': clang_format_executable,
+                                'test_sources': file_system.files.keys(),
+                            },
+                            constrained_output=['formatted_test_sources']) as resources:
+            stage_arguments = StageArguments(file_system=file_system,
+                                             resources=resources,
+                                             cache=cache,
+                                             progress_bar_supplier=progress_bar_supplier)
+            format_test_sources(stage_arguments)
 
         expected_formatted_test_sources = {
             source_math,

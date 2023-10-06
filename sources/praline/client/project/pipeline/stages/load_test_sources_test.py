@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.load_test_sources import load_test_sources, test_executable_contents
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
@@ -29,10 +30,6 @@ class LoadTestSourcesStageTest(TestCase):
             working_directory='project',
         )
 
-        resources = {
-            'project_structure': project_structure_dummy
-        }
-
         artifact_manifest = ArtifactManifest(organization='org',
                                              artifact='art',
                                              version=ArtifactVersion.from_string('5.35.5.SNAPSHOT'),
@@ -45,11 +42,14 @@ class LoadTestSourcesStageTest(TestCase):
                                              artifact_logging_level=ArtifactLoggingLevel.debug,
                                              dependencies=[])      
         
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         artifact_manifest=artifact_manifest, 
-                                         resources=resources)
-
-        load_test_sources(stage_arguments)
+        with StageResources(stage='load_test_sources', 
+                            activation=0, 
+                            resources={'project_structure': project_structure_dummy}, 
+                            constrained_output=['test_sources']) as resources:
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             artifact_manifest=artifact_manifest, 
+                                             resources=resources)
+            load_test_sources(stage_arguments)
 
         expected_test_sources = {
             test_math,
