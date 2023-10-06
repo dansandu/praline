@@ -24,9 +24,6 @@ version: 1.0.0
 Praline uses the file to build and manage artifacts for the project. Next, open the terminal in the directory and run the following commands:
 ```bash
 export PATH=$PATH:<path to cloned repo>/sources
-praline.py --executable --skip-formatting main
+praline.py --artifact-type=executable --skip-formatting main
 ```
-The first command adds the `praline.py` script to the path so you can easily invoke it inside the terminal. The second command invokes the script and builds the project as an executable artifact by specifying the `--executable` flag. You can omit the `--skip-formatting` flag if the `clang-format` executable path is set in the `resources/praline-client.config` file using the `clang-format-executable-path` key, or if the environment `PATH` variable contains the path to the executable. After running the command the terminal should print something like this:
-```
-INFO praline.common.file_system Hello, world!
-```
+The first command adds the `praline.py` script to the path so you can easily invoke it inside the terminal. The second command invokes the script and builds the project as an executable artifact by specifying the `--artifact-type=executable` flag. You can omit the `--skip-formatting` flag if the `clang-format` executable path is set in the `resources/praline-client.config` file using the `clang-format-executable-path` key, or if the environment `PATH` variable contains the path to the executable. After running the command the terminal should print `Hello, world!`
