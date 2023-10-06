@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.main import main
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing import project_structure_dummy
@@ -45,13 +46,14 @@ class MainStageTest(TestCase):
             }
         }
 
-        resources = {
-            'project_structure': project_structure_dummy,
-            'main_executable': main_executable
-        }
-
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         program_arguments=program_arguments, 
-                                         resources=resources)
-
-        main(stage_arguments)
+        with StageResources(stage='main', 
+                            activation=0, 
+                            resources={
+                                'project_structure': project_structure_dummy, 
+                                'main_executable': main_executable,
+                            }, 
+                            constrained_output=[]) as resources:
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             program_arguments=program_arguments, 
+                                             resources=resources)
+            main(stage_arguments)

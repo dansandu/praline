@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.load_main_sources import load_main_sources
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
@@ -25,10 +26,6 @@ class LoadMainSourcesStageTest(TestCase):
             working_directory='project',
         )
 
-        resources = {
-            'project_structure': project_structure_dummy,    
-        }
-
         artifact_manifest = ArtifactManifest(organization='org',
                                              artifact='art',
                                              version=ArtifactVersion.from_string('0.0.0.SNAPSHOT'),
@@ -41,11 +38,14 @@ class LoadMainSourcesStageTest(TestCase):
                                              artifact_logging_level=ArtifactLoggingLevel.debug,
                                              dependencies=[])  
 
-        stage_arguments = StageArguments(file_system=file_system,
-                                         artifact_manifest=artifact_manifest,
-                                         resources=resources)
-
-        load_main_sources(stage_arguments)
+        with StageResources(stage='load_main_sources', 
+                            activation=0, 
+                            resources={'project_structure': project_structure_dummy}, 
+                            constrained_output=['main_sources']) as resources:
+            stage_arguments = StageArguments(file_system=file_system,
+                                             artifact_manifest=artifact_manifest,
+                                             resources=resources)
+            load_main_sources(stage_arguments)
 
         expected_main_sources = {
             join('project', 'sources', 'org', 'art', 'math.cpp')

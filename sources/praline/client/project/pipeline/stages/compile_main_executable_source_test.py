@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.compile_main_sources import compile_main_sources
+from praline.client.project.pipeline.stages.compile_main_executable_source import compile_main_executable_source
 from praline.common import ProjectStructure
 from praline.common.compiling.compiler import IYieldDescriptor
 from praline.common.progress_bar import ProgressBarSupplier
@@ -39,17 +39,14 @@ class CompilerWrapperMock:
         return [self.sources_to_objects[source] for source in sources]
 
 
-class CompileMainSourcesStageTest(TestCase):
+class CompileMainExecutableSourceStageTest(TestCase):
     def test_with_formatted_sources(self):
         header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
-        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.cpp')
-        object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
-
         header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
-        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.cpp')
-        object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
-
         header_c = join(project_structure_dummy.external_headers_root, 'org', 'art', 'c.hpp')
+
+        source_executable = join(project_structure_dummy.sources_root, 'org', 'art', 'executable.cpp')
+        object_executable = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
 
         compiler = CompilerWrapperMock(
             self,
@@ -59,13 +56,12 @@ class CompileMainSourcesStageTest(TestCase):
                 header_c,
             ],
             sources_to_objects={
-                source_a: object_a,
-                source_b: object_b,
+                source_executable: object_executable,
             }
         )
 
         with StageResources(
-            stage='compile_main_sources',
+            stage='compile_main_executable_source',
             activation=0,
             resources={
                 'project_structure': project_structure_dummy,
@@ -73,37 +69,26 @@ class CompileMainSourcesStageTest(TestCase):
                     header_a,
                     header_b,
                 ],
-                'formatted_main_sources': [
-                    source_a,
-                    source_b,
-                ],
+                'formatted_main_executable_source': source_executable,
                 'external_headers': [
                     header_c,
                 ]
             },
-            constrained_output=['main_objects']
+            constrained_output=['main_executable_object']
         ) as resources:
             stage_arguments = StageArguments(compiler=compiler, resources=resources)
-            compile_main_sources(stage_arguments)
+            compile_main_executable_source(stage_arguments)
 
-        expected_objects = {
-            object_a,
-            object_b,
-        }
-
-        self.assertCountEqual(resources['main_objects'], expected_objects)
+        self.assertCountEqual(resources['main_executable_object'], object_executable)
 
 
     def test_with_unformatted_sources(self):
         header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
-        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.cpp')
-        object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
-
         header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
-        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.cpp')
-        object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
-
         header_c = join(project_structure_dummy.external_headers_root, 'org', 'art', 'c.hpp')
+
+        source_executable = join(project_structure_dummy.sources_root, 'org', 'art', 'executable.cpp')
+        object_executable = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
 
         compiler = CompilerWrapperMock(
             self,
@@ -113,13 +98,12 @@ class CompileMainSourcesStageTest(TestCase):
                 header_c,
             ],
             sources_to_objects={
-                source_a: object_a,
-                source_b: object_b,
+                source_executable: object_executable,
             }
         )
 
         with StageResources(
-            stage='compile_main_sources',
+            stage='compile_main_executable_source',
             activation=1,
             resources={
                 'project_structure': project_structure_dummy,
@@ -127,22 +111,14 @@ class CompileMainSourcesStageTest(TestCase):
                     header_a,
                     header_b,
                 ],
-                'main_sources': [
-                    source_a,
-                    source_b,
-                ],
+                'main_executable_source': source_executable,
                 'external_headers': [
                     header_c,
                 ]
             },
-            constrained_output=['main_objects']
+            constrained_output=['main_executable_object']
         ) as resources:            
             stage_arguments = StageArguments(compiler=compiler, resources=resources)
-            compile_main_sources(stage_arguments)
+            compile_main_executable_source(stage_arguments)
 
-        expected_objects = {
-            object_a,
-            object_b,
-        }
-
-        self.assertCountEqual(resources['main_objects'], expected_objects)
+        self.assertCountEqual(resources['main_executable_object'], object_executable)

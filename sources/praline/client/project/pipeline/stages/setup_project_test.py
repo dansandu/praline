@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import DeclaredResourceNotSuppliedError, StageResources
 from praline.client.project.pipeline.stages.setup_project import setup_project, IllformedProjectError
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
@@ -35,17 +36,16 @@ class SetupProjectStageTest(TestCase):
             working_directory='project'
         )
 
-        resources = {}
+        with StageResources(stage='setup_project', 
+                            activation=0, 
+                            resources={}, 
+                            constrained_output=['project_structure']) as resources:
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             artifact_manifest=self.artifact_manifest, 
+                                             resources=resources)
+            setup_project(stage_arguments)
 
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         artifact_manifest=self.artifact_manifest, 
-                                         resources=resources)
-
-        setup_project(stage_arguments)
-
-        project_structure = resources['project_structure']
-
-        self.assertEqual(project_structure, project_structure_dummy)
+        self.assertEqual(resources['project_structure'], project_structure_dummy)
 
         self.assertTrue(file_system.is_directory(self.resources_full))
 
@@ -66,13 +66,17 @@ class SetupProjectStageTest(TestCase):
             working_directory='project'
         )
 
-        resources = {}
-
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         artifact_manifest=self.artifact_manifest, 
-                                         resources=resources)
-
-        self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
+        try:
+            with StageResources(stage='setup_project', 
+                                activation=0, 
+                                resources={}, 
+                                constrained_output=['project_structure']) as resources:
+                stage_arguments = StageArguments(file_system=file_system, 
+                                                 artifact_manifest=self.artifact_manifest, 
+                                                 resources=resources)
+                self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
+        except DeclaredResourceNotSuppliedError:
+            pass
 
     def test_invalid_project_sources(self):
         file_system = FileSystemMock(
@@ -86,13 +90,17 @@ class SetupProjectStageTest(TestCase):
             working_directory='project'
         )
 
-        resources = {}
-
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         artifact_manifest=self.artifact_manifest, 
-                                         resources=resources)
-
-        self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
+        try:
+            with StageResources(stage='setup_project', 
+                                activation=0, 
+                                resources={}, 
+                                constrained_output=['project_structure']) as resources:
+                stage_arguments = StageArguments(file_system=file_system, 
+                                                 artifact_manifest=self.artifact_manifest, 
+                                                 resources=resources)
+                self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
+        except DeclaredResourceNotSuppliedError:
+            pass
 
     def test_valid_project_with_hidden_file(self):
         file_system = FileSystemMock(
@@ -106,10 +114,11 @@ class SetupProjectStageTest(TestCase):
             working_directory='project'
         )
 
-        resources = {}
-
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         artifact_manifest=self.artifact_manifest, 
-                                         resources=resources)
-
-        setup_project(stage_arguments)
+        with StageResources(stage='setup_project', 
+                            activation=0, 
+                            resources={}, 
+                            constrained_output=['project_structure']) as resources:
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             artifact_manifest=self.artifact_manifest, 
+                                             resources=resources)
+            setup_project(stage_arguments)

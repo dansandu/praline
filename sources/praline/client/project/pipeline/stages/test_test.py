@@ -1,3 +1,4 @@
+from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.test import test
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common.testing import project_structure_dummy
@@ -39,11 +40,6 @@ class TestStageTest(TestCase):
             on_execute=on_execute
         )
 
-        resources = {
-            'project_structure': project_structure_dummy,
-            'test_executable': test_executable
-        }
-
         program_arguments = {
             'byStage': {
                 'arguments': test_program_arguments
@@ -52,12 +48,18 @@ class TestStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, 0, header_length)
 
-        stage_arguments = StageArguments(file_system=file_system, 
-                                         program_arguments=program_arguments, 
-                                         resources=resources,
-                                         progress_bar_supplier=progress_bar_supplier)
-        
-        test(stage_arguments)
+        with StageResources(stage='test', 
+                            activation=0, 
+                            resources={
+                                'project_structure': project_structure_dummy,
+                                'test_executable': test_executable
+                            }, 
+                            constrained_output=['tests_passed']) as resources:
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             program_arguments=program_arguments, 
+                                             resources=resources,
+                                             progress_bar_supplier=progress_bar_supplier)
+            test(stage_arguments)
 
         self.assertEqual(resources['tests_passed'], 'success')
  
