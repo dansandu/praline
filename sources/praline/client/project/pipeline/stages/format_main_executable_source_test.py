@@ -49,7 +49,7 @@ class FormatMainExecutableSourceStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=1)
 
-        with StageResources(stage='load_main_executable_source', 
+        with StageResources(stage='format_main_executable_source', 
                             activation=0, 
                             resources={'clang_format_executable': clang_format_executable, 'main_executable_source': source_exe},
                             constrained_output=['formatted_main_executable_source']) as resources:
@@ -103,7 +103,7 @@ class FormatMainExecutableSourceStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=1)
 
-        with StageResources(stage='load_main_executable_source', 
+        with StageResources(stage='format_main_executable_source', 
                             activation=0, 
                             resources={'clang_format_executable': clang_format_executable, 'main_executable_source': source_exe},
                             constrained_output=['formatted_main_executable_source']) as resources:
