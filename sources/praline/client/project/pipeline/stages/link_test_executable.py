@@ -10,8 +10,11 @@ def link_test_executable(arguments: StageArguments):
     resources         = arguments.resources
     cache             = arguments.cache
 
+    executable_suffix = f'{artifact_manifest.organization}-{artifact_manifest.artifact}-executable.obj'
+    main_objects = [source for source in resources['main_objects'] if not source.endswith(executable_suffix)]
+
     project_structure             = resources['project_structure']
-    objects                       = resources['main_objects'] + resources['test_objects']
+    objects                       = main_objects + resources['test_objects']
     external_libraries            = resources['external_libraries']
     external_libraries_interfaces = resources['external_libraries_interfaces']
     artifact_identifier           = artifact_manifest.get_artifact_identifier() + '.test'
