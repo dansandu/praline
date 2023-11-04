@@ -52,6 +52,7 @@ class StageResources:
         return resource in self.resources
 
     def __exit__(self, type, value, traceback):
-        not_supplied = [resource for resource in self.constrained_output if resource not in self.resources]
-        if not_supplied:
-            raise DeclaredResourceNotSuppliedError(f"stage '{self.stage}' did not supply resource '{not_supplied[0]}' despite declaring it as output")
+        if not type:
+            not_supplied = [resource for resource in self.constrained_output if resource not in self.resources]
+            if not_supplied:
+                raise DeclaredResourceNotSuppliedError(f"stage '{self.stage}' did not supply resource '{not_supplied[0]}' despite declaring it as output")

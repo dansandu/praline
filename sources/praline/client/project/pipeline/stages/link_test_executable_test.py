@@ -56,6 +56,7 @@ class LinkTestExecutableStageTest(TestCase):
 
         object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
         object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
+        object_c = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
         object_d = join(project_structure_dummy.objects_root, 'org-art-c.test.obj')
         object_e = join(project_structure_dummy.objects_root, 'org-art-d.test.obj')
         object_f = join(project_structure_dummy.objects_root, 'org-art-executable.test.obj')
@@ -91,6 +92,7 @@ class LinkTestExecutableStageTest(TestCase):
                 'main_objects': [
                     object_a,
                     object_b,
+                    object_c,
                 ],
                 'test_objects': [
                     object_d,
