@@ -193,4 +193,6 @@ class FileSystem:
         shutil.copyfileobj(source, destination)
 
     def print(self, *args, **kwargs):
+        if kwargs.pop('clear_current_line', True):
+            print('\033[2K', end='')
         print(*args, **kwargs)

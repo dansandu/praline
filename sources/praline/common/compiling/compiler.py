@@ -137,6 +137,12 @@ class CompilerWrapper:
                                           object_)
                     objects.append(object_)
                 elif item.delta_type == DeltaType.UpToDate:
+                    if not self.file_system.exists(object_):
+                        self.compiler.compile(project_structure.sources_root, 
+                                              project_structure.external_headers_root, 
+                                              headers, 
+                                              source, 
+                                              object_)
                     objects.append(object_)
                 elif item.delta_type == DeltaType.Removed:
                     if self.file_system.exists(object_):

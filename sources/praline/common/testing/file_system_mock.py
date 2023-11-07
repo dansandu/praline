@@ -280,4 +280,6 @@ class FileSystemMock:
             self.remove_directory_recursively(directory)
 
     def print(self, *args, **kwargs):
+        if kwargs.pop('clear_current_line', True):
+            print('\033[2K', end='', file=self.stdout)
         print(*args, **kwargs, file=self.stdout)
