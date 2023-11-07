@@ -4,48 +4,49 @@ from enum import Enum
 
 filled_bar_character = '='
 
-empty_bar_character = '-'
+empty_bar_character = '='
 
 bar_length = 50
 
 summary_length = 40
 
-success_status = 'done'
-
-failure_status = 'halted'
+status_length = 6
 
 
 class TextHighlight(Enum):
-    No    = 0
-    Red   = 1
-    Green = 2
-    Blue  = 3
+    No        = 0
+    Red       = 1
+    Green     = 2
+    Blue      = 3
 
-    @classmethod
-    def highlight_text(cls, text: str, highlight):
-        if not text or highlight == TextHighlight.No:
-            return text
-        if highlight == TextHighlight.Red:
-            return '\033[31m' + text + '\033[0m'
-        elif highlight == TextHighlight.Green:
-            return '\033[32m' + text + '\033[0m'
-        elif highlight == TextHighlight.Blue:
-            return '\033[34m' + text + '\033[0m'
-        else:
-            raise ValueError(f"invalid TextHighlight provided: {highlight}")
+
+def format_text(text: str, highlight=TextHighlight.No):
+    if not text:
+        return text
+
+    if highlight == TextHighlight.No:
+        return text
+    elif highlight == TextHighlight.Red:
+        return '\033[31m' + text + '\033[0m'
+    elif highlight == TextHighlight.Green:
+        return '\033[32m' + text + '\033[0m'
+    elif highlight == TextHighlight.Blue:
+        return '\033[34m' + text + '\033[0m'
+    else:
+        raise ValueError(f"invalid TextHighlight provided: {highlight}")  
 
 
 def format_summary(text: str, highlight: TextHighlight = TextHighlight.No):
     if len(text) > summary_length:
         shortened_prefix  = '...'
         shortened         = shortened_prefix + text[len(shortened_prefix) - summary_length:]
-        summary           = TextHighlight.highlight_text(shortened, highlight)
+        summary           = format_text(shortened, highlight)
     else:
         padding_character = ' '
         padding = summary_length - len(text)
         left_padding  = padding // 2
         right_padding = padding // 2 + padding % 2
-        summary = padding_character * left_padding + TextHighlight.highlight_text(text, highlight) + padding_character * right_padding
+        summary = padding_character * left_padding + format_text(text, highlight) + padding_character * right_padding
     return summary
 
 
@@ -83,26 +84,37 @@ class ProgressBar:
         self.display()
     
     def display(self, exiting: bool = False, success: bool = False):
-        if exiting and success:
-            bar = filled_bar_character * bar_length
-            status = f" {TextHighlight.highlight_text(success_status, TextHighlight.Green)} "
-            summary = format_summary('', TextHighlight.No)
+        bar = ''
+        status = status_length * ' '
+        summary = format_summary('', TextHighlight.No)
+        ending = ''
+
+        if exiting:
+            if success:
+                bar = format_text(bar_length * filled_bar_character, TextHighlight.Green)
+            else:
+                if self.resolution > 0:
+                    percentage = self.progress / self.resolution
+                    filled_length = min(int(percentage * bar_length), bar_length - 1)
+                    bar = format_text(filled_length * filled_bar_character, TextHighlight.Red) + (bar_length - filled_length) * empty_bar_character
+                    status = f"{percentage:6.2%}" if percentage < 1.00 else "99.99%"    
+                else:
+                    bar = format_text(bar_length * filled_bar_character, TextHighlight.Red)
+                
+                summary = format_summary(self.summary, TextHighlight.No)
             ending = '\n'
         else:
-            percentage = self.progress / self.resolution if self.resolution > 0 else 0.0
-            filled_length = min(int(percentage * bar_length), bar_length - 1)
-            bar = filled_length * filled_bar_character + empty_bar_character * (bar_length - filled_length)
-
-            if exiting and not success:
-                status = TextHighlight.highlight_text(failure_status, TextHighlight.Red)
-                summary = format_summary('', TextHighlight.No)
-                ending = '\n'
+            if self.resolution > 0:
+                percentage = self.progress / self.resolution
+                filled_length = min(int(percentage * bar_length), bar_length - 1)
+                bar = format_text(filled_length * filled_bar_character, TextHighlight.Blue) + (bar_length - filled_length) * empty_bar_character
+                status = f"{percentage:6.2%}" if percentage < 1.00 else "99.99%"
             else:
-                status = f"{percentage:6.2%}" if percentage < 0.9999 else "99.99%"
-                summary = format_summary(self.summary, TextHighlight.Blue)
-                ending = ''
+                bar = format_text(bar_length * empty_bar_character, TextHighlight.No)
+
+            summary = format_summary(self.summary, TextHighlight.No)
         
-        self.file_system.print(f"\r{self.header: <{self.header_length}} {bar} {status} {summary}", end=ending, flush=True)
+        self.file_system.print(f"\r{self.header: <{self.header_length}} {bar} {status} {summary}\r", end=ending, flush=True, clear_current_line=False)
 
     def __exit__(self, type, value, traceback):
         self.display(exiting=True, success=type == None)

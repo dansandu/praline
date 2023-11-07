@@ -38,10 +38,14 @@ class CompilerMock(ICompiler):
                    external_headers_root: str,
                    headers: List[str],
                    source: str) -> bytes:
-        header = [h for h in headers if source[:-4] == h[:-4]][0]
-        with self.file_system.open_file(header, 'rb') as h:
+        headers = [h for h in headers if source[:-4] == h[:-4]]
+        if headers:
+            with self.file_system.open_file(headers[0], 'rb') as h:
+                with self.file_system.open_file(source, 'rb') as s:
+                    return h.read() + s.read()
+        else:
             with self.file_system.open_file(source, 'rb') as s:
-                return h.read() + s.read()
+                return s.read()
 
     def compile(self,
                 headers_root: str,
@@ -128,6 +132,7 @@ class CompilerTest(TestCase):
                 'sources/b.cpp': b'source-b.',
                 'sources/d.hpp': b'header-d.',
                 'sources/d.cpp': b'source-d.',
+                'sources/e.cpp': b'source-e.',
                 'target/objects/a.obj': b'header-a.source-a.',
                 'target/objects/b.obj': b'header-b.source-b.',
                 'target/objects/c.obj': b'header-c.source-c.'
@@ -136,14 +141,15 @@ class CompilerTest(TestCase):
 
         compiler = CompilerWrapper(file_system, CompilerMock(file_system))
         headers  = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
-        sources  = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp']
+        sources  = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp', 'sources/e.cpp']
         cache    = {
             'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
             'sources/b.cpp': '5addc12d3b54fb9836277adccb06a03131ab92c10faf97613259bb77775db8d3',
-            'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5'
+            'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5',
+            'sources/e.cpp': '7e0494e082ebf4d0b3b06d2433a4c59e3a610ea10e5e3747e5d4d68fd734e485',
         }
 
-        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=5)
 
         objects = compiler.compile_using_cache(self.project_structure,
                                                headers,
@@ -151,7 +157,7 @@ class CompilerTest(TestCase):
                                                cache,
                                                progress_bar_supplier)
 
-        expected_objects = {'target/objects/a.obj', 'target/objects/b.obj', 'target/objects/d.obj'}
+        expected_objects = {'target/objects/a.obj', 'target/objects/b.obj', 'target/objects/d.obj', 'target/objects/e.obj'}
 
         self.assertEqual({normpath(o) for o in objects}, {normpath(o) for o in expected_objects})
 
@@ -162,9 +168,11 @@ class CompilerTest(TestCase):
             'sources/b.cpp': b'source-b.',
             'sources/d.hpp': b'header-d.',
             'sources/d.cpp': b'source-d.',
+            'sources/e.cpp': b'source-e.',
             'target/objects/a.obj': b'header-a.source-a.',
             'target/objects/b.obj': b'updated-header-b.source-b.',
-            'target/objects/d.obj': b'header-d.source-d.'
+            'target/objects/d.obj': b'header-d.source-d.',
+            'target/objects/e.obj': b'source-e.',
         }
 
         expected_files = {normpath(p): data for p, data in new_files.items()}
@@ -174,7 +182,8 @@ class CompilerTest(TestCase):
         expected_cache = {
             'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
             'sources/b.cpp': 'db4b8fea71a29aedd0eac30601ac3489bdc72a3261697215901cf04da2d6a931',
-            'sources/d.cpp': 'edf58f60231d34dfe3eb468e1b4cfeb35dd39cecd796183660cf13bf301f103b'
+            'sources/d.cpp': 'edf58f60231d34dfe3eb468e1b4cfeb35dd39cecd796183660cf13bf301f103b',
+            'sources/e.cpp': '7e0494e082ebf4d0b3b06d2433a4c59e3a610ea10e5e3747e5d4d68fd734e485',
         }
 
         self.assertEqual(cache, expected_cache)
