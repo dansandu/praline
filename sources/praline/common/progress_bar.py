@@ -12,10 +12,6 @@ summary_length = 40
 
 status_length = 6
 
-show_cursor = '\033[?25h'
-
-hide_cursor = '\033[?25l'
-
 
 class TextHighlight(Enum):
     No        = 0
@@ -70,7 +66,6 @@ class ProgressBar:
         self.summary       = ''
 
     def __enter__(self):
-        self.file_system.print(hide_cursor, end='')
         self.display()
         return self
     
@@ -102,9 +97,11 @@ class ProgressBar:
                     percentage = self.progress / self.resolution
                     filled_length = min(int(percentage * bar_length), bar_length - 1)
                     bar = format_text(filled_length * filled_bar_character, TextHighlight.Red) + (bar_length - filled_length) * empty_bar_character
-                    status = f"{percentage:6.2%}" if percentage < 1.00 else "99.99%"
+                    status = f"{percentage:6.2%}" if percentage < 1.00 else "99.99%"    
                 else:
                     bar = format_text(bar_length * filled_bar_character, TextHighlight.Red)
+                
+                summary = format_summary(self.summary, TextHighlight.No)
             ending = '\n'
         else:
             if self.resolution > 0:
@@ -121,7 +118,6 @@ class ProgressBar:
 
     def __exit__(self, type, value, traceback):
         self.display(exiting=True, success=type == None)
-        self.file_system.print(show_cursor, end='', clear_current_line=False)
 
 
 class ProgressBarSupplier:
