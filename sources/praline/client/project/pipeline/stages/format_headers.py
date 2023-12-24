@@ -2,9 +2,7 @@ from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common.hashing import DeltaType, delta, hash_file, progression_resolution
 
 
-@stage(requirements=[['clang_format_executable', 'headers']],
-       output=['formatted_headers'],
-       cacheable=True)
+@stage(requirements=[['clang_format_executable', 'headers']], output=['formatted_headers'], cacheable=True)
 def format_headers(arguments: StageArguments):
     file_system = arguments.file_system
     resources   = arguments.resources

@@ -1,7 +1,5 @@
-from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, stage
-from praline.common.file_system import FileSystem, join
-
-from typing import Any, Dict
+from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
+from praline.common.file_system import join
 
 
 test_executable_contents = """\
@@ -87,12 +85,21 @@ int main(const int argumentsCount, const char* const* const arguments)
 """
 
 
-def can_run_unit_tests(arguments: StagePredicateArguments):
-    return (not arguments.program_arguments['global']['skip_unit_tests'] and 
-            any(f for f in arguments.file_system.files_in_directory('sources') if f.endswith('.test.cpp')))
+def predicate(arguments: StagePredicateArguments):
+    not_skipping_unit_tests = not arguments.program_arguments['global']['skip_unit_tests']
+    any_test_sources = any(f for f in arguments.file_system.files_in_directory('sources') if f.endswith('.test.cpp'))
+    
+    if not_skipping_unit_tests and any_test_sources:
+        return StagePredicateResult.success()
+    elif not_skipping_unit_tests:
+        return StagePredicateResult.failure("there are no test sources")
+    elif any_test_sources:
+        return StagePredicateResult.failure("the skip_unit_tests flag was used")
+    else:
+        return StagePredicateResult.failure("there are no test sources and the skip_unit_tests flag was used")
 
 
-@stage(requirements=[['project_structure']], output=['test_sources'], predicate=can_run_unit_tests)
+@stage(requirements=[['project_structure']], output=['test_sources'], predicate=predicate)
 def load_test_sources(arguments: StageArguments):
     file_system       = arguments.file_system
     artifact_manifest = arguments.artifact_manifest

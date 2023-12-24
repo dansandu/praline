@@ -8,7 +8,7 @@ from praline.common.tracing import trace
 
 import pkgutil
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 
 class StageNameConflictError(Exception):
@@ -39,11 +39,25 @@ class StagePredicateArguments:
 
 
 @dataclass(frozen=True)
+class StagePredicateResult:
+    can_run: bool
+    explanation: str
+
+    @staticmethod
+    def success():
+        return StagePredicateResult(can_run=True, explanation=None)
+    
+    @staticmethod
+    def failure(explanation: str):
+        return StagePredicateResult(can_run=False, explanation=explanation)
+
+
+@dataclass(frozen=True)
 class Stage:
     name             : str
     requirements     : List[List[str]]
     output           : List[str]
-    predicate        : Callable[[StagePredicateArguments], bool]
+    predicate        : Callable[[StagePredicateArguments], StagePredicateResult]
     program_arguments: List[Dict[str, Any]]
     cacheable        : bool
     exposed          : bool
@@ -63,7 +77,7 @@ def get_stages() -> Dict[str, Stage]:
 def stage(_function        : Callable[[StageArguments], None] = None,
           requirements     : List[List[str]] = [[]],
           output           : List[str] = [],
-          predicate        : Callable[[StagePredicateArguments], bool] = lambda _: True,
+          predicate        : Callable[[StagePredicateArguments], StagePredicateResult] = lambda _: StagePredicateResult.success(),
           program_arguments: List[Dict[str, Any]] = [],
           cacheable        : bool = False,
           exposed          : bool = False):

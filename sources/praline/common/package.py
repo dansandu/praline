@@ -1,7 +1,7 @@
 from praline.common import (ArtifactManifest, DependencyScope, DependencyVersion, PackageVersion, package_extension,
                             package_name_pattern)
 from praline.common.algorithm.general import cartesian_product
-from praline.common.algorithm.graph.instance_traversal import multiple_instance_depth_first_traversal
+from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
 from praline.common.compiling.compiler import get_compiler_supplier
 from praline.common.file_system import FileSystem, basename, common_path, join, normalized_path
 from praline.common.tracing import trace
@@ -100,8 +100,8 @@ def get_package_dependencies_recursively(file_system: FileSystem,
         for dependency in dependency_tree:
             dependency_identifier, dependency_version = split_package_version(dependency)
             if package_identifier == dependency_identifier and package_version != dependency_version:
-                return False
-        return True
+                return InstanceValidationResult.failure("")
+        return InstanceValidationResult.success()
 
     def no_cyclic_depedencies(cycle: List[str]):
         raise ArtifactCyclicDependenciesError(f"artifact '{root_package}' has cyclic dependencies {cycle}")
@@ -121,13 +121,16 @@ def get_package_dependencies_recursively(file_system: FileSystem,
             fixed_dependencies.append(matching_packages)
         return cartesian_product(fixed_dependencies)
 
-    dependency_trees = multiple_instance_depth_first_traversal(root_package, 
-                                                               visitor, 
-                                                               no_version_conflicts, 
-                                                               no_cyclic_depedencies)
-    if not dependency_trees:
+    instances = multiple_instance_depth_first_traversal(start_node=root_package, 
+                                                        node_visitor=visitor, 
+                                                        instance_validator=no_version_conflicts, 
+                                                        on_cycle=no_cyclic_depedencies)
+    valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
+    
+    if not valid_trees:
         raise UnsatisfiableArtifactDependenciesError(f"dependencies for package '{root_package}' cannot be satisfied")
-    dependencies = [dependency for dependency in dependency_trees[0]]
+    
+    dependencies = [dependency for dependency in valid_trees[0]]
     dependencies.remove(root_package)
     return dependencies
 

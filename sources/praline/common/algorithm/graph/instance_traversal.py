@@ -4,20 +4,35 @@ from copy import deepcopy
 
 
 @dataclass
+class InstanceValidationResult:
+    valid: bool
+    explanation: str
+
+    @staticmethod
+    def success():
+        return InstanceValidationResult(valid=True, explanation=None)
+    
+    @staticmethod
+    def failure(message: str):
+        return InstanceValidationResult(valid=False, explanation=message)
+
+
+@dataclass
 class Instance:
-    current_node: str
-    parent_node : str
-    stack       : List[Tuple[str, str]]
-    tree        : Dict[str, Tuple[int, List[str]]]
-    path        : List[str]
+    current_node      : str
+    parent_node       : str
+    stack             : List[Tuple[str, str]]
+    tree              : Dict[str, Tuple[int, List[str]]]
+    path              : List[str]
+    validation_result : InstanceValidationResult
 
     @classmethod
     def copy_from(cls, instance):
-        return cls(instance.current_node, instance.parent_node, list(instance.stack), dict(instance.tree), list(instance.path))
+        return cls(instance.current_node, instance.parent_node, list(instance.stack), dict(instance.tree), list(instance.path), instance.validation_result)
 
     @classmethod
     def fresh(cls, root: str):
-        return cls(None, None, [(root, None)], {}, [])
+        return cls(None, None, [(root, None)], {}, [], InstanceValidationResult.success())
 
 
 def update_path(instance: Instance, on_cycle: Callable[[List[str]], None]) -> None:
@@ -33,15 +48,16 @@ def update_path(instance: Instance, on_cycle: Callable[[List[str]], None]) -> No
 
 def multiple_instance_depth_first_traversal(start_node        : str,
                                             node_visitor      : Callable[[str], List[List[str]]],
-                                            instance_validator: Callable[[str, Dict[str, Tuple[int, List[str]]]], bool],
-                                            on_cycle          : Callable[[List[str]], None]) -> List[Dict[str, Tuple[int, List[str]]]]:
+                                            instance_validator: Callable[[str, Dict[str, Tuple[int, List[str]]]], InstanceValidationResult],
+                                            on_cycle          : Callable[[List[str]], None]) -> List[Instance]:
     global_tree = {}
     instances   = [Instance.fresh(start_node)]
 
-    def instance_depth_first_traversal(instance: Instance) -> bool:
+    def instance_depth_first_traversal(instance: Instance):
         if instance.current_node != None:
-            if not instance_validator(instance.current_node, instance.tree):
-                return False
+            instance.validation_result = instance_validator(instance.current_node, instance.tree)
+            if not instance.validation_result.valid:
+                return
             update_path(instance, on_cycle)
             instance.stack.extend((child, instance.current_node) for child in instance.tree[instance.current_node][1])
 
@@ -62,16 +78,15 @@ def multiple_instance_depth_first_traversal(start_node        : str,
                     new_instance.tree[new_instance.current_node] = (i, children[i])
                     instances.append(new_instance)
             
-            if not instance_validator(instance.current_node, instance.tree):
-                return False
+            instance.validation_result = instance_validator(instance.current_node, instance.tree)
+            if not instance.validation_result.valid:
+                return
             update_path(instance, on_cycle)
             instance.stack.extend((child, instance.current_node) for child in instance.tree[instance.current_node][1])
-        return True
 
     instance_index = 0
     while instance_index < len(instances):
-        if instance_depth_first_traversal(instances[instance_index]):
-            instance_index += 1
-        else:
-            del instances[instance_index]
-    return [instance.tree for instance in instances]
+        instance_depth_first_traversal(instances[instance_index])
+        instance_index += 1
+    
+    return instances
