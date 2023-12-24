@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateArguments
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common import ArtifactManifest
-from praline.common.algorithm.graph.instance_traversal import multiple_instance_depth_first_traversal
+from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
 from praline.common.algorithm.graph.simple_traversal import root_last_traversal
 from praline.common.compiling.compiler import CompilerWrapper
 from praline.common.file_system import FileSystem, join
@@ -73,10 +73,10 @@ def create_pipeline(file_system: FileSystem,
                                                             artifact_manifest,
                                                             compiler)
         stage_predicate_result = stages[stage].predicate(stage_predicate_arguments)
-        return (stage_predicate_result.can_run, stage_predicate_result.explanation)
+        return InstanceValidationResult(valid=stage_predicate_result.can_run, explanation=stage_predicate_result.explanation)
 
     instances = multiple_instance_depth_first_traversal(target_stage, visitor, validator, on_cycle)
-    valid_trees = [instance.tree for instance in instances if instance.validation_result[0]]
+    valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
     
     if any(valid_trees):
         stage_subtree = valid_trees[0]
@@ -87,7 +87,7 @@ def create_pipeline(file_system: FileSystem,
         message = f"could not create a pipeline to satisfy stage '{target_stage}':\n"
         for index in range(len(instances)):
             instance = instances[index]
-            message += f"  for instance #{index} the stage '{instance.current_node}' couldn't run: {instance.validation_result[1]}\n"
+            message += f"  for instance #{index} the stage '{instance.current_node}' couldn't run: {instance.validation_result.explanation}\n"
         raise UnsatisfiableStageError(message)
 
 

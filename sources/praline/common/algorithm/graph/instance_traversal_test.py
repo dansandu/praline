@@ -1,4 +1,4 @@
-from praline.common.algorithm.graph.instance_traversal import multiple_instance_depth_first_traversal
+from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
 from unittest import TestCase
 
 
@@ -34,8 +34,14 @@ class InstanceTraversalTest(TestCase):
         def error_on_cycle(cycle):
             raise RuntimeError(f"cycle detected: {cycle}")
 
-        instances = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: (True, None), error_on_cycle)
-        valid_trees = [instance.tree for instance in instances if instance.validation_result[0]]
+        instances = multiple_instance_depth_first_traversal(
+            start_node='A', 
+            node_visitor=tree.__getitem__, 
+            instance_validator=lambda _, __: InstanceValidationResult.success(), 
+            on_cycle=error_on_cycle
+        )
+        
+        valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
 
         self.assertEqual(len(valid_trees), 6)
 
@@ -137,8 +143,15 @@ class InstanceTraversalTest(TestCase):
             'K': []
         }
         cycles = []
-        instances = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: (True, None), cycles.append)
-        valid_trees = [instance.tree for instance in instances if instance.validation_result[0]]
+        
+        instances = multiple_instance_depth_first_traversal(
+            start_node='A', 
+            node_visitor=tree.__getitem__, 
+            instance_validator=lambda _, __: InstanceValidationResult.success(), 
+            on_cycle=cycles.append
+        )
+
+        valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
 
         self.assertEqual(cycles, [['A', 'E', 'J']])
 
