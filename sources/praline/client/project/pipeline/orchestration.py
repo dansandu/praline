@@ -72,16 +72,23 @@ def create_pipeline(file_system: FileSystem,
                                                             remote_proxy,
                                                             artifact_manifest,
                                                             compiler)
-        return stages[stage].predicate(stage_predicate_arguments)
+        stage_predicate_result = stages[stage].predicate(stage_predicate_arguments)
+        return (stage_predicate_result.can_run, stage_predicate_result.explanation)
 
-    trees = multiple_instance_depth_first_traversal(target_stage, visitor, validator, on_cycle)
-    if trees:
-        stage_subtree = trees[0]
+    instances = multiple_instance_depth_first_traversal(target_stage, visitor, validator, on_cycle)
+    valid_trees = [instance.tree for instance in instances if instance.validation_result[0]]
+    
+    if any(valid_trees):
+        stage_subtree = valid_trees[0]
         stage_order   = root_last_traversal(target_stage, lambda n: stage_subtree[n][1])
         pipeline      = [(stage_subtree[stage][0], stage) for stage in stage_order]
         return pipeline
-    
-    raise UnsatisfiableStageError(f"could not create a pipeline to satisfy stage '{target_stage}'")
+    else:
+        message = f"could not create a pipeline to satisfy stage '{target_stage}':\n"
+        for index in range(len(instances)):
+            instance = instances[index]
+            message += f"  for instance #{index} the stage '{instance.current_node}' couldn't run: {instance.validation_result[1]}\n"
+        raise UnsatisfiableStageError(message)
 
 
 @trace

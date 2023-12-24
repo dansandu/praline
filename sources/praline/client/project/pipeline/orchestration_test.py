@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.orchestration import (create_pipeline, invoke_stage, CyclicStagesError, 
                                                            MultipleSuppliersError, UnsatisfiableStageError)
-from praline.client.project.pipeline.stages import Stage, StageArguments
+from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateResult
 from praline.common.testing.file_system_mock import FileSystemMock
 
 import pickle
@@ -11,8 +11,8 @@ from unittest import TestCase
 class OrchestrationTest(TestCase):
     def setUp(self):
         self.do_nothing = lambda args: None
-        self.can_run    = lambda args: True
-        self.cant_run   = lambda args: False
+        self.can_run    = lambda args: StagePredicateResult.success()
+        self.cant_run   = lambda args: StagePredicateResult.failure("can't run")
         self.program_arguments = {'global': {}, 'byStage': {}}
 
     def test_create_pipeline(self):

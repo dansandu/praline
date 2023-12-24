@@ -34,9 +34,10 @@ class InstanceTraversalTest(TestCase):
         def error_on_cycle(cycle):
             raise RuntimeError(f"cycle detected: {cycle}")
 
-        trees = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: True, error_on_cycle)
+        instances = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: (True, None), error_on_cycle)
+        valid_trees = [instance.tree for instance in instances if instance.validation_result[0]]
 
-        self.assertEqual(len(trees), 6)
+        self.assertEqual(len(valid_trees), 6)
 
         tree0 = {
             'A': (0, ['B', 'C']),
@@ -49,7 +50,7 @@ class InstanceTraversalTest(TestCase):
             'L': (0, [])
         }
 
-        self.assertEqual(tree0, trees[0])
+        self.assertEqual(tree0, valid_trees[0])
 
         tree1 = {
             'A': (1, ['D', 'E']),
@@ -63,7 +64,7 @@ class InstanceTraversalTest(TestCase):
             'M': (0, [])
         }
 
-        self.assertEqual(tree1, trees[1])
+        self.assertEqual(tree1, valid_trees[1])
 
         tree2 = {
             'A': (0, ['B', 'C']),
@@ -73,7 +74,7 @@ class InstanceTraversalTest(TestCase):
             'I': (0, [])
         }
 
-        self.assertEqual(tree2, trees[2])
+        self.assertEqual(tree2, valid_trees[2])
 
         tree3 = {
             'A': (1, ['D', 'E']),
@@ -87,7 +88,7 @@ class InstanceTraversalTest(TestCase):
             'M': (0, [])
         }
 
-        self.assertEqual(tree3, trees[3])
+        self.assertEqual(tree3, valid_trees[3])
 
         tree4 = {
             'A': (1, ['D', 'E']),
@@ -98,7 +99,7 @@ class InstanceTraversalTest(TestCase):
             'J': (0, [])
         }
 
-        self.assertEqual(tree4, trees[4])
+        self.assertEqual(tree4, valid_trees[4])
 
         tree5 = {
             'A': (1, ['D', 'E']),
@@ -109,7 +110,7 @@ class InstanceTraversalTest(TestCase):
             'K': (0, [])
         }
 
-        self.assertEqual(tree5, trees[5])
+        self.assertEqual(tree5, valid_trees[5])
 
     def test_traversal_with_cycles(self):
         #
@@ -136,11 +137,12 @@ class InstanceTraversalTest(TestCase):
             'K': []
         }
         cycles = []
-        trees = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: True, cycles.append)
+        instances = multiple_instance_depth_first_traversal('A', tree.__getitem__, lambda _, __: (True, None), cycles.append)
+        valid_trees = [instance.tree for instance in instances if instance.validation_result[0]]
 
         self.assertEqual(cycles, [['A', 'E', 'J']])
 
-        self.assertEqual(len(trees), 6)
+        self.assertEqual(len(valid_trees), 6)
 
         tree0 = {
             'A': (0, ['B', 'C']),
@@ -151,7 +153,7 @@ class InstanceTraversalTest(TestCase):
             'H': (0, [])
         }
 
-        self.assertEqual(tree0, trees[0])
+        self.assertEqual(tree0, valid_trees[0])
 
         tree1 = {
             'A': (1, ['D', 'E']),
@@ -163,7 +165,7 @@ class InstanceTraversalTest(TestCase):
             'H': (0, [])
         }
 
-        self.assertEqual(tree1, trees[1])
+        self.assertEqual(tree1, valid_trees[1])
 
         tree2 = {
             'A': (0, ['B', 'C']),
@@ -173,7 +175,7 @@ class InstanceTraversalTest(TestCase):
             'I': (0, [])
         }
 
-        self.assertEqual(tree2, trees[2])
+        self.assertEqual(tree2, valid_trees[2])
 
         tree3 = {
             'A': (1, ['D', 'E']),
@@ -185,7 +187,7 @@ class InstanceTraversalTest(TestCase):
             'H': (0, [])
         }
 
-        self.assertEqual(tree3, trees[3])
+        self.assertEqual(tree3, valid_trees[3])
 
         tree4 = {
             'A': (1, ['D', 'E']),
@@ -196,7 +198,7 @@ class InstanceTraversalTest(TestCase):
             'J': (0, [])
         }
 
-        self.assertEqual(tree4, trees[4])
+        self.assertEqual(tree4, valid_trees[4])
 
         tree5 = {
             'A': (1, ['D', 'E']),
@@ -207,4 +209,4 @@ class InstanceTraversalTest(TestCase):
             'K': (0, [])
         }
 
-        self.assertEqual(tree5, trees[5])
+        self.assertEqual(tree5, valid_trees[5])

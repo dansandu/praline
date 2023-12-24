@@ -1,20 +1,28 @@
 from praline.client.project.pipeline.stages import stage
-from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, stage
+from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
 from praline.common import ArtifactType
 from praline.common.file_system import join
 
 
-def has_non_executable_sources(arguments: StagePredicateArguments):
+def predicate(arguments: StagePredicateArguments):
     sources_root = join(arguments.file_system.get_working_directory(), 'sources')
     files        = arguments.file_system.files_in_directory(sources_root)
-    return (arguments.artifact_manifest.artifact_type == ArtifactType.library and 
-            any(f.endswith('.cpp') and not f.endswith('.test.cpp') for f in files))
+    is_library   = arguments.artifact_manifest.artifact_type == ArtifactType.library
+    has_sources  = any(f.endswith('.cpp') and not f.endswith('.test.cpp') for f in files)
+
+    if is_library and has_sources:
+        return StagePredicateResult.success()
+    elif is_library:
+        return StagePredicateResult.failure("there are no source files to link")
+    elif has_sources:
+        return StagePredicateResult.failure("artifact type is not a library")
+    else:
+        return StagePredicateResult.failure("artifact type is not a library and there are no source files to link")
 
 
 @stage(requirements=[['project_structure', 'main_objects', 'external_libraries', 'external_libraries_interfaces']],
        output=['main_library', 'main_library_interface', 'main_library_symbols_table'],
-       predicate=has_non_executable_sources, 
-       cacheable=True)
+       predicate=predicate, cacheable=True)
 def link_main_library(arguments: StageArguments):
     artifact_manifest = arguments.artifact_manifest
     compiler          = arguments.compiler

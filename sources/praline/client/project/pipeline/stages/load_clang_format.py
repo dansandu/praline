@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, stage
+from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
 from praline.common.file_system import join
 
 
@@ -29,7 +29,10 @@ class ClangFormatConfigurationError(Exception):
 
 
 def predicate(arguments: StagePredicateArguments):
-    return not arguments.program_arguments['global']['skip_formatting']
+    if not arguments.program_arguments['global']['skip_formatting']:
+        return StagePredicateResult.success()
+    else:
+        return StagePredicateResult.failure("the skip_formatting flag was used")
 
 
 @stage(output=['clang_format_style_file', 'clang_format_executable'], predicate=predicate)

@@ -55,7 +55,7 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'dest'   : 'compiler',
                 'type'   : Compiler,
                 'choices': list(Compiler),
-                'help'  : "Sets the target compiler for the artifact. Overrides Pralinefile compiler. If multiple" +
+                'help'  : "Sets the target compiler for the artifact. Overrides Pralinefile compiler. If multiple " +
                     "compilers are set then the best match is chosen for the platform (e.g. gcc for linux, msvc " +
                     "for windows, etc.)."
             },
@@ -75,8 +75,8 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'default': ArtifactLoggingLevel.debug,
                 'help'   : "Log macros with the log level above the specified value are ignored during compilation. " +
                     "Non-macro log statements are not affected by this flag. Ensure that the same value is used for " +
-                    "all builds otherwise the ABI will be broken. It's recommended to leave this flag to debug to " +
-                    "compile all log statements and instead use the logger object interface to set the level."
+                    "all dependencies otherwise the ABI will be broken. It's recommended to leave this flag to " +
+                    "debug to compile all log statements and instead use the logger object interface to set the level."
             },
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}
