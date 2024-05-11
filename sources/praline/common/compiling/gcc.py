@@ -40,7 +40,7 @@ class GccCompiler(ICompiler):
         else:
             raise RuntimeError(f"unrecognized exported symbols '{logging_level_code}'")
 
-        self.flags = [f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++17',
+        self.flags = [f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++23',
                       '-Werror', '-Wall', '-Wextra',
                       '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
                       '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
