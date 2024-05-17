@@ -4,14 +4,15 @@ from praline.common.file_system import join
 
 test_executable_contents = """\
 #define CATCH_CONFIG_RUNNER
+
 #include "catchorg/catch/catch.hpp"
 #include "dansandu/ballotin/environment.hpp"
+#include "dansandu/ballotin/file_system.hpp"
 #include "dansandu/ballotin/logging.hpp"
 #include "dansandu/ballotin/progress_bar.hpp"
 
-#include <iostream>
-
 using dansandu::ballotin::environment::getEnvironmentVariable;
+using dansandu::ballotin::file_system::writeToStandardOutput;
 using dansandu::ballotin::logging::Level;
 using dansandu::ballotin::logging::Logger;
 using dansandu::ballotin::logging::UnitTestsHandler;
@@ -54,11 +55,13 @@ public:
     void testCaseStarting(Catch::TestCaseInfo const& testInfo) override
     {
         progressBar_->updateSummary(testInfo.name);
+        LOG_INFO("Starting test case '", testInfo.name, "'");
     }
 
     void testCaseEnded(Catch::TestCaseStats const& testCaseStats) override
     {
         progressBar_->advance();
+        LOG_INFO("Ending test case '", testCaseStats.testInfo.name, "'");
     }
 
     void testGroupEnded(Catch::TestGroupStats const& testGroupStats) override
@@ -74,11 +77,19 @@ CATCH_REGISTER_LISTENER(ProgressBarListener);
 
 int main(const int argumentsCount, const char* const* const arguments)
 {
+    auto unitTestsHandler = UnitTestsHandler{"unit_tests.log"};
+
     auto& logger = Logger::globalInstance();
     logger.setLevel(Level::debug);
-    logger.addHandler("UnitTests", Level::debug, UnitTestsHandler{"unit_tests.log"});
+    logger.addHandler("UnitTests", Level::debug, unitTestsHandler);
 
     const auto catchResult = Catch::Session().run(argumentsCount, arguments);
+
+    if (unitTestsHandler.errorsLogged() || unitTestsHandler.warningsLogged())
+    {
+        writeToStandardOutput("Tests failed: errors or warnings were logged\\n");
+        return -1;
+    }
 
     return catchResult;
 }
