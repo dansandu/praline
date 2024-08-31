@@ -81,7 +81,7 @@ int main(const int argumentsCount, const char* const* const arguments)
 
     auto& logger = Logger::globalInstance();
     logger.setLevel(Level::debug);
-    logger.addHandler("UnitTests", Level::debug, unitTestsHandler);
+    logger.addHandler(L"UnitTests", Level::debug, unitTestsHandler);
 
     const auto catchResult = Catch::Session().run(argumentsCount, arguments);
 
