@@ -3,6 +3,7 @@ import logging
 import logging.config
 import os.path
 import yaml
+import traceback
 
 
 with open(f"{os.path.dirname(__file__)}/../resources/praline-client.config", 'r') as f:
@@ -48,7 +49,7 @@ if __name__ == '__main__':
                      stages)
 
         exit(0)
-    except RuntimeError as exception:
-        logger.fatal(exception)
+    except Exception:
+        traceback.print_exc()
         exit(-1)
  
