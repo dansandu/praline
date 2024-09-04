@@ -1,7 +1,7 @@
 from praline.common import (Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform, 
                             get_artifact_logging_level_code)
 from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
-from praline.common.file_system import FileSystem, join
+from praline.common.file_system import FileSystem, join, directory_name
 from typing import List
 
 import logging
@@ -134,13 +134,28 @@ class ClangClCompiler(ICompiler):
                         symbols_table: str) -> None:
         library_interface = executable[:-4] + '.lib'
         export_file       = executable[:-4] + '.exp'
+
+        output_directory = directory_name(executable)
+        link_executable_rsp_file = join(output_directory, 'link_executable.rsp')
+
+        link_executable_arguments = ' '.join(
+            [
+                f'/OUT:{executable}',
+                f'/MACHINE:{self.machine}',
+                f'/IMPLIB:{library_interface}', 
+                f'/PDB:{symbols_table}'
+            ] +
+            self.linker_flags +
+            objects +
+            self.extra_libraries_interfaces +
+            external_libraries_interfaces
+        )
+
+        with self.file_system.open_file(link_executable_rsp_file, 'w') as f:
+            f.write(link_executable_arguments)
+
         status, stdout, stderror = self.file_system.execute([self.environment_file, '>nul', '2>&1', '&&', 
-                                                             'lld-link', f'/OUT:{executable}',
-                                                             f'/MACHINE:{self.machine}',
-                                                             f'/IMPLIB:{library_interface}', 
-                                                             f'/PDB:{symbols_table}'] + self.linker_flags + objects +
-                                                            self.extra_libraries_interfaces +
-                                                            external_libraries_interfaces)
+                                                             'lld-link', f'@{link_executable_rsp_file}'])
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
@@ -161,13 +176,27 @@ class ClangClCompiler(ICompiler):
                      library_interface: str,
                      symbols_table: str) -> None:
         export_file = library_interface[:-4] + '.exp'
-        status, stdout, stderror = self.file_system.execute([self.environment_file, '>nul', '2>&1', '&&',
-                                                             'lld-link', f'/OUT:{library}', '/DLL', 
-                                                             f'/IMPLIB:{library_interface}',
-                                                             f'/MACHINE:{self.machine}',
-                                                             f'/PDB:{symbols_table}'] + self.linker_flags + objects +
-                                                            self.extra_libraries_interfaces + 
-                                                            external_libraries_interfaces)
+
+        output_directory = directory_name(library)
+        link_library_rsp_file = join(output_directory, 'link_library.rsp')
+
+        link_library_arguments = ' '.join(
+            [
+                f'/OUT:{library}', '/DLL', 
+                f'/IMPLIB:{library_interface}',
+                f'/MACHINE:{self.machine}',
+                f'/PDB:{symbols_table}'
+            ] + 
+            self.linker_flags + 
+            objects +
+            self.extra_libraries_interfaces + 
+            external_libraries_interfaces
+        )
+
+        with self.file_system.open_file(link_library_rsp_file, 'w') as f:
+            f.write(link_library_arguments)
+
+        status, stdout, stderror = self.file_system.execute([self.environment_file, '>nul', '2>&1', '&&', 'lld-link', f'@{link_library_rsp_file}'])
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
