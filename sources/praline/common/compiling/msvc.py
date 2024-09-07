@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class MsvcCompiler(BaseMsvcCompiler):
     def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest):
-        super().__init__(compiler_name='cl', file_system=file_system, artifact_manifest=artifact_manifest)
+        super().__init__(compiler_name='cl', skipWhichCheck=True, file_system=file_system, artifact_manifest=artifact_manifest)
         
 
 class MsvcCompilerSupplier(ICompilerSupplier):

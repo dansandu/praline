@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class ClangClCompiler(BaseMsvcCompiler):
     def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest):
-        super().__init__(compiler_name='clang-cl', file_system=file_system, artifact_manifest=artifact_manifest)
+        super().__init__(compiler_name='clang-cl', skipWhichCheck=False, file_system=file_system, artifact_manifest=artifact_manifest)
 
 
 class ClangClCompilerSupplier(ICompilerSupplier):

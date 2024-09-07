@@ -50,7 +50,7 @@ class BaseMsvcYieldDescriptor(IYieldDescriptor):
 
 
 class BaseMsvcCompiler(ICompiler):
-    def __init__(self, compiler_name: str,  file_system: FileSystem, artifact_manifest: ArtifactManifest):
+    def __init__(self, compiler_name: str, skipWhichCheck: bool,  file_system: FileSystem, artifact_manifest: ArtifactManifest):
         self.compiler_name     = compiler_name
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
@@ -91,7 +91,7 @@ class BaseMsvcCompiler(ICompiler):
         if not file_system.exists(self.environment_file):
             raise CompilerInstantionError(f"the {compiler_name} compiler could not find environment configuration batch file")
 
-        if file_system.which(compiler_name) == None:
+        if not skipWhichCheck and file_system.which(compiler_name) == None:
             raise CompilerInstantionError(f"the {compiler_name} compiler could not find the {compiler_name} executable in the PATH")
 
         if artifact_manifest.exported_symbols == ExportedSymbols.all:
