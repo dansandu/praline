@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, REMAINDER
 from praline.client.project.pipeline.stages import Stage
-from praline.common import Architecture, ArtifactLoggingLevel, ArtifactType, Compiler, ExportedSymbols, Mode, Platform
+from praline.common import Architecture, ArtifactType, Compiler, ExportedSymbols, Mode, Platform
 from typing import Any, Dict
 
 
@@ -66,18 +66,7 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'choices': list(ExportedSymbols),
                 'help'   : "If set to explicit only symbols marked by the PRALINE_EXPORT macro will be exported " +
                     "otherwise all symbols are exported. Overrides Pralinefile exported_symbols."
-            },
-            {
-                'name'   : '--artifact-logging-level',
-                'dest'   : 'artifact_logging_level',
-                'type'   : ArtifactLoggingLevel,
-                'choices': list(ArtifactLoggingLevel),
-                'default': ArtifactLoggingLevel.debug,
-                'help'   : "Log macros with the log level above the specified value are ignored during compilation. " +
-                    "Non-macro log statements are not affected by this flag. Ensure that the same value is used for " +
-                    "all dependencies otherwise the ABI will be broken. It's recommended to leave this flag to " +
-                    "debug to compile all log statements and instead use the logger object interface to set the level."
-            },
+            }
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}
     }
