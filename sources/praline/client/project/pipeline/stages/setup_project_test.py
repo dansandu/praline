@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import DeclaredResourceNotSuppliedError, StageResources
 from praline.client.project.pipeline.stages.setup_project import setup_project, IllformedProjectError
 from praline.client.project.pipeline.stages import StageArguments
-from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
+from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             Compiler, ExportedSymbols, Mode, Platform)
 from praline.common.testing import project_structure_dummy
 from praline.common.testing.file_system_mock import FileSystemMock
@@ -21,7 +21,6 @@ class SetupProjectStageTest(TestCase):
                                                   compiler=Compiler.gcc,
                                                   exported_symbols=ExportedSymbols.explicit,
                                                   artifact_type=ArtifactType.executable,
-                                                  artifact_logging_level=ArtifactLoggingLevel.debug,
                                                   dependencies=[])
         
         self.resources_full = join('project', 'resources', 'my_organization', 'my_artifact')

@@ -1,6 +1,5 @@
 from praline.common import (Architecture, ArtifactManifest, ArtifactVersion, ArtifactType, ArtifactDependency, 
-                            ArtifactLoggingLevel, Compiler, ExportedSymbols, Mode, DependencyScope, 
-                            DependencyVersion, Platform)
+                            Compiler, ExportedSymbols, Mode, DependencyScope, DependencyVersion, Platform)
 from praline.common.package import (InvalidManifestFileError, get_matching_packages, read_artifact_manifest, 
                                     split_package_version, write_artifact_manifest, get_packages_from_directory,
                                     get_package_dependencies_from_archive)
@@ -29,7 +28,6 @@ class PackageTest(TestCase):
             compiler=Compiler.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            artifact_logging_level=ArtifactLoggingLevel.debug,
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',
@@ -59,7 +57,6 @@ class PackageTest(TestCase):
             compiler=Compiler.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            artifact_logging_level=ArtifactLoggingLevel.debug,
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',
@@ -168,7 +165,6 @@ class PackageTest(TestCase):
             compiler=Compiler.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            artifact_logging_level=ArtifactLoggingLevel.debug,
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',

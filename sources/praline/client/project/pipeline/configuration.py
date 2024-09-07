@@ -42,8 +42,6 @@ def get_artifact_manifest_and_compiler(file_system: FileSystem,
     if artifact_type == None:
         artifact_type = pralinefile['artifact_type']
 
-    artifact_logging_level = program_arguments['global']['artifact_logging_level']
-
     dependencies = []
     for dependency in pralinefile['dependencies']:
         dependencies.append(ArtifactDependency(**dependency))
@@ -57,7 +55,6 @@ def get_artifact_manifest_and_compiler(file_system: FileSystem,
                                          compiler=None,
                                          exported_symbols=exported_symbols,
                                          artifact_type=artifact_type,
-                                         artifact_logging_level=artifact_logging_level,
                                          dependencies=dependencies)
     
     compiler_name      = program_arguments['global']['compiler']

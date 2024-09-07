@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_main_library import link_main_library
-from praline.common import (Architecture, ArtifactLoggingLevel, ArtifactManifest, ArtifactType, ArtifactVersion, 
+from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             Compiler, ExportedSymbols, Mode, Platform, ProjectStructure)
 from praline.common.testing import project_structure_dummy
 
@@ -51,7 +51,6 @@ class LinkMainLibraryStageTest(TestCase):
             compiler=Compiler.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            artifact_logging_level=ArtifactLoggingLevel.debug,
             dependencies=[]
         )
 

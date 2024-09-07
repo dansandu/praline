@@ -18,9 +18,6 @@ class Architecture(StrEnum):
     x64 = auto()
 
 
-ArtifactLoggingLevel = StrEnum('ArtifactLoggingLevel', ['none', 'error', 'warn', 'info', 'debug'])
-
-
 class ArtifactType(StrEnum):
     executable = auto()
     library    = auto()
@@ -260,7 +257,6 @@ class ArtifactManifest:
     compiler: Compiler
     exported_symbols: ExportedSymbols
     artifact_type: ArtifactType
-    artifact_logging_level: ArtifactLoggingLevel
     dependencies: List[ArtifactDependency]
 
     def get_artifact_identifier(self, 
@@ -290,13 +286,9 @@ class ArtifactManifest:
             self.mode == other.mode and
             self.architecture == other.architecture and
             self.platform == other.platform and
-            self.compiler == other.compiler and
-            self.artifact_logging_level == other.artifact_logging_level
+            self.compiler == other.compiler
         )
 
-
-def get_artifact_logging_level_code(artifact_logging_level: ArtifactLoggingLevel) -> int:
-    return list(ArtifactLoggingLevel).index(artifact_logging_level)
 
 
 T = TypeVar('T')

@@ -1,5 +1,4 @@
-from praline.common import (Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform,
-                            get_artifact_logging_level_code)
+from praline.common import ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform
 from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
 from praline.common.file_system import basename, FileSystem, join
 from typing import List
@@ -31,20 +30,20 @@ class GccCompiler(ICompiler):
     def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest):
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
-        logging_level_code     = get_artifact_logging_level_code(artifact_manifest.artifact_logging_level)
 
         if artifact_manifest.exported_symbols == ExportedSymbols.explicit:
             visibility = 'hidden'
         elif artifact_manifest.exported_symbols == ExportedSymbols.all:
             visibility = 'default'
         else:
-            raise RuntimeError(f"unrecognized exported symbols '{logging_level_code}'")
+            raise RuntimeError(f"unrecognized exported symbols '{artifact_manifest.exported_symbols}'")
 
-        self.flags = [f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++23',
-                      '-Werror', '-Wall', '-Wextra',
-                      '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
-                      '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
-                      f'-DPRALINE_LOGGING_LEVEL={logging_level_code}']
+        self.flags = [
+            f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++23',
+            '-Werror', '-Wall', '-Wextra',
+            '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
+            '-DPRALINE_IMPORT=__attribute__((visibility("default")))'
+        ]
         
         if artifact_manifest.mode == Mode.debug:
             self.flags.append('-g')
