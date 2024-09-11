@@ -1,7 +1,8 @@
-from os.path import normpath
-from praline.common import ProjectStructure
-from praline.common.compiling.compiler import ICompiler, IYieldDescriptor, CompilerWrapper
+from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
+                            CompilerType, ExportedSymbols, Mode, Platform)
+from praline.common.compiling.compiler import ICompilingStrategy, IYieldDescriptor, Compiler
 from praline.common.file_system import join
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -10,56 +11,45 @@ from unittest import TestCase
 
 
 class YieldDescriptorMock(IYieldDescriptor):
-    def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
-        return super().get_object(sources_root, objects_root, source) + '.obj'
+    def get_object(self, source_relative_path: str) -> str:
+        return super().get_object(source_relative_path) + '.obj'
 
-    def get_executable(self, executables_root: str, name: str) -> str:
-        return join(executables_root, f'{name}.exe')
+    def get_executable(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.exe'
 
-    def get_library(self, libraries_root: str, name: str) -> str:
-        return join(libraries_root, f'{name}.dll')
+    def get_library(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.dll'
 
-    def get_library_interface(self, library_interfaces_root: str, name: str) -> str:
-        return join(library_interfaces_root, f'{name}.lib')
+    def get_library_interface(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.lib'
 
-    def get_symbols_table(self, symbols_tables_root: str, name: str) -> str:
-        return join(symbols_tables_root, f'{name}.pdb')
+    def get_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.pdb'
 
 
-class CompilerMock(ICompiler):
+class CompilingStrategyMock(ICompilingStrategy):
     def __init__(self, file_system):
         self.file_system = file_system
 
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return YieldDescriptorMock()
 
-    def preprocess(self,
-                   headers_root: str,
-                   external_headers_root: str,
-                   headers: List[str],
-                   source: str) -> bytes:
-        headers = [h for h in headers if source[:-4] == h[:-4]]
+    def preprocess(self, headers: List[str], source_path: str) -> bytes:
+        headers = [h for h in headers if source_path[:-4] == h[:-4]]
         if headers:
             with self.file_system.open_file(headers[0], 'rb') as h:
-                with self.file_system.open_file(source, 'rb') as s:
+                with self.file_system.open_file(source_path, 'rb') as s:
                     return h.read() + s.read()
         else:
-            with self.file_system.open_file(source, 'rb') as s:
+            with self.file_system.open_file(source_path, 'rb') as s:
                 return s.read()
 
-    def compile(self,
-                headers_root: str,
-                external_headers_root: str,
-                headers: List[str],
-                source: str,
-                object_: str) -> None:
-        data = self.preprocess(headers_root, external_headers_root, headers, source)
-        with self.file_system.open_file(object_, 'wb') as o:
+    def compile(self, headers: List[str], source_path: str, object_path: str) -> None:
+        data = self.preprocess(headers, source_path)
+        with self.file_system.open_file(object_path, 'wb') as o:
             o.write(data)
 
     def link_executable(self,
-                        external_libraries_root: str,
-                        external_libraries_interfaces_root: str,
                         objects: List[str],
                         external_libraries: List[str],
                         external_libraries_interfaces: List[str],
@@ -75,8 +65,6 @@ class CompilerMock(ICompiler):
             s.write(data + b'pbd')
 
     def link_library(self,
-                     external_libraries_root: str,
-                     external_libraries_interfaces_root: str,
                      objects: List[str],
                      external_libraries: List[str],
                      external_libraries_interfaces: List[str],
@@ -97,93 +85,118 @@ class CompilerMock(ICompiler):
 
 class CompilerTest(TestCase):
     def setUp(self):
-        self.artifact_identifier = 'org-art-x32-windows-compmock-debug-1.0.0'
-
-        self.project_structure = ProjectStructure(
-            project_directory='project',
-            resources_root='resources',
-            sources_root='sources',
-            target_root='target',
-            objects_root='target/objects',
-            executables_root='target/executables',
-            libraries_root='target/libraries',
-            libraries_interfaces_root='target/libraries_interfaces',
-            symbols_tables_root='target/symbols_tables',
-            external_root='target/external',
-            external_packages_root='target/external/packages',
-            external_headers_root='target/external/headers',
-            external_executables_root='target/external/executables',
-            external_libraries_root='target/external/libraries',
-            external_libraries_interfaces_root='target/external/libraries_interfaces',
-            external_symbols_tables_root='target/external/symbols_tables'
+        self.artifact_manifest = ArtifactManifest(
+            organization='org',
+            artifact='art',
+            version=ArtifactVersion.from_string('1.0.0'),
+            mode=Mode.debug,
+            architecture=Architecture.x32,
+            platform=Platform.windows,
+            compiler=CompilerType.msvc,
+            exported_symbols=ExportedSymbols.explicit,
+            artifact_type=ArtifactType.library,
+            dependencies=[]
         )
+
+        self.artifact_identifier = self.artifact_manifest.get_artifact_identifier()
+
+        self.project_structure = get_project_structure('project', self.artifact_manifest.organization, self.artifact_manifest.artifact)
+
+        self.source_path = lambda source: join(self.project_structure.sources_domain_root, source)
+        
+        self.object_path = lambda object: join(self.project_structure.objects_root, object)
+
+        self.executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.exe')
+        
+        self.library_path = join(self.project_structure.libraries_root, self.artifact_identifier + '.dll')
+
+        self.interface_path = join(self.project_structure.libraries_interfaces_root, self.artifact_identifier + '.lib')
+
+        self.symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.pdb')
+        
+        self.external_library_path = lambda external_library: join(self.project_structure.external_libraries_root, external_library)
+
+        self.external_interface_path = lambda external_interface: join(self.project_structure.external_libraries_interfaces_root, external_interface)
 
     def test_compilation_using_cache(self):
         file_system = FileSystemMock(
             directories={
+                self.project_structure.sources_domain_root,
                 self.project_structure.objects_root,
-                self.project_structure.sources_root,
-                self.project_structure.external_headers_root
+                self.project_structure.external_headers_root,
             }, 
             files={
-                'sources/a.hpp': b'header-a.',
-                'sources/a.cpp': b'source-a.',
-                'sources/b.hpp': b'updated-header-b.',
-                'sources/b.cpp': b'source-b.',
-                'sources/d.hpp': b'header-d.',
-                'sources/d.cpp': b'source-d.',
-                'sources/e.cpp': b'source-e.',
-                'target/objects/a.obj': b'header-a.source-a.',
-                'target/objects/b.obj': b'header-b.source-b.',
-                'target/objects/c.obj': b'header-c.source-c.'
+                self.source_path('a.hpp'): b'header-a.',
+                self.source_path('a.cpp'): b'source-a.',
+                self.source_path('b.hpp'): b'updated-header-b.',
+                self.source_path('b.cpp'): b'source-b.',
+                self.source_path('d.hpp'): b'header-d.',
+                self.source_path('d.cpp'): b'source-d.',
+                self.source_path('e.cpp'): b'source-e.',
+
+                self.object_path('org-art-a.obj'): b'header-a.source-a.',
+                self.object_path('org-art-b.obj'): b'header-b.source-b.',
+                self.object_path('org-art-c.obj'): b'header-c.source-c.',
             }
         )
 
-        compiler = CompilerWrapper(file_system, CompilerMock(file_system))
-        headers  = ['sources/a.hpp', 'sources/b.hpp', 'sources/d.hpp']
-        sources  = ['sources/a.cpp', 'sources/b.cpp', 'sources/d.cpp', 'sources/e.cpp']
-        cache    = {
-            'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
-            'sources/b.cpp': '5addc12d3b54fb9836277adccb06a03131ab92c10faf97613259bb77775db8d3',
-            'sources/c.cpp': '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5',
-            'sources/e.cpp': '7e0494e082ebf4d0b3b06d2433a4c59e3a610ea10e5e3747e5d4d68fd734e485',
+        compiler = Compiler(file_system, self.project_structure, self.artifact_manifest, CompilingStrategyMock(file_system))
+
+        headers = [
+            self.source_path('a.hpp'), 
+            self.source_path('b.hpp'),  
+            self.source_path('d.hpp'),
+        ]
+
+        sources = [
+            self.source_path('a.cpp'), 
+            self.source_path('b.cpp'), 
+            self.source_path('d.cpp'), 
+            self.source_path('e.cpp'),
+        ]
+        
+        cache = {
+            self.source_path('a.cpp'): '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
+            self.source_path('b.cpp'): '5addc12d3b54fb9836277adccb06a03131ab92c10faf97613259bb77775db8d3',
+            self.source_path('c.cpp'): '853b9c27fdbe775b24a8fb14f7ef43aba1d6e698df4f2df6bc4e0f22c800f1d5',
+            self.source_path('e.cpp'): '7e0494e082ebf4d0b3b06d2433a4c59e3a610ea10e5e3747e5d4d68fd734e485',
         }
 
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=5)
 
-        objects = compiler.compile_using_cache(self.project_structure,
-                                               headers,
-                                               sources,
-                                               cache,
-                                               progress_bar_supplier)
+        objects = compiler.compile_using_cache(headers, sources, cache, progress_bar_supplier)
 
-        expected_objects = {'target/objects/a.obj', 'target/objects/b.obj', 'target/objects/d.obj', 'target/objects/e.obj'}
-
-        self.assertEqual({normpath(o) for o in objects}, {normpath(o) for o in expected_objects})
-
-        new_files = {
-            'sources/a.hpp': b'header-a.',
-            'sources/a.cpp': b'source-a.',
-            'sources/b.hpp': b'updated-header-b.',
-            'sources/b.cpp': b'source-b.',
-            'sources/d.hpp': b'header-d.',
-            'sources/d.cpp': b'source-d.',
-            'sources/e.cpp': b'source-e.',
-            'target/objects/a.obj': b'header-a.source-a.',
-            'target/objects/b.obj': b'updated-header-b.source-b.',
-            'target/objects/d.obj': b'header-d.source-d.',
-            'target/objects/e.obj': b'source-e.',
+        expected_objects = {
+            self.object_path('org-art-a.obj'), 
+            self.object_path('org-art-b.obj'), 
+            self.object_path('org-art-d.obj'), 
+            self.object_path('org-art-e.obj'),
         }
 
-        expected_files = {normpath(p): data for p, data in new_files.items()}
+        self.assertEqual(set(objects), expected_objects)
+
+        expected_files = {
+            self.source_path('a.hpp'): b'header-a.',
+            self.source_path('a.cpp'): b'source-a.',
+            self.source_path('b.hpp'): b'updated-header-b.',
+            self.source_path('b.cpp'): b'source-b.',
+            self.source_path('d.hpp'): b'header-d.',
+            self.source_path('d.cpp'): b'source-d.',
+            self.source_path('e.cpp'): b'source-e.',
+
+            self.object_path('org-art-a.obj'): b'header-a.source-a.',
+            self.object_path('org-art-b.obj'): b'updated-header-b.source-b.',
+            self.object_path('org-art-d.obj'): b'header-d.source-d.',
+            self.object_path('org-art-e.obj'): b'source-e.',
+        }
 
         self.assertEqual(file_system.files, expected_files)
 
         expected_cache = {
-            'sources/a.cpp': '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
-            'sources/b.cpp': 'db4b8fea71a29aedd0eac30601ac3489bdc72a3261697215901cf04da2d6a931',
-            'sources/d.cpp': 'edf58f60231d34dfe3eb468e1b4cfeb35dd39cecd796183660cf13bf301f103b',
-            'sources/e.cpp': '7e0494e082ebf4d0b3b06d2433a4c59e3a610ea10e5e3747e5d4d68fd734e485',
+            self.source_path('a.cpp'): '8ceb2730683fdf075d4ede855d5ed98f32be31b093f74b0bee13fd5dea9037dc',
+            self.source_path('b.cpp'): 'db4b8fea71a29aedd0eac30601ac3489bdc72a3261697215901cf04da2d6a931',
+            self.source_path('d.cpp'): 'edf58f60231d34dfe3eb468e1b4cfeb35dd39cecd796183660cf13bf301f103b',
+            self.source_path('e.cpp'): '7e0494e082ebf4d0b3b06d2433a4c59e3a610ea10e5e3747e5d4d68fd734e485',
         }
 
         self.assertEqual(cache, expected_cache)
@@ -198,46 +211,43 @@ class CompilerTest(TestCase):
                 self.project_structure.external_libraries_interfaces_root
             },
             files={
-                'target/objects/a.obj':                       b'object-a.',
-                'target/external/libraries/b.dll':            b'external-library-b.',
-                'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.'
+                self.object_path('org-art-a.obj'):     b'object-a.',
+                self.external_library_path('b.dll'):   b'external-library-b.',
+                self.external_interface_path('c.lib'): b'external-library-interface-c.'
             }
         )
 
-        compiler                      = CompilerWrapper(file_system, CompilerMock(file_system))
-        objects                       = ['target/objects/a.obj']
-        external_libraries            = ['target/external/libraries/b.dll']
-        external_libraries_interfaces = ['target/external/libraries_interfaces/c.lib']
-        cache                         = {}
+        compiler = Compiler(file_system, self.project_structure, self.artifact_manifest, CompilingStrategyMock(file_system))
 
-        executable, symbols_table = compiler.link_executable_using_cache(self.project_structure,
-                                                                         self.artifact_identifier,
-                                                                         objects,
-                                                                         external_libraries,
-                                                                         external_libraries_interfaces,
-                                                                         cache)
+        objects                       = [self.object_path('org-art-a.obj')]
+        external_libraries            = [self.external_library_path('b.dll')]
+        external_libraries_interfaces = [self.external_interface_path('c.lib')]
 
-        self.assertEqual(normpath(executable), 
-                         normpath('target/executables/org-art-x32-windows-compmock-debug-1.0.0.exe'))
+        cache = {}
 
-        self.assertEqual(normpath(symbols_table),
-                         normpath('target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb'))
+        executable, symbols_table = compiler.link_executable_using_cache(is_test_executable=False,
+                                                                         objects=objects,
+                                                                         external_libraries=external_libraries,
+                                                                         external_libraries_interfaces=external_libraries_interfaces,
+                                                                         cache=cache)
 
-        new_files = {
-            'target/objects/a.obj':                       b'object-a.',
-            'target/external/libraries/b.dll':            b'external-library-b.',
-            'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'target/executables/org-art-x32-windows-compmock-debug-1.0.0.exe':
-                b'object-a.external-library-b.external-library-interface-c.exe',
-            'target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb':
-                b'object-a.external-library-b.external-library-interface-c.pbd'
+        self.assertEqual(executable, self.executable_path)
+
+        self.assertEqual(symbols_table, self.symbols_path)
+
+        expected_files = {
+            self.object_path('org-art-a.obj'):     b'object-a.',
+            self.external_library_path('b.dll'):   b'external-library-b.',
+            self.external_interface_path('c.lib'): b'external-library-interface-c.',
+            self.executable_path: b'object-a.external-library-b.external-library-interface-c.exe',
+            self.symbols_path:    b'object-a.external-library-b.external-library-interface-c.pbd'
         }
 
-        self.assertEqual(file_system.files, {normpath(p): d for p, d in new_files.items()})
+        self.assertEqual(file_system.files, expected_files)
 
-        new_cache = {}
+        expected_cache = {}
 
-        self.assertEqual(cache, new_cache)
+        self.assertEqual(cache, expected_cache)
 
     def test_link_library_using_cache(self):
         file_system = FileSystemMock(
@@ -250,48 +260,42 @@ class CompilerTest(TestCase):
                 self.project_structure.external_libraries_interfaces_root
             },
             files={
-                'target/objects/a.obj':                       b'object-a.',
-                'target/external/libraries/b.dll':            b'external-library-b.',
-                'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.'
+                self.object_path('org-art-a.obj'):     b'object-a.',
+                self.external_library_path('b.dll'):   b'external-library-b.',
+                self.external_interface_path('c.lib'): b'external-library-interface-c.'
             }
         )
 
-        compiler                      = CompilerWrapper(file_system, CompilerMock(file_system))
-        objects                       = ['target/objects/a.obj']
-        external_libraries            = ['target/external/libraries/b.dll']
-        external_libraries_interfaces = ['target/external/libraries_interfaces/c.lib']
-        cache                         = {}
+        compiler = Compiler(file_system, self.project_structure, self.artifact_manifest, CompilingStrategyMock(file_system))
 
-        library, library_interface, symbols_table = compiler.link_library_using_cache(self.project_structure,
-                                                                                      self.artifact_identifier,
-                                                                                      objects,
+        objects                       = [self.object_path('org-art-a.obj')]
+        external_libraries            = [self.external_library_path('b.dll')]
+        external_libraries_interfaces = [self.external_interface_path('c.lib')]
+
+        cache = {}
+
+        library, library_interface, symbols_table = compiler.link_library_using_cache(objects,
                                                                                       external_libraries,
                                                                                       external_libraries_interfaces,
                                                                                       cache)
+        
+        self.assertEqual(library, self.library_path)
 
-        self.assertEqual(normpath(library), 
-                         normpath('target/libraries/org-art-x32-windows-compmock-debug-1.0.0.dll'))
+        self.assertEqual(library_interface, self.interface_path)
 
-        self.assertEqual(normpath(library_interface), 
-                         normpath('target/libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib'))
+        self.assertEqual(symbols_table, self.symbols_path)
 
-        self.assertEqual(normpath(symbols_table),
-                         normpath('target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb'))
-
-        new_files = {
-            'target/objects/a.obj':                       b'object-a.',
-            'target/external/libraries/b.dll':            b'external-library-b.',
-            'target/external/libraries_interfaces/c.lib': b'external-library-interface-c.',
-            'target/libraries/org-art-x32-windows-compmock-debug-1.0.0.dll': 
-                b'object-a.external-library-b.external-library-interface-c.dll',
-            'target/libraries_interfaces/org-art-x32-windows-compmock-debug-1.0.0.lib': 
-                b'object-a.external-library-b.external-library-interface-c.lib',
-            'target/symbols_tables/org-art-x32-windows-compmock-debug-1.0.0.pdb': 
-                b'object-a.external-library-b.external-library-interface-c.pbd'
+        expected_files = {
+            self.object_path('org-art-a.obj'):     b'object-a.',
+            self.external_library_path('b.dll'):   b'external-library-b.',
+            self.external_interface_path('c.lib'): b'external-library-interface-c.',
+            self.library_path:   b'object-a.external-library-b.external-library-interface-c.dll',
+            self.interface_path: b'object-a.external-library-b.external-library-interface-c.lib',
+            self.symbols_path:   b'object-a.external-library-b.external-library-interface-c.pbd',
         }
 
-        self.assertEqual(file_system.files, {normpath(p): data for p, data in new_files.items()})
+        self.assertEqual(file_system.files, expected_files)
 
-        new_cache = {}
+        expected_cache = {}
 
-        self.assertEqual(cache, new_cache)
+        self.assertEqual(cache, expected_cache)

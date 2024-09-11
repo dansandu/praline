@@ -1,36 +1,21 @@
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_main_executable_source import compile_main_executable_source
-from praline.common import ProjectStructure
-from praline.common.compiling.compiler import IYieldDescriptor
+from praline.common.project_structure import get_project_structure
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.testing import project_structure_dummy
 
 from os.path import join
 from unittest import TestCase
 from typing import Any, Dict, List
 
 
-class YieldDescriptorMock:
-    def __init__(self, sources_to_objects: Dict[str, str]):
-        self.sources_to_objects = sources_to_objects
-
-    def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
-        return self.sources_to_objects[source]
-
-
-class CompilerWrapperMock:
+class CompilerMock:
     def __init__(self, test_case: TestCase, expected_headers, sources_to_objects: Dict[str, str]):
         self.test_case          = test_case
         self.expected_headers   = expected_headers
         self.sources_to_objects = sources_to_objects
-        self.yield_descriptor   = YieldDescriptorMock(sources_to_objects)
-
-    def get_yield_descriptor(self) -> IYieldDescriptor:
-        return self.yield_descriptor
 
     def compile_using_cache(self,
-                            project_structure: ProjectStructure,
                             headers: List[str],
                             sources: List[str],
                             cache: Dict[str, Any],
@@ -40,15 +25,26 @@ class CompilerWrapperMock:
 
 
 class CompileMainExecutableSourceStageTest(TestCase):
+    def setUp(self):
+        self.project_structure = get_project_structure('project', 'org', 'art')
+
+        self.source_path = lambda source: join(self.project_structure.sources_domain_root, source)
+
+        self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
+
+        self.object_path = lambda object: join(self.project_structure.objects_root, object)
+
     def test_with_formatted_sources(self):
-        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
-        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
-        header_c = join(project_structure_dummy.external_headers_root, 'org', 'art', 'c.hpp')
+        header_a = self.source_path('a.hpp')
+        header_b = self.source_path('b.hpp')
+        
+        source_executable = self.source_path('executable.cpp')
 
-        source_executable = join(project_structure_dummy.sources_root, 'org', 'art', 'executable.cpp')
-        object_executable = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
+        object_executable = self.object_path('org-art-executable.obj')
 
-        compiler = CompilerWrapperMock(
+        header_c = self.external_header_path('c.hpp')
+
+        compiler = CompilerMock(
             self,
             expected_headers=[
                 header_a,
@@ -64,7 +60,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
             stage='compile_main_executable_source',
             activation=0,
             resources={
-                'project_structure': project_structure_dummy,
+                'project_directories': True,
                 'formatted_headers': [
                     header_a,
                     header_b,
@@ -83,14 +79,16 @@ class CompileMainExecutableSourceStageTest(TestCase):
 
 
     def test_with_unformatted_sources(self):
-        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
-        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
-        header_c = join(project_structure_dummy.external_headers_root, 'org', 'art', 'c.hpp')
+        header_a = self.source_path('a.hpp')
+        header_b = self.source_path('b.hpp')
 
-        source_executable = join(project_structure_dummy.sources_root, 'org', 'art', 'executable.cpp')
-        object_executable = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
+        source_executable = self.source_path('executable.cpp')
 
-        compiler = CompilerWrapperMock(
+        object_executable = self.object_path('org-art-executable.obj')
+
+        header_c = self.external_header_path('c.hpp')
+
+        compiler = CompilerMock(
             self,
             expected_headers=[
                 header_a,
@@ -106,7 +104,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
             stage='compile_main_executable_source',
             activation=1,
             resources={
-                'project_structure': project_structure_dummy,
+                'project_directories': True,
                 'headers': [
                     header_a,
                     header_b,

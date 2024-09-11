@@ -1,13 +1,12 @@
 from praline.common import ArtifactDependency, ArtifactManifest
-from praline.common.compiling.compiler import CompilerWrapper, intantiate_compiler
+from praline.common.project_structure import get_project_structure
+from praline.common.compiling.compiler import Compiler, intantiate_compiler
 from praline.common.file_system import FileSystem
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 
-def get_artifact_manifest_and_compiler(file_system: FileSystem, 
-                                       program_arguments: Dict[str, Any], 
-                                       pralinefile: Dict[str, Any]) -> Tuple[ArtifactManifest, CompilerWrapper]:
+def get_compiler(file_system: FileSystem, program_arguments: Dict[str, Any], pralinefile: Dict[str, Any]) -> Compiler:
     organization = pralinefile['organization']
     artifact     = pralinefile['artifact']
     version      = pralinefile['version']
@@ -57,11 +56,14 @@ def get_artifact_manifest_and_compiler(file_system: FileSystem,
                                          artifact_type=artifact_type,
                                          dependencies=dependencies)
     
+    project_structure = get_project_structure(file_system.get_working_directory(), organization, artifact)
+    
     compiler_name      = program_arguments['global']['compiler']
     fallback_compilers = pralinefile['compilers']
-    (artifact_manifest, compiler) = intantiate_compiler(file_system, 
-                                                        artifact_manifest, 
-                                                        compiler_name, 
-                                                        fallback_compilers)
+    compiler           = intantiate_compiler(file_system,
+                                             artifact_manifest, 
+                                             project_structure,
+                                             compiler_name, 
+                                             fallback_compilers)
 
-    return (artifact_manifest, compiler)
+    return compiler

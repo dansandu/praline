@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.main import main
 from praline.client.project.pipeline.stages import StageArguments
-from praline.common.testing import project_structure_dummy
+from praline.common.project_structure import get_project_structure, ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
@@ -9,13 +9,19 @@ from typing import Dict, List
 from unittest import TestCase
 
 
+class CompilerMock:
+    def __init__(self, project_structure: ProjectStructure):
+        self.project_structure = project_structure
+
 class MainStageTest(TestCase):
     def test_main(self):
-        resources_root          = project_structure_dummy.resources_root
-        executables_root        = project_structure_dummy.executables_root
-        external_libraries_root = project_structure_dummy.external_libraries_root
+        project_structure = get_project_structure('project', 'org', 'art')
 
-        main_executable        = join(project_structure_dummy.executables_root, 'main.exe')
+        resources_root          = project_structure.resources_root
+        executables_root        = project_structure.executables_root
+        external_libraries_root = project_structure.external_libraries_root
+
+        main_executable        = join(project_structure.executables_root, 'main.exe')
         main_program_arguments = ['main', 'program', 'arguments']
 
         def on_execute(command: List[str], 
@@ -26,7 +32,6 @@ class MainStageTest(TestCase):
             self.assertEqual(add_to_library_path, [external_libraries_root, resources_root])
             self.assertTrue(interactive)
             return True
-
 
         file_system = FileSystemMock(
             directories={
@@ -46,14 +51,14 @@ class MainStageTest(TestCase):
             }
         }
 
+        compiler = CompilerMock(project_structure)
+
         with StageResources(stage='main', 
                             activation=0, 
-                            resources={
-                                'project_structure': project_structure_dummy, 
-                                'main_executable': main_executable,
-                            }, 
+                            resources={'main_executable': main_executable}, 
                             constrained_output=[]) as resources:
             stage_arguments = StageArguments(file_system=file_system, 
+                                             compiler=compiler,
                                              program_arguments=program_arguments, 
                                              resources=resources)
             main(stage_arguments)

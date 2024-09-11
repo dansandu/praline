@@ -1,8 +1,8 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 
 
-@stage(requirements=[['project_structure', 'formatted_headers', 'formatted_main_executable_source', 'external_headers'],
-                     ['project_structure', 'headers', 'main_executable_source', 'external_headers']],
+@stage(requirements=[['project_directories', 'formatted_headers', 'formatted_main_executable_source', 'external_headers'],
+                     ['project_directories', 'headers', 'main_executable_source', 'external_headers']],
        output=['main_executable_object'],
        cacheable=True)
 def compile_main_executable_source(arguments: StageArguments):
@@ -18,10 +18,6 @@ def compile_main_executable_source(arguments: StageArguments):
         headers           = resources['headers'] + resources['external_headers']
         executable_source = resources['main_executable_source']
 
-    project_structure = resources['project_structure']
+    objects = compiler.compile_using_cache(headers, [executable_source], cache, progress_bar_supplier)
     
-    resources['main_executable_object'] = compiler.compile_using_cache(project_structure,
-                                                                       headers,
-                                                                       [executable_source],
-                                                                       cache,
-                                                                       progress_bar_supplier)[0]
+    resources['main_executable_object'] = objects[0]

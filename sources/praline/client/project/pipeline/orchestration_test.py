@@ -32,7 +32,7 @@ class OrchestrationTest(TestCase):
             'F': Stage('F',        [['e', 'd']],    [],  self.can_run, [], False, False, self.do_nothing),
         }
 
-        pipeline = create_pipeline(None, None, self.program_arguments, None, None, None, 'F', stages)
+        pipeline = create_pipeline(None, None, self.program_arguments, None, None, 'F', stages)
 
         self.assertEqual(pipeline, [(0, 'C'), (0, 'E'), (0, 'B'), (1, 'D'), (0, 'F')])
 
@@ -50,8 +50,7 @@ class OrchestrationTest(TestCase):
             'C': Stage('C', [['b']], ['c'], self.can_run, [], False, False, self.do_nothing),
         }
 
-        self.assertRaises(CyclicStagesError, 
-                          create_pipeline, None, None, self.program_arguments, None, None, None, 'C', stages)
+        self.assertRaises(CyclicStagesError, create_pipeline, None, None, self.program_arguments, None, None, 'C', stages)
 
     def test_create_pipeline_with_multiple_suppliers(self):
         stages     = {
@@ -60,8 +59,7 @@ class OrchestrationTest(TestCase):
             'C': Stage('C', ['x'], ['c'], self.can_run, [], False, False, self.do_nothing),
         }
 
-        self.assertRaises(MultipleSuppliersError, 
-                          create_pipeline, None, None, self.program_arguments, None, None, None, 'C', stages)
+        self.assertRaises(MultipleSuppliersError, create_pipeline, None, None, self.program_arguments, None, None, 'C', stages)
 
     def test_create_pipeline_with_no_suppliers(self):
         stages     = {
@@ -70,8 +68,7 @@ class OrchestrationTest(TestCase):
             'C': Stage('C', ['a', 'b', 'x'], ['c'], self.can_run, [], False, False, self.do_nothing),
         }
 
-        self.assertRaises(UnsatisfiableStageError, 
-                          create_pipeline, None, None, self.program_arguments, None, None, None, 'C', stages)
+        self.assertRaises(UnsatisfiableStageError, create_pipeline, None, None, self.program_arguments, None, None, 'C', stages)
 
     def test_invoke_stage(self):
         #
@@ -137,7 +134,7 @@ class OrchestrationTest(TestCase):
             'byStage': {'C': { 'some-argument': 'some_value' }}
         }
 
-        invoke_stage(file_system, None, program_arguments, None, None, None, 'A', stages)
+        invoke_stage(file_system, None, program_arguments, None, None, 'A', stages)
 
         cache_path = join('project', 'target', 'cache.pickle')
 
@@ -163,8 +160,7 @@ class OrchestrationTest(TestCase):
         working_directory = 'project'
         file_system       = FileSystemMock({working_directory}, working_directory=working_directory)
 
-        self.assertRaises(CyclicStagesError, 
-                          invoke_stage, file_system, None, self.program_arguments, None, None, None, 'A', stages)
+        self.assertRaises(CyclicStagesError, invoke_stage, file_system, None, self.program_arguments, None, None, 'A', stages)
 
     def test_invoke_stage_with_unsatisfiable_disabled_stage(self):
         stages = {
@@ -177,8 +173,7 @@ class OrchestrationTest(TestCase):
         working_directory = 'project'
         file_system       = FileSystemMock({working_directory}, working_directory=working_directory)
 
-        self.assertRaises(UnsatisfiableStageError, 
-                          invoke_stage, file_system, None, self.program_arguments, None, None, None, 'A', stages)
+        self.assertRaises(UnsatisfiableStageError, invoke_stage, file_system, None, self.program_arguments, None, None, 'A', stages)
 
     def test_invoke_stage_with_unsatisfiable_nonexistent_stage(self):
         stages = {
@@ -191,5 +186,4 @@ class OrchestrationTest(TestCase):
         working_directory = 'project'
         file_system       = FileSystemMock({working_directory}, working_directory=working_directory)
 
-        self.assertRaises(UnsatisfiableStageError, 
-                          invoke_stage, file_system, None, self.program_arguments, None, None, None, 'A', stages)
+        self.assertRaises(UnsatisfiableStageError, invoke_stage, file_system, None, self.program_arguments, None, None, 'A', stages)

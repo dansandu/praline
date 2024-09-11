@@ -4,14 +4,15 @@ from praline.common.hashing import delta, DeltaType, progression_resolution
 from praline.common.package import clean_up_package, get_package_contents, unpack
 
 
-@stage(requirements=[['project_structure']],
+@stage(requirements=[['project_directories']],
        output=['external_resources', 'external_headers', 'external_executables', 'external_libraries', 
                'external_libraries_interfaces', 'external_symbols_tables'],
        cacheable=True, exposed=True)
 def pull_dependencies(arguments: StageArguments):
     file_system           = arguments.file_system
     resources             = arguments.resources
-    artifact_manifest     = arguments.artifact_manifest
+    artifact_manifest     = arguments.compiler.artifact_manifest
+    project_structure     = arguments.compiler.project_structure
     remote_proxy          = arguments.remote_proxy
     cache                 = arguments.cache
     progress_bar_supplier = arguments.progress_bar_supplier
@@ -30,8 +31,6 @@ def pull_dependencies(arguments: StageArguments):
         external_libraries.extend(contents['libraries'])
         external_libraries_interfaces.extend(contents['libraries_interfaces'])
         external_symbols_tables.extend(contents['symbols_tables'])
-
-    project_structure = resources['project_structure']
 
     package_hashes = remote_proxy.solve_dependencies(artifact_manifest)
 

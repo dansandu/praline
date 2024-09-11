@@ -15,26 +15,26 @@ program_arguments = [
 ]
 
 
-@stage(requirements=[['project_structure', 'test_executable']], 
+@stage(requirements=[['project_directories', 'test_executable']], 
        output=['tests_passed'],
        exposed=True, 
        program_arguments=program_arguments)
 def test(arguments: StageArguments):
     file_system           = arguments.file_system
     resources             = arguments.resources
+    project_structure     = arguments.compiler.project_structure
     progress_bar_supplier = arguments.progress_bar_supplier
     program_arguments     = arguments.program_arguments
 
-    project_structure       = resources['project_structure']
     test_executable         = resources['test_executable']
     arguments               = program_arguments['byStage']['arguments']
 
-    file_system.execute_and_fail_on_bad_return([test_executable] + arguments,
-                                               add_to_library_path=[project_structure.external_libraries_root],
-                                               interactive=True,
-                                               add_to_env={
-                                                   'PRALINE_PROGRESS_BAR_HEADER_LENGTH': 
-                                                       str(progress_bar_supplier.header_length)
-                                               })
+    file_system.execute_and_fail_on_bad_return(
+        [test_executable] + arguments,
+        add_to_library_path=[project_structure.external_libraries_root],
+        interactive=True,
+        add_to_env={
+            'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(progress_bar_supplier.header_length),
+        })
     
     resources['tests_passed'] = 'success'

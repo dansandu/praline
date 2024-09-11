@@ -1,8 +1,8 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 
 
-@stage(requirements=[['project_structure', 'formatted_headers', 'formatted_test_sources', 'external_headers'],
-                     ['project_structure',           'headers',           'test_sources', 'external_headers']],
+@stage(requirements=[['project_directories', 'formatted_headers', 'formatted_test_sources', 'external_headers'],
+                     ['project_directories',           'headers',           'test_sources', 'external_headers']],
        output=['test_objects'],
        cacheable=True)
 def compile_test_sources(arguments: StageArguments):
@@ -18,10 +18,4 @@ def compile_test_sources(arguments: StageArguments):
         headers           = resources['headers'] + resources['external_headers']
         sources           = resources['test_sources']
 
-    project_structure = resources['project_structure']
-
-    resources['test_objects'] = compiler.compile_using_cache(project_structure,
-                                                             headers,
-                                                             sources,
-                                                             cache,
-                                                             progress_bar_supplier)
+    resources['test_objects'] = compiler.compile_using_cache(headers, sources, cache, progress_bar_supplier)

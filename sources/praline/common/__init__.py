@@ -8,6 +8,9 @@ import re
 
 snapshot_datetime_format = "%Y%m%d%H%M%S%f"
 
+source_file_extension = '.cpp'
+
+test_source_file_extension = '.test.cpp'
 
 package_extension = '.tar.gz'
 
@@ -28,7 +31,7 @@ class ExportedSymbols(StrEnum):
     all      = auto()
 
 
-class Compiler(StrEnum):
+class CompilerType(StrEnum):
     gcc      = auto()
     clang    = auto()
     clang_cl = auto()
@@ -92,32 +95,12 @@ package_name_pattern = re.compile(
     f"(?P<artifact>{artifact_regex})-"
     f"(?P<architecture>{'|'.join(Architecture)})-"
     f"(?P<platform>{'|'.join(Platform)})-"
-    f"(?P<compiler>{'|'.join(Compiler)})-"
+    f"(?P<compiler>{'|'.join(CompilerType)})-"
     f"(?P<mode>{'|'.join(Mode)})-"
     fr"(?P<major>{number_regex})\."
     fr"(?P<minor>{number_regex})\."
     fr"(?P<patch>{number_regex})(?P<snapshot>.SNAPSHOT\d{{20}})?\.tar\.gz"
 )
-
-
-@dataclass(frozen=True)
-class ProjectStructure:
-    project_directory: str
-    resources_root: str
-    sources_root: str
-    target_root: str
-    objects_root: str
-    executables_root: str
-    libraries_root: str
-    libraries_interfaces_root: str
-    symbols_tables_root: str
-    external_root: str
-    external_packages_root: str
-    external_headers_root: str
-    external_executables_root: str
-    external_libraries_root: str
-    external_libraries_interfaces_root: str
-    external_symbols_tables_root: str
 
 
 @dataclass(frozen=True)
@@ -254,7 +237,7 @@ class ArtifactManifest:
     mode: Mode
     architecture: Architecture
     platform: Platform
-    compiler: Compiler
+    compiler: CompilerType
     exported_symbols: ExportedSymbols
     artifact_type: ArtifactType
     dependencies: List[ArtifactDependency]

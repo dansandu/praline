@@ -12,7 +12,7 @@ with open(f"{os.path.dirname(__file__)}/../resources/praline-client.config", 'r'
 
 
 from praline.client.project.pipeline.orchestration import invoke_stage
-from praline.client.project.pipeline.configuration import get_artifact_manifest_and_compiler
+from praline.client.project.pipeline.configuration import get_compiler
 from praline.client.project.pipeline.program_arguments import get_program_arguments
 from praline.client.project.pipeline.stages import get_stages
 from praline.client.repository.remote_proxy import RemoteProxy
@@ -35,18 +35,11 @@ if __name__ == '__main__':
         except FileNotFoundError as e:
             raise FileNotFoundError(f"Pralinefile was not found in working directory {project_directory}") from e
 
-        (artifact_manifest, compiler) = get_artifact_manifest_and_compiler(file_system, program_arguments, pralinefile)
+        compiler = get_compiler(file_system, program_arguments, pralinefile)
         
         stage = program_arguments['global']['running_stage']
 
-        invoke_stage(file_system,
-                     configuration,
-                     program_arguments,
-                     remote_proxy,
-                     artifact_manifest,
-                     compiler,
-                     stage, 
-                     stages)
+        invoke_stage(file_system, configuration, program_arguments, remote_proxy, compiler, stage, stages)
 
         exit(0)
     except Exception:

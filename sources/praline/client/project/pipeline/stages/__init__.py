@@ -1,7 +1,8 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common import ArtifactManifest
-from praline.common.compiling.compiler import CompilerWrapper
+from praline.common.project_structure import ProjectStructure
+from praline.common.compiling.compiler import Compiler
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
 from praline.common.tracing import trace
@@ -21,8 +22,7 @@ class StageArguments:
     configuration: Dict[str, Any] = None
     program_arguments: Dict[str, Any] = None
     remote_proxy: RemoteProxy = None
-    artifact_manifest: ArtifactManifest = None
-    compiler: CompilerWrapper = None
+    compiler: Compiler = None
     resources: StageResources = None
     cache: Dict[str, Any] = None
     progress_bar_supplier: ProgressBarSupplier = None
@@ -34,8 +34,7 @@ class StagePredicateArguments:
     configuration: Dict[str, Any] = None
     program_arguments: Dict[str, Any] = None
     remote_proxy: RemoteProxy = None
-    artifact_manifest: ArtifactManifest = None
-    compiler: CompilerWrapper = None
+    compiler: Compiler = None
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.test import test
 from praline.client.project.pipeline.stages import StageArguments
-from praline.common.testing import project_structure_dummy
+from praline.common.project_structure import get_project_structure, ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -10,29 +10,38 @@ from typing import Dict, List
 from unittest import TestCase
 
 
+class CompilerMock:
+    def __init__(self, project_structure: ProjectStructure):
+        self.project_structure = project_structure
+
+
 class TestStageTest(TestCase):
     def test_main(self):
-        executables_root        = join('project', 'target', 'executables')
-        external_libraries_root = join('project', 'target', 'external', 'libraries')
-        test_executable         = join('project', 'target', 'executables', 'test.exe')
-        test_program_arguments  = ['test', 'program', 'arguments']
+        project_structure = get_project_structure('project', 'org', 'art')
+
+        test_executable        = join('project', 'target', 'executables', 'test.exe')
+        test_program_arguments = ['test', 'program', 'arguments']
 
         header_length = 101
+
+        expected_env = {
+            'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(header_length),
+        }
 
         def on_execute(command: List[str], 
                        add_to_library_path: List[str], 
                        interactive: bool, 
                        add_to_env: Dict[str, str]):
             self.assertEqual(command, [test_executable] + test_program_arguments)
-            self.assertEqual(add_to_library_path, [external_libraries_root])
+            self.assertEqual(add_to_library_path, [project_structure.external_libraries_root])
             self.assertTrue(interactive)
-            self.assertEqual(add_to_env, {'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(header_length)})
+            self.assertEqual(add_to_env, expected_env)
             return True
 
         file_system = FileSystemMock(
             directories={
-                executables_root,
-                external_libraries_root,
+                project_structure.executables_root,
+                project_structure.external_libraries_root,
             }, 
             files={
                 test_executable: b''
@@ -48,16 +57,19 @@ class TestStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, 0, header_length)
 
+        compiler = CompilerMock(project_structure)
+
         with StageResources(stage='test', 
                             activation=0, 
                             resources={
-                                'project_structure': project_structure_dummy,
+                                'project_directories': True,
                                 'test_executable': test_executable
                             }, 
                             constrained_output=['tests_passed']) as resources:
-            stage_arguments = StageArguments(file_system=file_system, 
-                                             program_arguments=program_arguments, 
+            stage_arguments = StageArguments(file_system=file_system,
+                                             compiler=compiler,
                                              resources=resources,
+                                             program_arguments=program_arguments, 
                                              progress_bar_supplier=progress_bar_supplier)
             test(stage_arguments)
 

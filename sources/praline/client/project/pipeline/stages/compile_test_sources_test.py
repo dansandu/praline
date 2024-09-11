@@ -1,36 +1,21 @@
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_test_sources import compile_test_sources
-from praline.common import ProjectStructure
-from praline.common.compiling.compiler import IYieldDescriptor
+from praline.common.project_structure import get_project_structure
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.testing import project_structure_dummy
 
 from os.path import join
 from typing import Any, Dict, List
 from unittest import TestCase
 
 
-class YieldDescriptorMock:
-    def __init__(self, sources_to_objects: Dict[str, str]):
-        self.sources_to_objects = sources_to_objects
-
-    def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
-        return self.sources_to_objects[source]
-
-
-class CompilerWrapperMock:
+class CompilerMock:
     def __init__(self, test_case: TestCase, expected_headers, sources_to_objects: Dict[str, str]):
         self.test_case          = test_case
         self.expected_headers   = expected_headers
         self.sources_to_objects = sources_to_objects
-        self.yield_descriptor   = YieldDescriptorMock(sources_to_objects)
-
-    def get_yield_descriptor(self) -> IYieldDescriptor:
-        return self.yield_descriptor
 
     def compile_using_cache(self,
-                            project_structure: ProjectStructure,
                             headers: List[str],
                             sources: List[str],
                             cache: Dict[str, Any],
@@ -40,18 +25,27 @@ class CompilerWrapperMock:
 
 
 class CompileTestSourcesStageTest(TestCase):
+    def setUp(self):
+        self.project_structure = get_project_structure('project', 'theorg', 'theart')
+
+        self.source_path = lambda source: join(self.project_structure.sources_domain_root, source)
+
+        self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
+
+        self.object_path = lambda object: join(self.project_structure.objects_root, object)
+
     def test_with_formatted_sources(self):
-        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
-        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.test.cpp')
-        object_a = join(project_structure_dummy.objects_root, 'org-art-a.test.obj')
+        header_a = self.source_path('a.hpp')
+        source_a = self.source_path('a.test.cpp')
+        object_a = self.object_path('theorg-theart-a.test.obj')
 
-        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
-        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.test.cpp')
-        object_b = join(project_structure_dummy.objects_root, 'org-art-b.test.obj')
+        header_b = self.source_path('b.hpp')
+        source_b = self.source_path('b.test.cpp')
+        object_b = self.object_path('theorg-theart-b.test.obj')
 
-        header_c = join(project_structure_dummy.sources_root, 'org', 'art', 'c.hpp')
+        header_c = self.external_header_path('c.hpp')
 
-        compiler = CompilerWrapperMock(
+        compiler = CompilerMock(
             self,
             expected_headers=[
                 header_a,
@@ -68,7 +62,6 @@ class CompileTestSourcesStageTest(TestCase):
             stage='compile_test_sources',
             activation=0,
             resources={
-                'project_structure': project_structure_dummy,
                 'formatted_headers': [
                     header_a,
                     header_b,
@@ -94,17 +87,17 @@ class CompileTestSourcesStageTest(TestCase):
         self.assertEqual(set(resources['test_objects']), expected_objects)
 
     def test_without_formatted_sources(self):
-        header_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.hpp')
-        source_a = join(project_structure_dummy.sources_root, 'org', 'art', 'a.test.cpp')
-        object_a = join(project_structure_dummy.objects_root, 'org-art-a.test.obj')
+        header_a = self.source_path('a.hpp')
+        source_a = self.source_path('a.test.cpp')
+        object_a = self.object_path('org-art-a.test.obj')
 
-        header_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.hpp')
-        source_b = join(project_structure_dummy.sources_root, 'org', 'art', 'b.test.cpp')
-        object_b = join(project_structure_dummy.objects_root, 'org-art-b.test.obj')
+        header_b = self.source_path('b.hpp')
+        source_b = self.source_path('b.test.cpp')
+        object_b = self.object_path('org-art-b.test.obj')
 
-        header_c = join(project_structure_dummy.sources_root, 'org', 'art', 'c.hpp')
+        header_c = self.external_header_path('c.hpp')
 
-        compiler = CompilerWrapperMock(
+        compiler = CompilerMock(
             self,
             expected_headers=[
                 header_a,
@@ -121,7 +114,6 @@ class CompileTestSourcesStageTest(TestCase):
             stage='compile_test_sources',
             activation=1,
             resources={
-                'project_structure': project_structure_dummy,
                 'headers': [
                     header_a,
                     header_b,

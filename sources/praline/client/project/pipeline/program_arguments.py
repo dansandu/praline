@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, REMAINDER
 from praline.client.project.pipeline.stages import Stage
-from praline.common import Architecture, ArtifactType, Compiler, ExportedSymbols, Mode, Platform
+from praline.common import Architecture, ArtifactType, CompilerType, ExportedSymbols, Mode, Platform
 from typing import Any, Dict
 
 
@@ -53,8 +53,8 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
             {
                 'name'   : '--compiler',
                 'dest'   : 'compiler',
-                'type'   : Compiler,
-                'choices': list(Compiler),
+                'type'   : CompilerType,
+                'choices': list(CompilerType),
                 'help'  : "Sets the target compiler for the artifact. Overrides Pralinefile compiler. If multiple " +
                     "compilers are set then the best match is chosen for the platform (e.g. gcc for linux, msvc " +
                     "for windows, etc.)."

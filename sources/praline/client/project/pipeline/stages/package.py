@@ -3,25 +3,25 @@ from praline.common.package import manifest_file_name, pack, write_artifact_mani
 from praline.common.file_system import join, relative_path
 
 
-@stage(requirements=[['project_structure', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
-                     ['project_structure', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table'],
-                     ['project_structure', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
-                     ['project_structure', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table'],
-                     ['project_structure', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
-                     ['project_structure', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
-                     ['project_structure', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
-                     ['project_structure', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
-                     ['project_structure', 'resources', 'formatted_headers', 'tests_passed'],
-                     ['project_structure', 'resources', 'formatted_headers'],
-                     ['project_structure', 'resources',           'headers', 'tests_passed'],
-                     ['project_structure', 'resources',           'headers']],
+@stage(requirements=[['project_directories', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+                     ['project_directories', 'resources', 'formatted_headers', 'main_executable', 'main_executable_symbols_table'],
+                     ['project_directories', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+                     ['project_directories', 'resources',           'headers', 'main_executable', 'main_executable_symbols_table'],
+                     ['project_directories', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
+                     ['project_directories', 'resources', 'formatted_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
+                     ['project_directories', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
+                     ['project_directories', 'resources',           'headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
+                     ['project_directories', 'resources', 'formatted_headers', 'tests_passed'],
+                     ['project_directories', 'resources', 'formatted_headers'],
+                     ['project_directories', 'resources',           'headers', 'tests_passed'],
+                     ['project_directories', 'resources',           'headers']],
        output=['package'], exposed=True)
 def package(arguments: StageArguments):
     file_system       = arguments.file_system
-    artifact_manifest = arguments.artifact_manifest
+    artifact_manifest = arguments.compiler.artifact_manifest
+    project_structure = arguments.compiler.project_structure
     resources         = arguments.resources
 
-    project_structure  = resources['project_structure']
     project_root       = project_structure.project_directory
     sources_root       = project_structure.sources_root
     target_root        = project_structure.target_root

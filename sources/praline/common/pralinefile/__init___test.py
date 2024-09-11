@@ -1,5 +1,5 @@
 from praline.common import (
-    Architecture, ArtifactVersion, ArtifactType, Compiler, DependencyScope, DependencyVersion, ExportedSymbols, 
+    Architecture, ArtifactVersion, ArtifactType, CompilerType, DependencyScope, DependencyVersion, ExportedSymbols, 
     Mode, Platform
 )
 from praline.common.pralinefile import read_pralinefile
@@ -31,7 +31,7 @@ class PralinefileTest(TestCase):
             'platforms': list(Platform),
             'architectures': list(Architecture),
             'modes': list(Mode),
-            'compilers': list(Compiler),
+            'compilers': list(CompilerType),
             'exported_symbols': ExportedSymbols.explicit,
             'artifact_type': ArtifactType.library,
             'dependencies': [
@@ -78,7 +78,7 @@ class PralinefileTest(TestCase):
             'platforms': [Platform.linux, Platform.windows],
             'architectures': [Architecture.arm, Architecture.x32],
             'modes': [Mode.release],
-            'compilers': [Compiler.gcc, Compiler.clang],
+            'compilers': [CompilerType.gcc, CompilerType.clang],
             'exported_symbols': ExportedSymbols.all,
             'artifact_type': ArtifactType.executable,
             'dependencies': [
