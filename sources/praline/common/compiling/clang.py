@@ -64,11 +64,15 @@ class ClangCompilingStrategy(ICompilingStrategy):
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return ClangYieldDescriptor()
 
-    def preprocess(self, headers: List[str], source_path: str) -> bytes:
+    def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
+        include_paths = [f'-I{self.project_structure.main_sources_root}', f'-I{self.project_structure.external_headers_root}']
+        if not main_source:
+            include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
+
         status, stdout, stderror = self.file_system.execute(
             ['clang++', '-E', '-P', source_path] + 
             self.flags + 
-            [f'-I{self.project_structure.sources_root}', f'-I{self.project_structure.external_headers_root}']
+            include_paths
         )
         
         if stderror:
@@ -77,11 +81,15 @@ class ClangCompilingStrategy(ICompilingStrategy):
             raise RuntimeError(f"failed preprocessing source {source_path} -- process exited with status code {status}")
         return stdout
 
-    def compile(self, headers: List[str], source_path: str, object_path: str):
+    def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool):
+        include_paths = [f'-I{self.project_structure.main_sources_root}', f'-I{self.project_structure.external_headers_root}']
+        if not main_source:
+            include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
+
         self.file_system.execute_and_fail_on_bad_return(
             ['clang++', '-o', object_path, '-c', source_path] + 
             self.flags + 
-            [f'-I{self.project_structure.sources_root}', f'-I{self.project_structure.external_headers_root}']
+            include_paths
         )
 
     def link_executable(self,

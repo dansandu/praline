@@ -1,14 +1,13 @@
 from praline.client.project.pipeline.stages import stage
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
-from praline.common import ArtifactType
-from praline.common.file_system import join
+from praline.common import ArtifactType, source_file_extension, test_source_file_extension
 
 
 def predicate(arguments: StagePredicateArguments):
-    sources_root = join(arguments.file_system.get_working_directory(), 'sources')
-    files        = arguments.file_system.files_in_directory(sources_root)
-    is_library   = arguments.compiler.artifact_manifest.artifact_type == ArtifactType.library
-    has_sources  = any(f.endswith('.cpp') and not f.endswith('.test.cpp') for f in files)
+    main_sources_root = arguments.project_structure.main_sources_root
+    files             = arguments.file_system.files_in_directory(main_sources_root)
+    is_library        = arguments.artifact_manifest.artifact_type == ArtifactType.library
+    has_sources       = any(f.endswith(source_file_extension) and not f.endswith(test_source_file_extension) for f in files)
 
     if is_library and has_sources:
         return StagePredicateResult.success()

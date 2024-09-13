@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.test import test
 from praline.client.project.pipeline.stages import StageArguments
-from praline.common.project_structure import get_project_structure, ProjectStructure
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -10,16 +10,11 @@ from typing import Dict, List
 from unittest import TestCase
 
 
-class CompilerMock:
-    def __init__(self, project_structure: ProjectStructure):
-        self.project_structure = project_structure
-
-
 class TestStageTest(TestCase):
     def test_main(self):
         project_structure = get_project_structure('project', 'org', 'art')
 
-        test_executable        = join('project', 'target', 'executables', 'test.exe')
+        test_executable        = join(project_structure.executables_root, 'test.exe')
         test_program_arguments = ['test', 'program', 'arguments']
 
         header_length = 101
@@ -57,8 +52,6 @@ class TestStageTest(TestCase):
 
         progress_bar_supplier = ProgressBarSupplierMock(self, 0, header_length)
 
-        compiler = CompilerMock(project_structure)
-
         with StageResources(stage='test', 
                             activation=0, 
                             resources={
@@ -67,7 +60,7 @@ class TestStageTest(TestCase):
                             }, 
                             constrained_output=['tests_passed']) as resources:
             stage_arguments = StageArguments(file_system=file_system,
-                                             compiler=compiler,
+                                             project_structure=project_structure,
                                              resources=resources,
                                              program_arguments=program_arguments, 
                                              progress_bar_supplier=progress_bar_supplier)

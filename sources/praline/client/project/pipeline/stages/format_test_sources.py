@@ -7,6 +7,7 @@ def format_test_sources(arguments: StageArguments):
     resources    = arguments.resources
     file_system  = arguments.file_system
     cache        = arguments.cache
+    
     progress_bar_supplier = arguments.progress_bar_supplier
 
     test_sources = resources['test_sources']

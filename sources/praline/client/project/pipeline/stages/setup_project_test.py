@@ -3,17 +3,11 @@ from praline.client.project.pipeline.stages.setup_project import setup_project, 
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
-from praline.common.project_structure import get_project_structure, ProjectStructure
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
 from unittest import TestCase
-
-
-class CompilerMock:
-    def __init__(self, project_structure: ProjectStructure,  artifact_manifest: ArtifactManifest):
-        self.project_structure = project_structure
-        self.artifact_manifest = artifact_manifest
 
 
 class SetupProjectStageTest(TestCase):
@@ -34,8 +28,6 @@ class SetupProjectStageTest(TestCase):
         
         self.project_structure = get_project_structure(project_directory='directory', organization=organization, artifact=artifact)
 
-        self.compiler = CompilerMock(self.project_structure, self.artifact_manifest)
-
     def test_project_setup(self):
         file_system = FileSystemMock(
             directories={
@@ -48,7 +40,10 @@ class SetupProjectStageTest(TestCase):
                             activation=0, 
                             resources={}, 
                             constrained_output=['project_directories']) as resources:
-            stage_arguments = StageArguments(file_system=file_system, compiler=self.compiler, resources=resources)
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             project_structure=self.project_structure, 
+                                             artifact_manifest=self.artifact_manifest, 
+                                             resources=resources)
             setup_project(stage_arguments)
 
         self.assertTrue(resources['project_directories'])
@@ -60,11 +55,11 @@ class SetupProjectStageTest(TestCase):
         file_system = FileSystemMock(
             directories={
                 self.project_structure.project_directory,
-                self.project_structure.resources_domain_root,
-                self.project_structure.sources_domain_root,
+                self.project_structure.main_resources_domain_root,
+                self.project_structure.main_sources_domain_root,
             },
             files={
-                join(self.project_structure.resources_root, self.artifact_manifest.organization, 'somefile'): b''
+                join(self.project_structure.main_resources_root, self.artifact_manifest.organization, 'somefile'): b''
             },
             working_directory=self.project_structure.project_directory
         )
@@ -74,7 +69,10 @@ class SetupProjectStageTest(TestCase):
                                 activation=0, 
                                 resources={}, 
                                 constrained_output=['project_directories']) as resources:
-                stage_arguments = StageArguments(file_system=file_system, compiler=self.compiler, resources=resources)
+                stage_arguments = StageArguments(file_system=file_system, 
+                                                 project_structure=self.project_structure, 
+                                                 artifact_manifest=self.artifact_manifest, 
+                                                 resources=resources)
                 self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
         except DeclaredResourceNotSuppliedError:
             pass
@@ -83,11 +81,11 @@ class SetupProjectStageTest(TestCase):
         file_system = FileSystemMock(
             directories={
                 self.project_structure.project_directory,
-                self.project_structure.resources_domain_root,
-                self.project_structure.sources_domain_root,
+                self.project_structure.main_resources_domain_root,
+                self.project_structure.main_sources_domain_root,
             }, 
             files={
-                join(self.project_structure.sources_root, 'somefile'): b''
+                join(self.project_structure.main_sources_root, 'somefile'): b''
             },
             working_directory=self.project_structure.project_directory
         )
@@ -97,7 +95,10 @@ class SetupProjectStageTest(TestCase):
                                 activation=0, 
                                 resources={}, 
                                 constrained_output=['project_directories']) as resources:
-                stage_arguments = StageArguments(file_system=file_system, compiler=self.compiler, resources=resources)
+                stage_arguments = StageArguments(file_system=file_system, 
+                                                 project_structure=self.project_structure, 
+                                                 artifact_manifest=self.artifact_manifest, 
+                                                 resources=resources)
                 self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
         except DeclaredResourceNotSuppliedError:
             pass
@@ -106,11 +107,11 @@ class SetupProjectStageTest(TestCase):
         file_system = FileSystemMock(
             directories={
                 self.project_structure.project_directory,
-                self.project_structure.resources_domain_root,
-                self.project_structure.sources_domain_root,
+                self.project_structure.main_resources_domain_root,
+                self.project_structure.main_sources_domain_root,
             }, 
             files={
-                join(self.project_structure.sources_root, '.hidden'): b''
+                join(self.project_structure.main_sources_root, '.hidden'): b''
             },
             working_directory=self.project_structure.project_directory
         )
@@ -119,5 +120,8 @@ class SetupProjectStageTest(TestCase):
                             activation=0, 
                             resources={}, 
                             constrained_output=['project_directories']) as resources:
-            stage_arguments = StageArguments(file_system=file_system, compiler=self.compiler, resources=resources)
+            stage_arguments = StageArguments(file_system=file_system, 
+                                             project_structure=self.project_structure, 
+                                             artifact_manifest=self.artifact_manifest, 
+                                             resources=resources)
             setup_project(stage_arguments)

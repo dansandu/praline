@@ -22,13 +22,12 @@ program_arguments = [
 def main(arguments: StageArguments):
     file_system       = arguments.file_system 
     resources         = arguments.resources
-    project_structure = arguments.compiler.project_structure
+    project_structure = arguments.project_structure
     program_arguments = arguments.program_arguments['byStage']['arguments']
 
     main_executable         = resources['main_executable']
     external_libraries_root = project_structure.external_libraries_root
-    resources_root          = project_structure.resources_root
     
     file_system.execute_and_fail_on_bad_return([main_executable] + program_arguments,
-                                               add_to_library_path=[external_libraries_root, resources_root],
+                                               add_to_library_path=[external_libraries_root],
                                                interactive=True)

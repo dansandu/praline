@@ -1,5 +1,6 @@
 from praline.client.project.pipeline.stages.clean import clean
 from praline.client.project.pipeline.stages import StageArguments
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
@@ -8,29 +9,41 @@ from unittest import TestCase
 
 class CleanStageTest(TestCase):
     def test_clean_stage_with_target_folder(self):
+        project_structure = get_project_structure('project', 'org', 'art')
+
         file_system = FileSystemMock(
             directories={
-                join('project', 'target'), 
+                project_structure.target_root, 
+                project_structure.temporary_root
             },
-            working_directory='project',
+            files={
+                join(project_structure.temporary_root, 'file.txt'): b'some text',
+            },
+            working_directory=project_structure.project_directory,
         )
 
-        stage_arguments = StageArguments(file_system=file_system)
+        stage_arguments = StageArguments(file_system=file_system, project_structure=project_structure)
 
         clean(stage_arguments)
 
-        self.assertEqual(file_system.directories, {'project'})
+        self.assertEqual(file_system.directories, {project_structure.project_directory})
+
+        self.assertEqual(len(file_system.files), 0)
 
     def test_clean_stage_without_target_folder(self):
+        project_structure = get_project_structure('project', 'org', 'art')
+
         file_system = FileSystemMock(
             directories={
-                'project'
+                project_structure.project_directory
             },
-            working_directory='project',
+            working_directory=project_structure.project_directory,
         )
 
-        stage_arguments = StageArguments(file_system=file_system)
+        stage_arguments = StageArguments(file_system=file_system, project_structure=project_structure)
 
         clean(stage_arguments)
 
-        self.assertEqual(file_system.directories, {'project'})
+        self.assertEqual(file_system.directories, {project_structure.project_directory})
+
+        self.assertEqual(len(file_system.files), 0)

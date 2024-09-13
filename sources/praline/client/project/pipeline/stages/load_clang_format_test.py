@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import DeclaredResourceNotSuppliedError, StageResources
-from praline.client.project.pipeline.stages import StageArguments
+from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments
 from praline.client.project.pipeline.stages.load_clang_format import (
-    clang_format_style_file_contents, ClangFormatConfigurationError, load_clang_format
+    clang_format_style_file_contents, ClangFormatConfigurationError, load_clang_format, predicate
 )
 from praline.common.testing.file_system_mock import FileSystemMock
 
@@ -29,6 +29,16 @@ class LoadClangFormatStageTest(TestCase):
             'clang-format-executable-path': normalized_executable_path
         }
 
+        program_arguments = {
+            'global': {
+                'skip_formatting': False
+            }
+        }
+
+        predicate_result = predicate(StagePredicateArguments(program_arguments=program_arguments))
+
+        self.assertTrue(predicate_result.can_run)
+
         with StageResources(stage='load_clang_format', 
                             activation=0, 
                             resources={}, 
@@ -46,7 +56,7 @@ class LoadClangFormatStageTest(TestCase):
         normalized_executable_path = join('path', 'to', 'clang_format_executable')
         normalized_style_file_path = join('project', '.clang-format')
 
-        file_system   = FileSystemMock(
+        file_system = FileSystemMock(
             directories={
                 join('path', 'to'), 
                 'project',
@@ -131,3 +141,16 @@ class LoadClangFormatStageTest(TestCase):
                 self.assertRaises(ClangFormatConfigurationError, load_clang_format, stage_arguments)
         except DeclaredResourceNotSuppliedError:
             pass
+
+    def test_load_clang_format_stage_predicate_with_skip_format_flag(self):
+        program_arguments = {
+            'global': {
+                'skip_formatting': True
+            }
+        }
+
+        predicate_result = predicate(StagePredicateArguments(program_arguments=program_arguments))
+
+        self.assertFalse(predicate_result.can_run)
+
+        self.assertEqual(predicate_result.explanation, "the skip_formatting flag was used")

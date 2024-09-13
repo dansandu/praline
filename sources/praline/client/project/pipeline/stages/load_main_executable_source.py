@@ -15,7 +15,7 @@ int main(const int, const char* const* const)
 
 
 def predicate(arguments: StagePredicateArguments):
-    artifact_manifest = arguments.compiler.artifact_manifest
+    artifact_manifest = arguments.artifact_manifest
     if artifact_manifest.artifact_type == ArtifactType.executable:
         return StagePredicateResult.success()
     else:
@@ -24,14 +24,11 @@ def predicate(arguments: StagePredicateArguments):
 
 @stage(requirements=[['project_directories']], output=['main_executable_source'], predicate=predicate)
 def load_main_executable_source(arguments: StageArguments):
-    file_system = arguments.file_system
-    compiler    = arguments.compiler
-    resources   = arguments.resources
+    file_system       = arguments.file_system
+    project_structure = arguments.project_structure
+    resources         = arguments.resources
 
-    main_executable_source = join(compiler.project_structure.sources_root, 
-                                  compiler.artifact_manifest.organization, 
-                                  compiler.artifact_manifest.artifact, 
-                                  'executable.cpp')
+    main_executable_source = join(project_structure.main_sources_domain_root, 'executable.cpp')
 
     resources['main_executable_source'] = main_executable_source
 

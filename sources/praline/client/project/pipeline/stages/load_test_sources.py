@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
-from praline.common import test_source_file_extension
+from praline.common import test_header_file_extension, test_source_file_extension
 from praline.common.file_system import join
 
 
@@ -100,14 +100,17 @@ int main(const int argumentsCount, const char* const* const arguments)
 
 
 def predicate(arguments: StagePredicateArguments):
-    file_system = arguments.file_system
-    project_structure = arguments.compiler.project_structure
-    not_skipping_unit_tests = not arguments.program_arguments['global']['skip_unit_tests']
-    any_test_sources = any(f for f in file_system.files_in_directory(project_structure.sources_root) if f.endswith(test_source_file_extension))
+    file_system       = arguments.file_system
+    project_structure = arguments.project_structure
+    skip_unit_tests   = arguments.program_arguments['global']['skip_unit_tests']
+    any_test_sources  = any(
+        f for f in file_system.files_in_directory(project_structure.test_sources_root) 
+            if f.endswith(test_header_file_extension) or f.endswith(test_source_file_extension)
+    )
     
-    if not_skipping_unit_tests and any_test_sources:
+    if not skip_unit_tests and any_test_sources:
         return StagePredicateResult.success()
-    elif not_skipping_unit_tests:
+    elif not skip_unit_tests:
         return StagePredicateResult.failure("there are no test sources")
     elif any_test_sources:
         return StagePredicateResult.failure("the skip_unit_tests flag was used")
@@ -118,15 +121,11 @@ def predicate(arguments: StagePredicateArguments):
 @stage(requirements=[['project_directories']], output=['test_sources'], predicate=predicate)
 def load_test_sources(arguments: StageArguments):
     file_system       = arguments.file_system
-    artifact_manifest = arguments.compiler.artifact_manifest
-    project_structure = arguments.compiler.project_structure
+    project_structure = arguments.project_structure
     resources         = arguments.resources
 
-    test_executable_source = join(project_structure.sources_root,
-                                  artifact_manifest.organization,
-                                  artifact_manifest.artifact, 
-                                  'executable.test.cpp')
+    test_executable_source = join(project_structure.test_sources_domain_root, 'executable.test.cpp')
         
     file_system.create_file_if_missing(test_executable_source, test_executable_contents)
 
-    resources['test_sources'] = [f for f in file_system.files_in_directory(project_structure.sources_root) if f.endswith('.test.cpp')]
+    resources['test_sources'] = [f for f in file_system.files_in_directory(project_structure.test_sources_root) if f.endswith(test_source_file_extension)]

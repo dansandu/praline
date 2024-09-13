@@ -2,6 +2,8 @@ from praline.client.project.pipeline.cache import Cache
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateArguments
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common import ArtifactManifest
+from praline.common.project_structure import ProjectStructure
 from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
 from praline.common.algorithm.graph.simple_traversal import root_last_traversal
 from praline.common.compiling.compiler import Compiler
@@ -38,6 +40,8 @@ def create_pipeline(file_system: FileSystem,
                     configuration: Dict[str, Any],
                     program_arguments: Dict[str, Any],
                     remote_proxy: RemoteProxy,
+                    project_structure: ProjectStructure,
+                    artifact_manifest: ArtifactManifest,
                     compiler: Compiler,
                     target_stage: str,
                     stages: Dict[str, Stage]) -> List[str]:    
@@ -64,7 +68,9 @@ def create_pipeline(file_system: FileSystem,
 
     def validator(stage: str, subtree: Dict[str, List[str]]):
         stage_program_arguments   = get_stage_program_arguments(stage, program_arguments)
-        stage_predicate_arguments = StagePredicateArguments(file_system, configuration, stage_program_arguments, remote_proxy, compiler)
+        stage_predicate_arguments = StagePredicateArguments(
+            file_system, configuration, stage_program_arguments, remote_proxy, project_structure, artifact_manifest, compiler)
+        
         stage_predicate_result = stages[stage].predicate(stage_predicate_arguments)
         return InstanceValidationResult(valid=stage_predicate_result.can_run, explanation=stage_predicate_result.explanation)
 
@@ -89,11 +95,14 @@ def invoke_stage(file_system: FileSystem,
                  configuration: Dict[str, Any],
                  program_arguments: Dict[str, Any],
                  remote_proxy: RemoteProxy,
+                 project_structure: ProjectStructure,
+                 artifact_manifest: ArtifactManifest,
                  compiler: Compiler,
                  target_stage: str,
                  stages: Dict[str, Stage]):
     global_resources = {}
-    pipeline  = create_pipeline(file_system, configuration, program_arguments, remote_proxy, compiler, target_stage, stages)
+    pipeline  = create_pipeline(
+        file_system, configuration, program_arguments, remote_proxy, project_structure, artifact_manifest, compiler, target_stage, stages)
 
     progress_bar_header_length = max(len(stage_name) for _, stage_name in pipeline)
 
@@ -112,6 +121,8 @@ def invoke_stage(file_system: FileSystem,
                                                configuration=configuration,
                                                program_arguments=stage_program_arguments,
                                                remote_proxy=remote_proxy,
+                                               project_structure=project_structure,
+                                               artifact_manifest=artifact_manifest,
                                                compiler=compiler,
                                                resources=stage_resources,
                                                cache=stage_cache,
@@ -122,6 +133,8 @@ def invoke_stage(file_system: FileSystem,
                                            configuration=configuration,
                                            program_arguments=stage_program_arguments,
                                            remote_proxy=remote_proxy,
+                                           project_structure=project_structure,
+                                           artifact_manifest=artifact_manifest,
                                            compiler=compiler,
                                            resources=stage_resources,
                                            progress_bar_supplier=progress_bar_supplier)

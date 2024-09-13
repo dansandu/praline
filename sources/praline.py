@@ -36,10 +36,12 @@ if __name__ == '__main__':
             raise FileNotFoundError(f"Pralinefile was not found in working directory {project_directory}") from e
 
         compiler = get_compiler(file_system, program_arguments, pralinefile)
+        project_structure = compiler.project_structure
+        artifact_manifest = compiler.artifact_manifest
         
         stage = program_arguments['global']['running_stage']
 
-        invoke_stage(file_system, configuration, program_arguments, remote_proxy, compiler, stage, stages)
+        invoke_stage(file_system, configuration, program_arguments, remote_proxy, project_structure, artifact_manifest, compiler, stage, stages)
 
         exit(0)
     except Exception:

@@ -9,6 +9,7 @@ def format_main_executable_source(arguments: StageArguments):
     resources    = arguments.resources
     file_system  = arguments.file_system
     cache        = arguments.cache
+    
     progress_bar_supplier = arguments.progress_bar_supplier
 
     main_executable_source = resources['main_executable_source']

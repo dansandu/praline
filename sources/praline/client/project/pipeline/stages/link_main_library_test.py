@@ -1,7 +1,10 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
-from praline.client.project.pipeline.stages.link_main_library import link_main_library
+from praline.client.project.pipeline.stages.link_main_library import link_main_library, predicate
+from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
+                            CompilerType, ExportedSymbols, Mode, Platform)
 from praline.common.project_structure import get_project_structure
+from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
 from typing import Any, Dict, List, Tuple
@@ -32,27 +35,27 @@ class CompilerMock:
                 'org-art-arm-linux-gcc-debug-0.5.0.SNAPSHOT.pdb')
 
 
-class LinkMainLibraryStageTest(TestCase):
-    def setUp(self):
-        self.project_structure = get_project_structure('project', 'org', 'art')
-
-        self.source_path = lambda source: join(self.project_structure.sources_domain_root, source)
-
-        self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
-
-        self.object_path = lambda object: join(self.project_structure.objects_root, object)
-        
-        self.external_library_path = lambda external_library: join(self.project_structure.external_libraries_root, external_library)
-
-        self.external_interface_path = lambda external_interface: join(self.project_structure.external_libraries_interfaces_root, external_interface)
-
+class LinkMainLibraryStageTest(TestCase):        
     def test_link_main_library(self):
-        object_a = self.object_path('org-art-a.obj')
-        object_b = self.object_path('org-art-b.obj')
+        project_structure = get_project_structure('project', 'org', 'art')
 
-        external_library = self.external_library_path('otherorg-otherart-arm-linux-gcc-debug.0.0.1.dll')
+        main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
+
+        main_object_path = lambda object: join(project_structure.main_objects_root, object)
+
+        external_library_path = lambda external_library: join(project_structure.external_libraries_root, external_library)
+
+        external_interface_path = lambda external_interface: join(project_structure.external_libraries_interfaces_root, external_interface)
+
+        source_a = main_source_path('a.cpp')
+        source_b = main_source_path('b.cpp')
+
+        object_a = main_object_path('org-art-a.obj')
+        object_b = main_object_path('org-art-b.obj')
+
+        external_library = external_library_path('otherorg-otherart-arm-linux-gcc-debug.0.0.1.dll')
         
-        external_library_interface = self.external_interface_path('otherorg-otherart-b-arm-linux-gcc-debug.0.0.2.lib')
+        external_library_interface = external_interface_path('otherorg-otherart-b-arm-linux-gcc-debug.0.0.2.lib')
 
         compiler = CompilerMock(
             self,
@@ -67,6 +70,38 @@ class LinkMainLibraryStageTest(TestCase):
                 external_library_interface,
             ]
         )
+
+        file_system = FileSystemMock(
+            directories={
+                project_structure.main_sources_domain_root,
+                project_structure.main_objects_root,
+                project_structure.external_libraries_root,
+                project_structure.external_libraries_interfaces_root,
+            },
+            files={
+                source_a: b'',
+                source_b: b'',
+                object_a: b'',
+                object_b: b'',
+            }
+        )
+
+        artifact_manifest = ArtifactManifest(
+            organization='org',
+            artifact='art',
+            version=ArtifactVersion.from_string('1.3.0'),
+            mode=Mode.debug,
+            architecture=Architecture.arm,
+            platform=Platform.linux,
+            compiler=CompilerType.gcc,
+            exported_symbols=ExportedSymbols.explicit,
+            artifact_type=ArtifactType.library,
+            dependencies=[]
+        )
+
+        predicate_result = predicate(StageArguments(project_structure=project_structure, file_system=file_system, artifact_manifest=artifact_manifest))
+
+        self.assertTrue(predicate_result.can_run)
 
         with StageResources(
             stage='link_main_library',

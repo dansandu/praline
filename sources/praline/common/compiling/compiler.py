@@ -7,7 +7,7 @@ from praline.common.hashing import hash_binary, delta, DeltaType, progression_re
 from praline.common.reflection import subclasses_of
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 
 class CompilerInstantionError(Exception):
@@ -24,11 +24,11 @@ class ICompilingStrategy(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def preprocess(self, headers: List[str], source_path: str) -> bytes:
+    def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
         raise NotImplementedError()
 
     @abstractmethod
-    def compile(self, headers: List[str], source_path: str, object_path: str) -> List[str]:
+    def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> List[str]:
         raise NotImplementedError()
 
     @abstractmethod
@@ -76,53 +76,63 @@ class Compiler:
         self.artifact_manifest = artifact_manifest
         self.compiler_strategy = compiler_strategy
 
-    def compile_using_cache(self,
-                            headers: List[str],
-                            sources: List[str],
-                            cache: Dict[str, Any],
-                            progress_bar_supplier: ProgressBarSupplier) -> List[str]:
-        new_cache        = {}
-        objects          = []
+    def compile_sources_using_cache(self,
+                                    headers: List[str],
+                                    sources: List[str],
+                                    cache: Dict[str, Any],
+                                    progress_bar_supplier: ProgressBarSupplier,
+                                    main_sources: bool) -> List[str]:
+        new_cache  = {}
+        objects    = []
+        resolution = progression_resolution(sources, cache)
+
         yield_descriptor = self.compiler_strategy.get_yield_descriptor()
-        resolution       = progression_resolution(sources, cache)
+
+        object_path_supplier = self.project_structure.get_main_object_path if main_sources else self.project_structure.get_test_object_path
+
         with progress_bar_supplier.create(resolution) as progress_bar:
-            def hasher(source: str):
-                progress_bar.update_summary(source)
-                return hash_binary(self.compiler_strategy.preprocess(headers, source))
+            def hasher(source_path: str):
+                progress_bar.update_summary(source_path)
+                return hash_binary(self.compiler_strategy.preprocess(headers, source_path, main_sources))
+            
             for item in delta(sources, hasher, cache, new_cache):
                 source_path = item.key
-                object_path = self.project_structure.get_object_path(yield_descriptor, source_path)
+                object_path = object_path_supplier(yield_descriptor, source_path)
 
                 if item.delta_type in [DeltaType.Added, DeltaType.Modified]:
-                    self.compiler_strategy.compile(headers, source_path, object_path)
+                    self.compiler_strategy.compile(headers, source_path, object_path, main_sources)
                     objects.append(object_path)
+
                 elif item.delta_type == DeltaType.UpToDate:
                     if not self.file_system.exists(object_path):
-                        self.compiler_strategy.compile(headers, source_path, object_path)
+                        self.compiler_strategy.compile(headers, source_path, object_path, main_sources)
+
                     objects.append(object_path)
                 elif item.delta_type == DeltaType.Removed:
                     if self.file_system.exists(object_path):
                         self.file_system.remove_file(object_path)
+                
                 progress_bar.advance()
         cache.clear()
         cache.update(new_cache)
         return objects
 
     def link_executable_using_cache(self,
-                                    is_test_executable: bool,
                                     objects: List[str],
                                     external_libraries: List[str],
                                     external_libraries_interfaces: List[str],
-                                    cache: Dict[str, Any]) -> Tuple[str, str]:
-        artifact_identifier = self.artifact_manifest.get_artifact_identifier() + ('.test' if is_test_executable else '')
+                                    cache: Dict[str, Any],
+                                    main_executable: bool) -> Tuple[str, str]:
+        artifact_identifier = self.artifact_manifest.get_artifact_identifier()
+        if not main_executable:
+            artifact_identifier + '.test'
+
         yield_descriptor    = self.compiler_strategy.get_yield_descriptor()
         executable          = self.project_structure.get_executable_path(yield_descriptor, artifact_identifier)
         symbols_table       = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
-        self.compiler_strategy.link_executable(objects,
-                                               external_libraries,
-                                               external_libraries_interfaces,
-                                               executable,
-                                               symbols_table)
+
+        self.compiler_strategy.link_executable(objects, external_libraries, external_libraries_interfaces, executable, symbols_table)
+
         if self.file_system.exists(symbols_table):
             return (executable, symbols_table)
         else:
@@ -172,7 +182,7 @@ def get_prefered_compiler(file_system: FileSystem) -> CompilerType:
     if platform == Platform.windows:
         return CompilerType.clang_cl
     elif platform == Platform.linux:
-        return CompilerType.msvc
+        return CompilerType.gcc
     elif platform == Platform.darwin:
         return CompilerType.clang
     else:

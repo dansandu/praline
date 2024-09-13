@@ -18,17 +18,20 @@ def check_unique(file_system: FileSystem, root: str, organization: str, artifact
 @stage(output=['project_directories'])
 def setup_project(arguments: StageArguments):
     file_system       = arguments.file_system
-    project_structure = arguments.compiler.project_structure
-    artifact_manifest = arguments.compiler.artifact_manifest
+    project_structure = arguments.project_structure
+    artifact_manifest = arguments.artifact_manifest
     resources         = arguments.resources
 
     for directory in vars(project_structure).values():
         file_system.create_directory_if_missing(directory)
 
-    organization      = artifact_manifest.organization
-    artifact          = artifact_manifest.artifact
+    organization = artifact_manifest.organization
+    artifact     = artifact_manifest.artifact
 
-    check_unique(file_system, project_structure.resources_root, organization, artifact)
-    check_unique(file_system, project_structure.sources_root, organization, artifact)
+    check_unique(file_system, project_structure.main_resources_root, organization, artifact)
+    check_unique(file_system, project_structure.main_sources_root, organization, artifact)
+    
+    check_unique(file_system, project_structure.test_resources_root, organization, artifact)
+    check_unique(file_system, project_structure.test_sources_root, organization, artifact)
 
     resources['project_directories'] = True

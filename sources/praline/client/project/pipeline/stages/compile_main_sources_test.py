@@ -15,11 +15,13 @@ class CompilerMock:
         self.expected_headers   = expected_headers
         self.sources_to_objects = sources_to_objects
 
-    def compile_using_cache(self,
-                            headers: List[str],
-                            sources: List[str],
-                            cache: Dict[str, Any],
-                            progress_bar_supplier: ProgressBarSupplier) -> List[str]:
+    def compile_sources_using_cache(self,
+                                    headers: List[str],
+                                    sources: List[str],
+                                    cache: Dict[str, Any],
+                                    progress_bar_supplier: ProgressBarSupplier,
+                                    main_sources: bool) -> List[str]:
+        self.test_case.assertTrue(main_sources)
         self.test_case.assertCountEqual(headers, self.expected_headers)
         return [self.sources_to_objects[source] for source in sources]
 
@@ -28,20 +30,20 @@ class CompileMainSourcesStageTest(TestCase):
     def setUp(self):
         self.project_structure = get_project_structure('project', 'someorg', 'someart')
 
-        self.source_path = lambda source: join(self.project_structure.sources_domain_root, source)
+        self.main_source_path = lambda source: join(self.project_structure.main_sources_domain_root, source)
 
+        self.main_object_path = lambda object: join(self.project_structure.main_objects_root, object)
+        
         self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
 
-        self.object_path = lambda object: join(self.project_structure.objects_root, object)
-
     def test_with_formatted_sources(self):
-        header_a = self.source_path('a.hpp')
-        source_a = self.source_path('a.cpp')
-        object_a = self.object_path('someorg-someart-a.obj')
+        header_a = self.main_source_path('a.hpp')
+        source_a = self.main_source_path('a.cpp')
+        object_a = self.main_object_path('someorg-someart-a.obj')
 
-        header_b = self.source_path('b.hpp')
-        source_b = self.source_path('b.cpp')
-        object_b = self.object_path('someorg-someart-b.obj')
+        header_b = self.main_source_path('b.hpp')
+        source_b = self.main_source_path('b.cpp')
+        object_b = self.main_object_path('someorg-someart-b.obj')
 
         header_c = self.external_header_path('c.hpp')
         
@@ -62,7 +64,7 @@ class CompileMainSourcesStageTest(TestCase):
             stage='compile_main_sources',
             activation=0,
             resources={
-                'formatted_headers': [
+                'formatted_main_headers': [
                     header_a,
                     header_b,
                 ],
@@ -88,15 +90,15 @@ class CompileMainSourcesStageTest(TestCase):
 
 
     def test_with_unformatted_sources(self):
-        header_a = self.source_path('a.hpp')
-        source_a = self.source_path('a.cpp')
+        header_a = self.main_source_path('a.hpp')
+        source_a = self.main_source_path('a.cpp')
 
-        header_b = self.source_path('b.hpp')
-        source_b = self.source_path('b.cpp')
+        header_b = self.main_source_path('b.hpp')
+        source_b = self.main_source_path('b.cpp')
         
-        object_a = self.object_path('org-art-a.obj')
+        object_a = self.main_object_path('org-art-a.obj')
 
-        object_b = self.object_path('org-art-b.obj')
+        object_b = self.main_object_path('org-art-b.obj')
 
         header_c = self.external_header_path('c.hpp')
 
@@ -117,7 +119,7 @@ class CompileMainSourcesStageTest(TestCase):
             stage='compile_main_sources',
             activation=1,
             resources={
-                'headers': [
+                'main_headers': [
                     header_a,
                     header_b,
                 ],

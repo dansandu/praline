@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stages import StageArguments, stage
-
+from praline.common.file_system import directory_name
 
 program_arguments = [
     {
@@ -22,16 +22,17 @@ program_arguments = [
 def test(arguments: StageArguments):
     file_system           = arguments.file_system
     resources             = arguments.resources
-    project_structure     = arguments.compiler.project_structure
+    project_structure     = arguments.project_structure
     progress_bar_supplier = arguments.progress_bar_supplier
     program_arguments     = arguments.program_arguments
 
     test_executable         = resources['test_executable']
     arguments               = program_arguments['byStage']['arguments']
+    external_libraries_root = project_structure.external_libraries_root
 
     file_system.execute_and_fail_on_bad_return(
         [test_executable] + arguments,
-        add_to_library_path=[project_structure.external_libraries_root],
+        add_to_library_path=[external_libraries_root],
         interactive=True,
         add_to_env={
             'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(progress_bar_supplier.header_length),

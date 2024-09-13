@@ -22,6 +22,8 @@ class StageArguments:
     configuration: Dict[str, Any] = None
     program_arguments: Dict[str, Any] = None
     remote_proxy: RemoteProxy = None
+    project_structure: ProjectStructure = None
+    artifact_manifest: ArtifactManifest = None
     compiler: Compiler = None
     resources: StageResources = None
     cache: Dict[str, Any] = None
@@ -34,6 +36,8 @@ class StagePredicateArguments:
     configuration: Dict[str, Any] = None
     program_arguments: Dict[str, Any] = None
     remote_proxy: RemoteProxy = None
+    project_structure: ProjectStructure = None
+    artifact_manifest: ArtifactManifest = None
     compiler: Compiler = None
 
 

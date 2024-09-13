@@ -8,7 +8,11 @@ import re
 
 snapshot_datetime_format = "%Y%m%d%H%M%S%f"
 
+header_file_extension = '.hpp'
+
 source_file_extension = '.cpp'
+
+test_header_file_extension = '.test.hpp'
 
 test_source_file_extension = '.test.cpp'
 

@@ -15,11 +15,13 @@ class CompilerMock:
         self.expected_headers   = expected_headers
         self.sources_to_objects = sources_to_objects
 
-    def compile_using_cache(self,
-                            headers: List[str],
-                            sources: List[str],
-                            cache: Dict[str, Any],
-                            progress_bar_supplier: ProgressBarSupplier) -> List[str]:
+    def compile_sources_using_cache(self,
+                                    headers: List[str],
+                                    sources: List[str],
+                                    cache: Dict[str, Any],
+                                    progress_bar_supplier: ProgressBarSupplier,
+                                    main_sources: bool) -> List[str]:
+        self.test_case.assertTrue(main_sources)
         self.test_case.assertCountEqual(headers, self.expected_headers)
         return [self.sources_to_objects[source] for source in sources]
 
@@ -28,19 +30,19 @@ class CompileMainExecutableSourceStageTest(TestCase):
     def setUp(self):
         self.project_structure = get_project_structure('project', 'org', 'art')
 
-        self.source_path = lambda source: join(self.project_structure.sources_domain_root, source)
+        self.main_source_path = lambda source: join(self.project_structure.main_sources_domain_root, source)
 
         self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
 
-        self.object_path = lambda object: join(self.project_structure.objects_root, object)
+        self.main_object_path = lambda object: join(self.project_structure.main_objects_root, object)
 
     def test_with_formatted_sources(self):
-        header_a = self.source_path('a.hpp')
-        header_b = self.source_path('b.hpp')
+        header_a = self.main_source_path('a.hpp')
+        header_b = self.main_source_path('b.hpp')
         
-        source_executable = self.source_path('executable.cpp')
+        source_executable = self.main_source_path('executable.cpp')
 
-        object_executable = self.object_path('org-art-executable.obj')
+        object_executable = self.main_object_path('org-art-executable.obj')
 
         header_c = self.external_header_path('c.hpp')
 
@@ -61,7 +63,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
             activation=0,
             resources={
                 'project_directories': True,
-                'formatted_headers': [
+                'formatted_main_headers': [
                     header_a,
                     header_b,
                 ],
@@ -77,14 +79,13 @@ class CompileMainExecutableSourceStageTest(TestCase):
 
         self.assertCountEqual(resources['main_executable_object'], object_executable)
 
-
     def test_with_unformatted_sources(self):
-        header_a = self.source_path('a.hpp')
-        header_b = self.source_path('b.hpp')
+        header_a = self.main_source_path('a.hpp')
+        header_b = self.main_source_path('b.hpp')
 
-        source_executable = self.source_path('executable.cpp')
+        source_executable = self.main_source_path('executable.cpp')
 
-        object_executable = self.object_path('org-art-executable.obj')
+        object_executable = self.main_object_path('org-art-executable.obj')
 
         header_c = self.external_header_path('c.hpp')
 
@@ -105,7 +106,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
             activation=1,
             resources={
                 'project_directories': True,
-                'headers': [
+                'main_headers': [
                     header_a,
                     header_b,
                 ],

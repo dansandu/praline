@@ -16,12 +16,12 @@ class CompilerMock:
         self.external_libraries_interfaces = external_libraries_interfaces
 
     def link_executable_using_cache(self,
-                                    is_test_executable: bool,
                                     objects: List[str],
                                     external_libraries: List[str],
                                     external_libraries_interfaces: List[str],
-                                    cache: Dict[str, Any]) -> Tuple[str, str]:
-        self.test_case.assertFalse(is_test_executable)
+                                    cache: Dict[str, Any],
+                                    main_executable: bool) -> Tuple[str, str]:
+        self.test_case.assertTrue(main_executable)
         self.test_case.assertCountEqual(objects, self.expected_objects)
         self.test_case.assertCountEqual(external_libraries, self.external_libraries)
         self.test_case.assertCountEqual(external_libraries_interfaces, self.external_libraries_interfaces)
@@ -32,15 +32,15 @@ class LinkMainExecutableStageTest(TestCase):
     def test_link_main_executable(self):
         project_structure = get_project_structure('project', 'theorg', 'theart')
 
-        object_path = lambda object: join(project_structure.objects_root, object)
+        main_object_path = lambda object: join(project_structure.main_objects_root, object)
         
         external_library_path = lambda external_library: join(project_structure.external_libraries_root, external_library)
 
         external_interface_path = lambda external_interface: join(project_structure.external_libraries_interfaces_root, external_interface)
 
-        object_a = object_path('theorg-theart-a.obj')
-        object_b = object_path('theorg-theart-b.obj')
-        object_x = object_path('theorg-theart-executable.obj')
+        object_a = main_object_path('theorg-theart-a.obj')
+        object_b = main_object_path('theorg-theart-b.obj')
+        object_x = main_object_path('theorg-theart-executable.obj')
 
         external_library = external_library_path('theorg-theart-arm-linux-gcc-debug.0.0.1.dll')
         

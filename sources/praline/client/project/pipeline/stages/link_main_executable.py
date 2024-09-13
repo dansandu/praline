@@ -14,8 +14,8 @@ def link_main_executable(arguments: StageArguments):
     external_libraries_interfaces = resources['external_libraries_interfaces']
 
     (resources['main_executable'], 
-     resources['main_executable_symbols_table']) = compiler.link_executable_using_cache(is_test_executable=False,
-                                                                                        objects=main_objects,
-                                                                                        external_libraries=external_libraries,
-                                                                                        external_libraries_interfaces=external_libraries_interfaces,
-                                                                                        cache=cache)
+     resources['main_executable_symbols_table']) = compiler.link_executable_using_cache(main_objects,
+                                                                                        external_libraries,
+                                                                                        external_libraries_interfaces,
+                                                                                        cache,
+                                                                                        main_executable=True)

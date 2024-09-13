@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.format_test_sources import format_test_sources
 from praline.client.project.pipeline.stages import StageArguments
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -11,12 +12,14 @@ from unittest import TestCase
 
 class FormatTestSourcesStageTest(TestCase):
     def test_format_test_sources(self):
-        root = join('project', 'sources', 'org', 'art')
+        project_structure = get_project_structure('project', 'org', 'art')
 
-        source_math    = join(root, 'math.test.cpp')
-        source_vector  = join(root, 'vector.test.cpp')
-        source_map     = join(root, 'map.test.cpp')
-        source_request = join(root, 'request.test.cpp')
+        test_source_path = lambda source: join(project_structure.test_sources_domain_root, source)
+
+        source_math    = test_source_path('math.test.cpp')
+        source_vector  = test_source_path('vector.test.cpp')
+        source_map     = test_source_path('map.test.cpp')
+        source_request = test_source_path('request.test.cpp')
 
         files_to_format_checklist = [
             source_math,
@@ -34,7 +37,7 @@ class FormatTestSourcesStageTest(TestCase):
 
         file_system = FileSystemMock(
             directories={
-                root
+                project_structure.test_sources_domain_root
             },
             files={
                 source_math: b'math-contents',

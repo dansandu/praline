@@ -102,11 +102,15 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return BaseMsvcYieldDescriptor()
 
-    def preprocess(self, headers: List[str], source_path: str) -> bytes:
+    def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
+        include_paths = ['/I', self.project_structure.main_sources_root, '/I', self.project_structure.external_headers_root]
+        if not main_source:
+            include_paths.extend(['/I', self.project_structure.test_sources_root])
+
         status, stdout, stderror = self.file_system.execute(
             [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, '/EP', source_path] + 
-            self.compiler_flags +
-            ['/I', self.project_structure.sources_root, '/I', self.project_structure.external_headers_root]
+            self.compiler_flags + 
+            include_paths
         )
 
         if status != 0:
@@ -114,11 +118,15 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             raise RuntimeError(f"command exited with return code {status}")
         return stdout
 
-    def compile(self, headers: List[str], source_path: str, object_path: str) -> None:
+    def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> None:
+        include_paths = ['/I', self.project_structure.main_sources_root, '/I', self.project_structure.external_headers_root]
+        if not main_source:
+            include_paths.extend(['/I', self.project_structure.test_sources_root])
+
         status, stdout, stderror = self.file_system.execute(
             [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, f'/Fo{object_path}', '/c', source_path] + 
             self.compiler_flags +
-            ['/I', self.project_structure.sources_root, '/I', self.project_structure.external_headers_root]
+            include_paths
         )
 
         if status != 0:
