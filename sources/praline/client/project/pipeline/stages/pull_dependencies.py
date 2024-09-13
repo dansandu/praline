@@ -7,7 +7,7 @@ from praline.common.package import clean_up_package, get_package_contents, unpac
 @stage(requirements=[['project_directories']],
        output=['external_resources', 'external_headers', 'external_executables', 'external_libraries', 
                'external_libraries_interfaces', 'external_symbols_tables'],
-       cacheable=True, exposed=True)
+       exposed=True)
 def pull_dependencies(arguments: StageArguments):
     file_system           = arguments.file_system
     resources             = arguments.resources

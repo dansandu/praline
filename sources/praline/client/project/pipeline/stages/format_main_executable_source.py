@@ -3,8 +3,7 @@ from praline.common.hashing import DeltaType, delta, hash_file, progression_reso
 
 
 @stage(requirements=[['clang_format_executable', 'main_executable_source']],
-       output=['formatted_main_executable_source'],
-       cacheable=True)
+       output=['formatted_main_executable_source'])
 def format_main_executable_source(arguments: StageArguments):
     resources    = arguments.resources
     file_system  = arguments.file_system

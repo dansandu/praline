@@ -2,8 +2,7 @@ from praline.client.project.pipeline.stages import StageArguments, stage
 
 
 @stage(requirements=[['project_directories', 'main_objects', 'main_executable_object', 'external_libraries', 'external_libraries_interfaces']],
-       output=['main_executable', 'main_executable_symbols_table'], 
-       cacheable=True)
+       output=['main_executable', 'main_executable_symbols_table'])
 def link_main_executable(arguments: StageArguments):
     compiler          = arguments.compiler
     resources         = arguments.resources

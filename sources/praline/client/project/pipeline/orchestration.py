@@ -113,22 +113,9 @@ def invoke_stage(file_system: FileSystem,
         with StageResources(stage_name, activation, local_resources, stage.output) as stage_resources:        
             progress_bar_header   = stage_name.replace('_', ' ')
             progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_length)
-            if stage.cacheable:
-                cache_path = join(file_system.get_working_directory(), 'target', 'cache.pickle')
-                with Cache(file_system, cache_path) as cache:
-                    cache[stage_name] = stage_cache = cache.get(stage_name, {})
-                    arguments = StageArguments(file_system=file_system,
-                                               configuration=configuration,
-                                               program_arguments=stage_program_arguments,
-                                               remote_proxy=remote_proxy,
-                                               project_structure=project_structure,
-                                               artifact_manifest=artifact_manifest,
-                                               compiler=compiler,
-                                               resources=stage_resources,
-                                               cache=stage_cache,
-                                               progress_bar_supplier=progress_bar_supplier)
-                    stage.invoker(arguments)
-            else:
+            cache_path = join(file_system.get_working_directory(), 'target', 'cache.pickle')
+            with Cache(file_system, cache_path) as cache:
+                cache[stage_name] = stage_cache = cache.get(stage_name, {})
                 arguments = StageArguments(file_system=file_system,
                                            configuration=configuration,
                                            program_arguments=stage_program_arguments,
@@ -137,6 +124,7 @@ def invoke_stage(file_system: FileSystem,
                                            artifact_manifest=artifact_manifest,
                                            compiler=compiler,
                                            resources=stage_resources,
+                                           cache=stage_cache,
                                            progress_bar_supplier=progress_bar_supplier)
                 stage.invoker(arguments)
             global_resources.update(stage_resources.resources)

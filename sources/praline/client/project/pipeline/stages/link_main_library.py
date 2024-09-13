@@ -21,7 +21,7 @@ def predicate(arguments: StagePredicateArguments):
 
 @stage(requirements=[['project_directories', 'main_objects', 'external_libraries', 'external_libraries_interfaces']],
        output=['main_library', 'main_library_interface', 'main_library_symbols_table'],
-       predicate=predicate, cacheable=True)
+       predicate=predicate)
 def link_main_library(arguments: StageArguments):
     compiler          = arguments.compiler
     resources         = arguments.resources
