@@ -9,7 +9,7 @@ from praline.common.tracing import trace
 
 import pkgutil
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List
 
 
 class StageNameConflictError(Exception):

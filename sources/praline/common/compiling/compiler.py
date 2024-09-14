@@ -7,7 +7,7 @@ from praline.common.hashing import hash_binary, delta, DeltaType, progression_re
 from praline.common.reflection import subclasses_of
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class CompilerInstantionError(Exception):

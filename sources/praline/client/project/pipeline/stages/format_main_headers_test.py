@@ -10,8 +10,8 @@ from typing import Dict, List
 from unittest import TestCase
 
 
-class FormatHeadersStageTest(TestCase):
-    def test_format_headers(self):
+class FormatMainHeadersStageTest(TestCase):
+    def test_format_main_headers(self):
         project_structure = get_project_structure('project', 'org', 'art')
 
         main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)

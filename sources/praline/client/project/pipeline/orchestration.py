@@ -26,7 +26,6 @@ class UnsatisfiableStageError(Exception):
     pass
 
 
-
 def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]):
     arguments = {
         'global': program_arguments['global'],

@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stages import StageArguments, stage
-from praline.common.file_system import directory_name
+
 
 program_arguments = [
     {

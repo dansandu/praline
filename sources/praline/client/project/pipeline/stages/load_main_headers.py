@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common import header_file_extension, test_header_file_extension
 
+
 @stage(requirements=[['project_directories']], output=['main_headers'])
 def load_main_headers(arguments: StageArguments):
     file_system       = arguments.file_system

@@ -8,7 +8,7 @@ from os.path import join
 from unittest import TestCase
 
 
-class LoadMainHeadersStageTest(TestCase):
+class LoadTestHeadersStageTest(TestCase):
     def test_load_test_headers_stage(self):
         project_structure = get_project_structure('project', 'org', 'art')
 

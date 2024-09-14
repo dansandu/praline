@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.load_main_sources import load_main_sources
-from praline.common.project_structure import get_project_structure, ProjectStructure
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join

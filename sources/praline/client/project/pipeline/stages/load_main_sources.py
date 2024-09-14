@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common import source_file_extension, test_source_file_extension
 
+
 @stage(requirements=[['project_directories']], output=['main_sources'])
 def load_main_sources(arguments: StageArguments):
     file_system       = arguments.file_system
