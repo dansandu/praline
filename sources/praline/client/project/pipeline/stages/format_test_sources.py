@@ -2,11 +2,12 @@ from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common.hashing import hash_file, delta, progression_resolution, DeltaType
 
 
-@stage(requirements=[['clang_format_executable', 'test_sources']], output=['formatted_test_sources'], cacheable=True)
+@stage(requirements=[['clang_format_executable', 'test_sources']], output=['formatted_test_sources'])
 def format_test_sources(arguments: StageArguments):
     resources    = arguments.resources
     file_system  = arguments.file_system
     cache        = arguments.cache
+    
     progress_bar_supplier = arguments.progress_bar_supplier
 
     test_sources = resources['test_sources']

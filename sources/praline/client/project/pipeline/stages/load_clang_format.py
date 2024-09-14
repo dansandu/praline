@@ -54,6 +54,8 @@ def load_clang_format(arguments: StageArguments):
                 "to the path environment variable")
     
     project_directory = file_system.get_working_directory()
+    
     resources['clang_format_executable'] = clang_format_executable
     resources['clang_format_style_file'] = clang_format_style_file = join(project_directory, '.clang-format')
+
     file_system.create_file_if_missing(clang_format_style_file, clang_format_style_file_contents)

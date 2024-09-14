@@ -2,7 +2,7 @@ from praline.common import (ArtifactManifest, DependencyScope, DependencyVersion
                             package_name_pattern)
 from praline.common.algorithm.general import cartesian_product
 from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
-from praline.common.compiling.compiler import get_compiler_supplier
+from praline.common.compiling.compiler import get_compiling_strategy_supplier
 from praline.common.file_system import FileSystem, basename, common_path, join, normalized_path
 from praline.common.tracing import trace
 
@@ -219,17 +219,16 @@ def clean_up_package(file_system: FileSystem, package_path: str, extraction_path
     else:
         artifact_identifer = package_name[:-7]
 
-    compiler_supplier = get_compiler_supplier(compiler)
+    compiler_supplier = get_compiling_strategy_supplier(compiler)
     yield_descriptor  = compiler_supplier.get_yield_descriptor()
     
-    library = yield_descriptor.get_library(join(extraction_path, 'libraries'), artifact_identifer)
+    library = join(extraction_path, 'libraries', yield_descriptor.get_library(artifact_identifer))
     
-    library_interface = yield_descriptor.get_library_interface(join(extraction_path, 'libraries_interfaces'), 
-                                                               artifact_identifer)
+    library_interface = join(extraction_path, 'libraries_interfaces', yield_descriptor.get_library_interface(artifact_identifer))
     
-    symbols_table = yield_descriptor.get_symbols_table(join(extraction_path, 'symbols_tables'), artifact_identifer) 
+    symbols_table = join(extraction_path, 'symbols_tables', yield_descriptor.get_symbols_table(artifact_identifer)) 
     
-    executable = yield_descriptor.get_executable(join(extraction_path, 'executables'), artifact_identifer)
+    executable = join(extraction_path, 'executables', yield_descriptor.get_executable(artifact_identifer))
 
     file_system.remove_file_if_it_exists(executable)
     file_system.remove_file_if_it_exists(library)

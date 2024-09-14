@@ -1,11 +1,11 @@
-from praline.common import Compiler
+from praline.common import CompilerType
 from praline.common.pralinefile.validation.validator import PralinefileValidationError, validator
 from typing import Any, Dict
 
 
 @validator
 def validate_compilers(pralinefile: Dict[str, Any]):
-    allowed_compilers = [compiler.value for compiler in Compiler]
+    allowed_compilers = [compiler.value for compiler in CompilerType]
     compilers = pralinefile.get('compilers', allowed_compilers)
     if not isinstance(compilers, list):
         raise PralinefileValidationError(
@@ -17,5 +17,5 @@ def validate_compilers(pralinefile: Dict[str, Any]):
         if compiler not in allowed_compilers:
             raise PralinefileValidationError(
                 f"pralinefile çompiler '{compiler}' is not recognized -- allowed compilers are {allowed_compilers}")
-        converted_compilers.append(Compiler(compiler))
+        converted_compilers.append(CompilerType(compiler))
     pralinefile['compilers'] = converted_compilers

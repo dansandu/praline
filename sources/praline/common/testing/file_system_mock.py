@@ -264,15 +264,14 @@ class FileSystemMock:
         
         for removed_file in removed_files:
             self.files.pop(removed_file)
-            tail = os.path.normpath(os.path.dirname(removed_file))
-            if tail:
-                self.directories.add(tail)
 
         for removed_directory in removed_directories:
             self.directories.remove(removed_directory)
-            tail = os.path.normpath(os.path.dirname(removed_directory))
-            if tail:
-                self.directories.add(tail)
+        
+        tail = os.path.dirname(normalized_path)
+        if tail:
+            self.directories.add(tail)
+        
         self.directories = unique_directories(self.directories)
 
     def remove_directory_recursively_if_it_exists(self, directory: str) -> None:

@@ -15,20 +15,19 @@ program_arguments = [
 ]
 
 
-@stage(requirements=[['project_structure', 'main_executable', 'tests_passed'], 
-                     ['project_structure', 'main_executable']],
+@stage(requirements=[['project_directories', 'main_executable', 'tests_passed'], 
+                     ['project_directories', 'main_executable']],
        exposed=True, 
        program_arguments=program_arguments)
 def main(arguments: StageArguments):
     file_system       = arguments.file_system 
     resources         = arguments.resources
+    project_structure = arguments.project_structure
     program_arguments = arguments.program_arguments['byStage']['arguments']
 
     main_executable         = resources['main_executable']
-    project_structure       = resources['project_structure']
     external_libraries_root = project_structure.external_libraries_root
-    resources_root          = project_structure.resources_root
     
     file_system.execute_and_fail_on_bad_return([main_executable] + program_arguments,
-                                               add_to_library_path=[external_libraries_root, resources_root],
+                                               add_to_library_path=[external_libraries_root],
                                                interactive=True)

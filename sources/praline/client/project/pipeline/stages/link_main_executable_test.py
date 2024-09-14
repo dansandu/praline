@@ -1,70 +1,53 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_main_executable import link_main_executable
-from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
-                            Compiler, ExportedSymbols, Mode, Platform, ProjectStructure)
-from praline.common.testing import project_structure_dummy
+from praline.common.project_structure import get_project_structure
 
 from os.path import join
 from typing import Any, Dict, List, Tuple
 from unittest import TestCase
 
 
-class CompilerWrapperMock:
-    def __init__(self, 
-                 test_case: TestCase,
-                 expected_artifact_identifier: str,
-                 expected_objects: List[str],
-                 external_libraries: List[str],
-                 external_libraries_interfaces: List[str]):
+class CompilerMock:
+    def __init__(self, test_case: TestCase, expected_objects: List[str], external_libraries: List[str], external_libraries_interfaces: List[str]):
         self.test_case                     = test_case
-        self.expected_artifact_identifier  = expected_artifact_identifier
         self.expected_objects              = expected_objects
         self.external_libraries            = external_libraries
         self.external_libraries_interfaces = external_libraries_interfaces
 
     def link_executable_using_cache(self,
-                                    project_structure: ProjectStructure,
-                                    artifact_identifier: str,
                                     objects: List[str],
                                     external_libraries: List[str],
                                     external_libraries_interfaces: List[str],
-                                    cache: Dict[str, Any]) -> Tuple[str, str]:
-        self.test_case.assertEqual(artifact_identifier, self.expected_artifact_identifier)
+                                    cache: Dict[str, Any],
+                                    main_executable: bool) -> Tuple[str, str]:
+        self.test_case.assertTrue(main_executable)
         self.test_case.assertCountEqual(objects, self.expected_objects)
         self.test_case.assertCountEqual(external_libraries, self.external_libraries)
         self.test_case.assertCountEqual(external_libraries_interfaces, self.external_libraries_interfaces)
-        return ('org-art-arm-linux-gcc-debug-0.0.0.exe', 'org-art-arm-linux-gcc-debug-0.0.0.pdb')
+        return ('theorg-theart-arm-linux-gcc-debug-0.0.0.exe', 'theorg-theart-arm-linux-gcc-debug-0.0.0.pdb')
 
 
 class LinkMainExecutableStageTest(TestCase):
     def test_link_main_executable(self):
-        artifact_manifest = ArtifactManifest(
-            organization='org',
-            artifact='art',
-            version=ArtifactVersion.from_string('0.0.0'),
-            mode=Mode.debug,
-            architecture=Architecture.arm,
-            platform=Platform.linux,
-            compiler=Compiler.gcc,
-            exported_symbols=ExportedSymbols.explicit,
-            artifact_type=ArtifactType.library,
-            dependencies=[]
-        )
+        project_structure = get_project_structure('project', 'theorg', 'theart')
 
-        object_a = join(project_structure_dummy.objects_root, 'org-art-a.obj')
-        object_b = join(project_structure_dummy.objects_root, 'org-art-b.obj')
-        object_x = join(project_structure_dummy.objects_root, 'org-art-executable.obj')
-
-        external_library = join(project_structure_dummy.external_libraries_root, 
-                                'org-art-a-arm-linux-gcc-debug.0.0.1.dll')
+        main_object_path = lambda object: join(project_structure.main_objects_root, object)
         
-        external_library_interface = join(project_structure_dummy.external_libraries_interfaces_root, 
-                                          'org-art-b-arm-linux-gcc-debug.0.0.2.lib')
+        external_library_path = lambda external_library: join(project_structure.external_libraries_root, external_library)
 
-        compiler = CompilerWrapperMock(
+        external_interface_path = lambda external_interface: join(project_structure.external_libraries_interfaces_root, external_interface)
+
+        object_a = main_object_path('theorg-theart-a.obj')
+        object_b = main_object_path('theorg-theart-b.obj')
+        object_x = main_object_path('theorg-theart-executable.obj')
+
+        external_library = external_library_path('theorg-theart-arm-linux-gcc-debug.0.0.1.dll')
+        
+        external_library_interface = external_interface_path('otherorg-otherart-arm-linux-gcc-debug.0.0.2.lib')
+
+        compiler = CompilerMock(
             self,
-            expected_artifact_identifier='org-art-arm-linux-gcc-debug-0.0.0',
             expected_objects=[
                 object_a,
                 object_b,
@@ -82,7 +65,7 @@ class LinkMainExecutableStageTest(TestCase):
             stage='link_main_executable',
             activation=0,
             resources={
-                'project_structure': project_structure_dummy,
+                'project_directories': True,
                 'main_objects': [
                     object_a,
                     object_b,
@@ -97,11 +80,9 @@ class LinkMainExecutableStageTest(TestCase):
             },
             constrained_output=['main_executable', 'main_executable_symbols_table']
         ) as resources:
-            stage_arguments = StageArguments(artifact_manifest=artifact_manifest,
-                                             compiler=compiler,
-                                             resources=resources)
+            stage_arguments = StageArguments(compiler=compiler, resources=resources)
             link_main_executable(stage_arguments)
 
-        self.assertEqual(resources['main_executable'], 'org-art-arm-linux-gcc-debug-0.0.0.exe')
+        self.assertEqual(resources['main_executable'], 'theorg-theart-arm-linux-gcc-debug-0.0.0.exe')
 
-        self.assertEqual(resources['main_executable_symbols_table'], 'org-art-arm-linux-gcc-debug-0.0.0.pdb')
+        self.assertEqual(resources['main_executable_symbols_table'], 'theorg-theart-arm-linux-gcc-debug-0.0.0.pdb')

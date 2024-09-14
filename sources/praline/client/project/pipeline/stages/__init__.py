@@ -1,14 +1,15 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common import ArtifactManifest
-from praline.common.compiling.compiler import CompilerWrapper
+from praline.common.project_structure import ProjectStructure
+from praline.common.compiling.compiler import Compiler
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
 from praline.common.tracing import trace
 
 import pkgutil
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List
 
 
 class StageNameConflictError(Exception):
@@ -21,8 +22,9 @@ class StageArguments:
     configuration: Dict[str, Any] = None
     program_arguments: Dict[str, Any] = None
     remote_proxy: RemoteProxy = None
+    project_structure: ProjectStructure = None
     artifact_manifest: ArtifactManifest = None
-    compiler: CompilerWrapper = None
+    compiler: Compiler = None
     resources: StageResources = None
     cache: Dict[str, Any] = None
     progress_bar_supplier: ProgressBarSupplier = None
@@ -34,8 +36,9 @@ class StagePredicateArguments:
     configuration: Dict[str, Any] = None
     program_arguments: Dict[str, Any] = None
     remote_proxy: RemoteProxy = None
+    project_structure: ProjectStructure = None
     artifact_manifest: ArtifactManifest = None
-    compiler: CompilerWrapper = None
+    compiler: Compiler = None
 
 
 @dataclass(frozen=True)
@@ -59,7 +62,6 @@ class Stage:
     output           : List[str]
     predicate        : Callable[[StagePredicateArguments], StagePredicateResult]
     program_arguments: List[Dict[str, Any]]
-    cacheable        : bool
     exposed          : bool
     invoker          : Callable[[StageArguments], None]
 
@@ -79,21 +81,13 @@ def stage(_function        : Callable[[StageArguments], None] = None,
           output           : List[str] = [],
           predicate        : Callable[[StagePredicateArguments], StagePredicateResult] = lambda _: StagePredicateResult.success(),
           program_arguments: List[Dict[str, Any]] = [],
-          cacheable        : bool = False,
           exposed          : bool = False):
     def decorator(function: Callable[[StageArguments], None]):
         wrapped = trace(function, parameters=['resources', 'cache', 'program_arguments'])
         name = function.__name__
         if name in registered_stages:
             raise StageNameConflictError(f"multiple stage definitions named '{name}'")
-        registered_stages[name] = Stage(name, 
-                                        requirements,
-                                        output, 
-                                        predicate, 
-                                        program_arguments,
-                                        cacheable, 
-                                        exposed, 
-                                        wrapped)
+        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, wrapped)
         return wrapped
     if _function is None:
         return decorator

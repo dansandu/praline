@@ -1,5 +1,6 @@
-from praline.common import Architecture, ArtifactManifest, Compiler, ExportedSymbols, Mode, Platform
-from praline.common.compiling.compiler import ICompiler, CompilerInstantionError, ICompilerSupplier, IYieldDescriptor
+from praline.common import Architecture, ArtifactManifest, ExportedSymbols, Mode, Platform
+from praline.common.project_structure import ProjectStructure
+from praline.common.compiling.compiler import CompilerInstantionError, ICompilingStrategy, IYieldDescriptor
 from praline.common.file_system import FileSystem, join, directory_name
 from typing import List
 
@@ -33,27 +34,28 @@ def get_environment_file(architecture: Architecture) -> str:
 
 
 class BaseMsvcYieldDescriptor(IYieldDescriptor):
-    def get_object(self, sources_root: str, objects_root: str, source: str) -> str:
-        return super().get_object(sources_root, objects_root, source) + '.obj'
+    def get_object(self, source_relative_path: str) -> str:
+        return super().get_object(source_relative_path) + '.obj'
 
-    def get_executable(self, executables_root: str, name: str) -> str:
-        return join(executables_root, f'{name}.exe')
+    def get_executable(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.exe'
 
-    def get_library(self, libraries_root: str, name: str) -> str:
-        return join(libraries_root, f'{name}.dll')
+    def get_library(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.dll'
 
-    def get_library_interface(self, library_interfaces_root: str, name: str) -> str:
-        return join(library_interfaces_root, f'{name}.lib')
+    def get_library_interface(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.lib'
 
-    def get_symbols_table(self, symbols_tables_root: str, name: str) -> str:
-        return join(symbols_tables_root, f'{name}.pdb')
+    def get_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.pdb'
 
 
-class BaseMsvcCompiler(ICompiler):
-    def __init__(self, compiler_name: str, skipWhichCheck: bool,  file_system: FileSystem, artifact_manifest: ArtifactManifest):
+class BaseMsvcCompilingStrategy(ICompilingStrategy):
+    def __init__(self, compiler_name: str, skipWhichCheck: bool,  file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
         self.compiler_name     = compiler_name
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
+        self.project_structure = project_structure
         self.environment_file  = get_environment_file(artifact_manifest.architecture)
         self.machine           = get_msvc_machine(artifact_manifest.architecture)
         
@@ -100,15 +102,15 @@ class BaseMsvcCompiler(ICompiler):
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return BaseMsvcYieldDescriptor()
 
-    def preprocess(self,
-                   headers_root: str,
-                   external_headers_root: str,
-                   headers: List[str],
-                   source: str) -> bytes:
+    def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
+        include_paths = ['/I', self.project_structure.main_sources_root, '/I', self.project_structure.external_headers_root]
+        if not main_source:
+            include_paths.extend(['/I', self.project_structure.test_sources_root])
 
         status, stdout, stderror = self.file_system.execute(
-            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, '/EP', source] + self.compiler_flags +
-            ['/I', headers_root, '/I', external_headers_root]
+            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, '/EP', source_path] + 
+            self.compiler_flags + 
+            include_paths
         )
 
         if status != 0:
@@ -116,16 +118,15 @@ class BaseMsvcCompiler(ICompiler):
             raise RuntimeError(f"command exited with return code {status}")
         return stdout
 
-    def compile(self,
-                headers_root: str,
-                external_headers_root: str,
-                headers: List[str],
-                source: str,
-                object_: str) -> None:
+    def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> None:
+        include_paths = ['/I', self.project_structure.main_sources_root, '/I', self.project_structure.external_headers_root]
+        if not main_source:
+            include_paths.extend(['/I', self.project_structure.test_sources_root])
 
         status, stdout, stderror = self.file_system.execute(
-            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, f'/Fo{object_}', '/c', source] +  self.compiler_flags +
-            ['/I', headers_root, '/I', external_headers_root]
+            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, f'/Fo{object_path}', '/c', source_path] + 
+            self.compiler_flags +
+            include_paths
         )
 
         if status != 0:
@@ -134,8 +135,6 @@ class BaseMsvcCompiler(ICompiler):
             raise RuntimeError(f"command exited with return code {status}")
 
     def link_executable(self,
-                        external_libraries_root: str,
-                        external_libraries_interfaces_root: str,
                         objects: List[str],
                         external_libraries: List[str],
                         external_libraries_interfaces: List[str],
@@ -178,8 +177,6 @@ class BaseMsvcCompiler(ICompiler):
 
 
     def link_library(self,
-                     external_libraries_root: str,
-                     external_libraries_interfaces_root: str,
                      objects: List[str],
                      external_libraries: List[str],
                      external_libraries_interfaces: List[str],

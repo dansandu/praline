@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.format_main_executable_source import format_main_executable_source
+from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -11,10 +12,12 @@ from unittest import TestCase
 
 class FormatMainExecutableSourceStageTest(TestCase):
     def test_format_main_executable_source_stale(self):
-        root = join('project', 'sources', 'org', 'art')
+        project_structure = get_project_structure('project', 'org', 'art')
 
-        source_math = join(root, 'math.cpp')
-        source_exe  = join(root, 'executable.cpp')
+        main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
+
+        source_math = main_source_path('math.cpp')
+        source_exe  = main_source_path('executable.cpp')
 
         calls = [source_exe]
 
@@ -27,7 +30,7 @@ class FormatMainExecutableSourceStageTest(TestCase):
 
         file_system = FileSystemMock(
             directories={
-                root
+                project_structure.main_sources_domain_root
             }, 
             files={
                 source_math: b'math-contents',
@@ -70,10 +73,12 @@ class FormatMainExecutableSourceStageTest(TestCase):
         self.assertEqual(cache, expected_cache)
 
     def test_format_main_executable_source_fresh(self):
-        root = join('project', 'sources', 'org', 'art')
+        project_structure = get_project_structure('project', 'org', 'art')
 
-        source_map    = join(root, 'map.cpp')
-        source_exe    = join(root, 'executable.cpp')
+        main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
+
+        source_map = main_source_path('map.cpp')
+        source_exe = main_source_path('executable.cpp')
 
         calls = []
 
@@ -86,7 +91,7 @@ class FormatMainExecutableSourceStageTest(TestCase):
 
         file_system = FileSystemMock(
             directories={
-                root
+                project_structure.main_sources_domain_root
             }, 
             files={
                 source_map: b'map-contents',
