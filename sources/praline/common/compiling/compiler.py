@@ -6,8 +6,12 @@ from praline.common.file_system import FileSystem
 from praline.common.hashing import hash_binary, delta, DeltaType, progression_resolution
 from praline.common.reflection import subclasses_of
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple
+
+
+logger = logging.getLogger(__name__)
 
 
 class CompilerInstantionError(Exception):
@@ -100,15 +104,18 @@ class Compiler:
                 object_path = object_path_supplier(yield_descriptor, source_path)
 
                 if item.delta_type in [DeltaType.Added, DeltaType.Modified]:
+                    logger.debug(f"Source '{source_path}' has been changed and will be compiled")
                     self.compiler_strategy.compile(headers, source_path, object_path, main_sources)
                     objects.append(object_path)
 
                 elif item.delta_type == DeltaType.UpToDate:
+                    logger.debug(f"Source '{source_path}' is up-to-date and will not be recompiled")
                     if not self.file_system.exists(object_path):
                         self.compiler_strategy.compile(headers, source_path, object_path, main_sources)
 
                     objects.append(object_path)
                 elif item.delta_type == DeltaType.Removed:
+                    logger.debug(f"Source '{source_path}' has been removed")
                     if self.file_system.exists(object_path):
                         self.file_system.remove_file(object_path)
                 
@@ -164,8 +171,7 @@ def get_compiling_strategy_suppliers() -> List[ICompilingStrategySupplier]:
     suppliers = [klass() for klass in subclasses_of(ICompilingStrategySupplier)]
     duplicates = get_duplicates(suppliers, lambda a, b: a.get_type() == b.get_type())
     if duplicates:
-        raise RuntimeError("multiple compilers defined with the same type "
-                           f"'{suppliers[duplicates[0][0]].get_type()}'")
+        raise RuntimeError(f"Multiple compilers defined with the same type '{suppliers[duplicates[0][0]].get_type()}'")
     return suppliers
 
 
@@ -173,7 +179,7 @@ def get_compiling_strategy_supplier(compiler_type: CompilerType) -> ICompilingSt
     suppliers = get_compiling_strategy_suppliers()
     matching  = [supplier for supplier in suppliers if supplier.get_type() == compiler_type]
     if not matching:
-        raise RuntimeError(f"no compiler with type '{compiler_type}' was found")
+        raise RuntimeError(f"No compiler with type '{compiler_type}' was found")
     return matching[0]
 
 
@@ -221,6 +227,6 @@ def intantiate_compiler(file_system: FileSystem,
                 messages.append(str(e))
     
         if compiling_strategy == None:
-            raise NoSupportedCompilerFoundError(f"no suitable compiler was found:\n" + '\n'.join(messages))
+            raise NoSupportedCompilerFoundError(f"No suitable compiler was found:\n" + '\n'.join(messages))
     
     return Compiler(file_system, project_structure, final_manifest, compiling_strategy)

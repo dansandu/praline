@@ -12,7 +12,7 @@ def validate_organization_work(pralinefile: Dict[str, Any]):
             f"Pralinefile organization '{organization}' has invalid type '{type(organization)}' -- type must be str")
     if not organization_pattern.fullmatch(organization):
         raise PralinefileValidationError(
-            f"pralinefile organization '{organization}' is not valid -- organization must contain lowercase "
+            f"Pralinefile organization '{organization}' is not valid -- organization must contain lowercase "
             "alphanumerics or underscores")
 
 

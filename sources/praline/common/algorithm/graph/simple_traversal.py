@@ -1,9 +1,6 @@
-from collections import deque
-from praline.common.tracing import trace
-from typing import Callable, Dict, List
+from typing import Callable, List
 
 
-@trace
 def root_last_traversal(root: str, node_visitor: Callable[[str], List[str]]) -> List[str]:
     visited = []
     result = []

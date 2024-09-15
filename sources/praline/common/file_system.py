@@ -1,5 +1,4 @@
 from praline.common import Architecture, Platform
-from praline.common.tracing import trace, INFO
 
 import os
 import os.path
@@ -45,7 +44,6 @@ def common_path(paths: List[str]) -> str:
 
 
 class FileSystem:
-    @trace
     def execute(self, 
                 command: List[str], 
                 add_to_library_path: List[str] = [], 
@@ -58,11 +56,11 @@ class FileSystem:
             elif sys.platform == 'win32':
                 environment_copy['PATH'] += os.pathsep + os.pathsep.join(add_to_library_path)
             else:
-                raise RuntimeError(f"couldn't change library path -- unsupported platform '{sys.platform}'")
+                raise RuntimeError(f"Couldn't change library path -- unsupported platform '{sys.platform}'")
         
         for key, value in add_to_env.items():
             if key in environment_copy:
-                raise RuntimeError(f"variable '{key}' already present in environment")
+                raise RuntimeError(f"Variable '{key}' already present in environment")
             else:
                 environment_copy[key] = value
         
@@ -99,7 +97,7 @@ class FileSystem:
                 logger.error(stderror.decode())
         
         if status != 0:
-            raise RuntimeError(f"command exited with return code {status}")
+            raise RuntimeError(f"Command exited with return code {status}")
 
     def exists(self, path: str) -> bool:
         return path != None and os.path.exists(path)
@@ -112,19 +110,19 @@ class FileSystem:
 
     def create_file_if_missing(self, path: str, contents: str = '') -> None:
         if not os.path.exists(path):
-            logger.debug(f"creating file '{path}'")
+            logger.debug(f"Creating file '{path}'")
             os.makedirs(name=directory_name(path), exist_ok=True)
             with open(path, 'w') as f:
                 f.write(contents)
         elif not self.is_file(path):
-            raise RuntimeError(f"'{path}' already exists and is not a file")
+            raise RuntimeError(f"Path '{path}' already exists and is not a file")
 
     def create_directory_if_missing(self, path: str) -> None:
         if not self.exists(path):
-            logger.debug(f"creating directory '{path}'")
+            logger.debug(f"Creating directory '{path}'")
             os.makedirs(path)
         elif not self.is_directory(path):
-            raise RuntimeError(f"'{path}' already exists and is not a directory")
+            raise RuntimeError(f"Path '{path}' already exists and is not a directory")
 
     def list_directory(self, directory: str, hidden: bool = False) -> List[str]:
         return [entry for entry in os.scandir(directory) if hidden or not entry.name.startswith('.')]
@@ -138,7 +136,6 @@ class FileSystem:
     def get_working_directory(self) -> str:
         return os.getcwd()
 
-    @trace
     def remove_directory_recursively(self, directory: str) -> None:
         shutil.rmtree(directory)
 
@@ -146,7 +143,6 @@ class FileSystem:
         if self.exists(directory):
             self.remove_directory_recursively(directory)
 
-    @trace
     def remove_file(self, path) -> None:
         os.remove(path)
 
@@ -174,7 +170,7 @@ class FileSystem:
         elif m == 'AMD64' or m == 'x86_64':
             return Architecture.x64
         else:
-            raise RuntimeError(f"unrecognized architecture '{m}'")
+            raise RuntimeError(f"Unrecognized architecture '{m}'")
 
     def get_platform(self) -> str:
         if sys.platform == 'win32':
@@ -184,7 +180,7 @@ class FileSystem:
         elif sys.platform == 'darwin':
             return Platform.darwin
         else:
-            raise RuntimeError(f"unrecognized platform '{sys.platform}'")
+            raise RuntimeError(f"Unrecognized platform '{sys.platform}'")
 
     def open_tarfile(self, path: str, mode: str):
         return tarfile.open(path, mode)

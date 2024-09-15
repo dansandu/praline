@@ -1,11 +1,11 @@
 from praline.common.file_system import FileSystem
 
+import logging
 import pickle
-from logging import getLogger
 from typing import Any, Dict
 
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class FileCache:
@@ -22,9 +22,9 @@ class FileCache:
     
     def __enter__(self):
         if self.active and self.file_system.exists(self.file_path):
+            logger.debug(f"Reading cache from file '{self.file_path}'")
             with self.file_system.open_file(self.file_path, 'rb') as handle:
                 self.cache = pickle.load(handle)
-            logger.debug(f"read cache={self.cache}")
         return self
 
     def __setitem__(self, key: str, value) -> None:
@@ -38,7 +38,7 @@ class FileCache:
 
     def __exit__(self, type, value, traceback):
         if self.active:
-            logger.debug(f"writing cache={self.cache}")
+            logger.debug(f"Writing cache to file '{self.file_path}'")
             self.file_system.create_file_if_missing(self.file_path)
             with self.file_system.open_file(self.file_path, 'wb') as handle:
                 pickle.dump(self.cache, handle, protocol=pickle.HIGHEST_PROTOCOL)

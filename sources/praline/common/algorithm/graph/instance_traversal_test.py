@@ -32,7 +32,7 @@ class InstanceTraversalTest(TestCase):
         }
 
         def error_on_cycle(cycle):
-            raise RuntimeError(f"cycle detected: {cycle}")
+            raise RuntimeError(f"Cycle detected: {cycle}")
 
         instances = multiple_instance_depth_first_traversal(
             start_node='A', 

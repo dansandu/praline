@@ -9,13 +9,13 @@ def validate_compilers(pralinefile: Dict[str, Any]):
     compilers = pralinefile.get('compilers', allowed_compilers)
     if not isinstance(compilers, list):
         raise PralinefileValidationError(
-            f"pralinefile compilers {compilers} has invalid type '{type(compilers)}' -- type must be list")
+            f"Pralinefile compilers {compilers} has invalid type '{type(compilers)}' -- type must be list")
     if not compilers:
-        raise PralinefileValidationError("pralinefile compilers field cannot be empty")
+        raise PralinefileValidationError("Pralinefile compilers field cannot be empty")
     converted_compilers = []
     for compiler in compilers:
         if compiler not in allowed_compilers:
             raise PralinefileValidationError(
-                f"pralinefile çompiler '{compiler}' is not recognized -- allowed compilers are {allowed_compilers}")
+                f"Pralinefile çompiler '{compiler}' is not recognized -- allowed compilers are {allowed_compilers}")
         converted_compilers.append(CompilerType(compiler))
     pralinefile['compilers'] = converted_compilers

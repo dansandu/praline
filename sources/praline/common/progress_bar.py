@@ -33,7 +33,7 @@ def format_text(text: str, highlight=TextHighlight.No):
     elif highlight == TextHighlight.Blue:
         return '\033[34m' + text + '\033[0m'
     else:
-        raise ValueError(f"invalid TextHighlight provided: {highlight}")  
+        raise ValueError(f"Invalid TextHighlight provided: {highlight}")  
 
 
 def format_summary(text: str, highlight: TextHighlight = TextHighlight.No):
@@ -53,10 +53,10 @@ def format_summary(text: str, highlight: TextHighlight = TextHighlight.No):
 class ProgressBar:
     def __init__(self, file_system: FileSystem, header: str, header_length: int, resolution: int):
         if header_length <= 0:
-            raise ValueError("progress bar header length must be greater than 0")
+            raise ValueError("Progress bar header length must be greater than 0")
         
         if resolution < 0:
-            raise ValueError("progress bar resolution must be greater or equal to 0")
+            raise ValueError("Progress bar resolution must be greater or equal to 0")
         
         self.file_system   = file_system
         self.header        = header
@@ -75,10 +75,10 @@ class ProgressBar:
 
     def advance(self, amount: int = 1):
         if self.resolution == 0:
-            raise ValueError("cannot advance if progress bar resolution is 0 -- the bar will be filled on successful __exit__")
+            raise ValueError("Cannot advance if progress bar resolution is 0 -- the bar will be filled on successful __exit__")
 
         if amount <= 0:
-            raise ValueError("progress bar advance amount must be greater than 0")
+            raise ValueError("Progress bar advance amount must be greater than 0")
 
         self.progress = min(self.progress + amount, self.resolution)
         self.display()

@@ -1,5 +1,4 @@
 from praline.common.file_system import FileSystem
-from praline.common.tracing import trace
 
 from dataclasses import dataclass
 from enum import Enum
@@ -7,7 +6,6 @@ from hashlib import sha3_256
 from typing import Callable, Dict, Generator, List
 
 
-@trace
 def hash_file(file_system: FileSystem, file_path: str) -> str:
     hasher = sha3_256()
     with file_system.open_file(file_path, 'rb') as f:
@@ -16,7 +14,6 @@ def hash_file(file_system: FileSystem, file_path: str) -> str:
     return hasher.hexdigest()
 
 
-@trace
 def hash_archive(file_system: FileSystem, archive_path: str):
     hasher = sha3_256()
     with file_system.open_tarfile(archive_path, 'r:gz') as archive:
@@ -46,7 +43,6 @@ class DeltaItem:
     delta_type: DeltaType
 
 
-@trace
 def delta(keys: List[str], 
           key_hasher: Callable[[str],str], 
           cache: Dict[str, str], 

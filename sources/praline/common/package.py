@@ -1,10 +1,9 @@
-from praline.common import (ArtifactManifest, DependencyScope, DependencyVersion, PackageVersion, package_extension,
-                            package_name_pattern)
+from praline.common import (ArtifactManifest, DependencyVersion, PackageVersion, package_extension, package_name_pattern)
 from praline.common.algorithm.general import cartesian_product
 from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
 from praline.common.compiling.compiler import get_compiling_strategy_supplier
 from praline.common.file_system import FileSystem, basename, common_path, join, normalized_path
-from praline.common.tracing import trace
+
 
 import logging
 import pickle
@@ -53,14 +52,13 @@ def read_artifact_manifest(file_system: FileSystem, package_path: str) -> Artifa
             if isinstance(data, ArtifactManifest):
                 return data
             else:
-                raise InvalidManifestFileError(f"the manifest file is invalid for the package '{package_path}'")
+                raise InvalidManifestFileError(f"The manifest file is invalid for the package '{package_path}'")
 
 
 def split_package_version(package_name: str) -> str:
     return package_name[:-len(package_extension)].rsplit('-', 1)
 
 
-@trace
 def get_matching_packages(dependency: str, candidate_packages: List[str]) -> List[str]:
     matching_versions = []
     identifier, version = split_package_version(dependency)
@@ -75,7 +73,6 @@ def get_matching_packages(dependency: str, candidate_packages: List[str]) -> Lis
     return [f"{identifier}-{version}{package_extension}" for version in sorted_versions]
 
 
-@trace
 def get_packages_from_directory(file_system: FileSystem, directory: str) -> List[str]:
     return [entry.name for entry in file_system.list_directory(directory) 
             if package_name_pattern.fullmatch(entry.name)]
@@ -86,7 +83,6 @@ def get_package_dependencies_from_archive(file_system: FileSystem, package_path:
     return artifact_manifest.get_package_dependencies_file_names()
 
 
-@trace
 def get_package_dependencies_recursively(file_system: FileSystem, 
                                          artifact_manifest: ArtifactManifest,
                                          repository_path: str) -> List[str]:
@@ -104,7 +100,7 @@ def get_package_dependencies_recursively(file_system: FileSystem,
         return InstanceValidationResult.success()
 
     def no_cyclic_depedencies(cycle: List[str]):
-        raise ArtifactCyclicDependenciesError(f"artifact '{root_package}' has cyclic dependencies {cycle}")
+        raise ArtifactCyclicDependenciesError(f"Artifact '{root_package}' has cyclic dependencies {cycle}")
 
     def visitor(package):
         if package == root_package:
@@ -116,8 +112,7 @@ def get_package_dependencies_recursively(file_system: FileSystem,
             matching_packages = get_matching_packages(dependency, candidate_packages)
             if not matching_packages:
                 raise UnsatisfiableArtifactDependencyError(
-                    f"couldn't find any package matching '{dependency}' "
-                    f"when solving dependencies for package '{package}'")
+                    f"Couldn't find any package matching '{dependency}' when solving dependencies for package '{package}'")
             fixed_dependencies.append(matching_packages)
         return cartesian_product(fixed_dependencies)
 
@@ -128,21 +123,19 @@ def get_package_dependencies_recursively(file_system: FileSystem,
     valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
     
     if not valid_trees:
-        raise UnsatisfiableArtifactDependenciesError(f"dependencies for package '{root_package}' cannot be satisfied")
+        raise UnsatisfiableArtifactDependenciesError(f"Dependencies for package '{root_package}' cannot be satisfied")
     
     dependencies = [dependency for dependency in valid_trees[0]]
     dependencies.remove(root_package)
     return dependencies
 
 
-@trace
 def pack(file_system: FileSystem, package_path: str, package_files: List[Tuple[str, str]]):
     with file_system.open_tarfile(package_path, 'w:gz') as archive:
         for file_path, package_file_path in package_files:
             archive.add(file_path, package_file_path)
 
 
-@trace
 def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> Dict[str, List[str]]:
     contents = {
         'resources': [],
@@ -163,7 +156,7 @@ def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> 
                         files.append(join(extraction_path, member.name))
                         valid = True
                 if member.name != manifest_file_name and not valid:
-                    raise InvalidPackageContentsError(f"unrecognized file '{member.name}' in package")
+                    raise InvalidPackageContentsError(f"Unrecognized file '{member.name}' in package")
     
     for header in contents['headers']:
         with file_system.open_file(header, 'rb') as f:
@@ -173,7 +166,6 @@ def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> 
     return contents
 
 
-@trace
 def get_package_contents(file_system: FileSystem, package_path: str, extraction_path: str) -> Dict[str, List[str]]:
     contents = {
         'resources': [],
@@ -193,16 +185,15 @@ def get_package_contents(file_system: FileSystem, package_path: str, extraction_
                         files.append(join(extraction_path, member.name))
                         valid = True
                 if member.name != manifest_file_name and not valid:
-                    raise InvalidPackageContentsError(f"unrecognized file '{member.name}' in package")    
+                    raise InvalidPackageContentsError(f"Unrecognized file '{member.name}' in package")    
     return contents
 
 
-@trace
 def clean_up_package(file_system: FileSystem, package_path: str, extraction_path: str):
     package_name = basename(package_path)
     match        = package_name_pattern.fullmatch(package_name)
     if not match:
-        raise RuntimeError(f"invalid package name '{package_name}'")
+        raise RuntimeError(f"Invalid package name '{package_name}'")
     
     organization = match['organization']
     artifact     = match['artifact']

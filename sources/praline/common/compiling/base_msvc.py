@@ -18,7 +18,7 @@ def get_msvc_machine(architecture: Architecture) -> str:
     elif architecture ==Architecture.arm:
         return 'ARM'
     else:
-        raise RuntimeError(f"unrecognized architecture '{architecture}'")
+        raise RuntimeError(f"Unrecognized architecture '{architecture}'")
 
 
 def get_environment_file(architecture: Architecture) -> str:
@@ -29,7 +29,7 @@ def get_environment_file(architecture: Architecture) -> str:
     elif architecture ==Architecture.arm:
         batfile = 'vcvarsall.bat'
     else:
-        raise RuntimeError(f"unrecognized architecture '{architecture}'")
+        raise RuntimeError(f"Unrecognized architecture '{architecture}'")
     return fr"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\{batfile}"
 
 
@@ -85,19 +85,19 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             self.compiler_flags.extend(['/MD', '/O2', '/DNDEBUG'])
             self.linker_flags.extend(['/DEBUG:NONE'])
         else:
-            raise RuntimeError(f"unrecognized mode '{self.mode}'")
+            raise RuntimeError(f"Unrecognized mode '{self.mode}'")
 
         if artifact_manifest.platform != Platform.windows:
-            raise CompilerInstantionError(f"the {compiler_name} compiler does not support the '{artifact_manifest.platform}' platform")
+            raise CompilerInstantionError(f"The {compiler_name} compiler does not support the '{artifact_manifest.platform}' platform")
 
         if not file_system.exists(self.environment_file):
-            raise CompilerInstantionError(f"the {compiler_name} compiler could not find environment configuration batch file")
+            raise CompilerInstantionError(f"The {compiler_name} compiler could not find environment configuration batch file")
 
         if not skipWhichCheck and file_system.which(compiler_name) == None:
-            raise CompilerInstantionError(f"the {compiler_name} compiler could not find the {compiler_name} executable in the PATH")
+            raise CompilerInstantionError(f"The {compiler_name} compiler could not find the {compiler_name} executable in the PATH")
 
         if artifact_manifest.exported_symbols == ExportedSymbols.all:
-            raise CompilerInstantionError(f"the {compiler_name} compiler does not support currently exporting all symbols")
+            raise CompilerInstantionError(f"The {compiler_name} compiler does not support currently exporting all symbols")
 
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return BaseMsvcYieldDescriptor()
@@ -115,7 +115,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
 
         if status != 0:
             logger.error(stderror.decode())
-            raise RuntimeError(f"command exited with return code {status}")
+            raise RuntimeError(f"Command exited with return code {status}")
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> None:
@@ -132,7 +132,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
-            raise RuntimeError(f"command exited with return code {status}")
+            raise RuntimeError(f"Command exited with return code {status}")
 
     def link_executable(self,
                         objects: List[str],
@@ -169,7 +169,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
-            raise RuntimeError(f"command exited with return code {status}")
+            raise RuntimeError(f"Command exited with return code {status}")
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
         if self.file_system.exists(library_interface):
@@ -211,9 +211,9 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         if status != 0:
             logger.info(stdout.decode())
             logger.error(stderror.decode())
-            raise RuntimeError(f"command exited with return code {status}")
+            raise RuntimeError(f"Command exited with return code {status}")
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
         if not self.file_system.exists(library_interface):
-            logger.warn(f"no library interface file '{library_interface}' was created because there are no symbols to"
+            logger.warn(f"No library interface file '{library_interface}' was created because there are no symbols to"
                         "export -- use PRALINE_EXPORT to export symbols")

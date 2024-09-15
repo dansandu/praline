@@ -45,12 +45,12 @@ def load_clang_format(arguments: StageArguments):
         clang_format_executable = configuration['clang-format-executable-path']
         if not file_system.is_file(clang_format_executable):
             raise ClangFormatConfigurationError(
-                f"user supplied clang-format '{clang_format_executable}' is not a file")
+                f"User supplied clang-format '{clang_format_executable}' is not a file")
     else:
         clang_format_executable = file_system.which('clang-format')
         if clang_format_executable is None:
             raise ClangFormatConfigurationError(
-                "coudn't find clang-format in path -- either supply it in the praline-client.config file or add it "
+                "Coudn't find clang-format in path -- either supply it in the praline-client.config file or add it "
                 "to the path environment variable")
     
     project_directory = file_system.get_working_directory()
