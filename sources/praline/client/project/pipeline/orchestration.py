@@ -1,4 +1,4 @@
-from praline.client.project.pipeline.cache import Cache
+from praline.client.project.pipeline.file_cache import FileCache
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateArguments
 from praline.client.repository.remote_proxy import RemoteProxy
@@ -26,7 +26,7 @@ class UnsatisfiableStageError(Exception):
     pass
 
 
-def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]):
+def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]) -> Dict[str, Any]:
     arguments = {
         'global': program_arguments['global'],
         'byStage': program_arguments['byStage'].get(stage, {})
@@ -112,8 +112,8 @@ def invoke_stage(file_system: FileSystem,
         with StageResources(stage_name, activation, local_resources, stage.output) as stage_resources:        
             progress_bar_header   = stage_name.replace('_', ' ')
             progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_length)
-            cache_path = join(file_system.get_working_directory(), 'target', 'cache.pickle')
-            with Cache(file_system, cache_path) as cache:
+            cache_path = join(project_structure.target_root, 'cache.pickle')
+            with FileCache(file_system, cache_path, stage.cacheable) as cache:
                 cache[stage_name] = stage_cache = cache.get(stage_name, {})
                 arguments = StageArguments(file_system=file_system,
                                            configuration=configuration,

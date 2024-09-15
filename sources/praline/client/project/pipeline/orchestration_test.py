@@ -2,6 +2,7 @@ from praline.client.project.pipeline.orchestration import (create_pipeline, invo
                                                            MultipleSuppliersError, UnsatisfiableStageError)
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateResult
 from praline.common.testing.file_system_mock import FileSystemMock
+from praline.common.project_structure import get_project_structure
 
 import pickle
 from os.path import join
@@ -15,7 +16,12 @@ class OrchestrationTest(TestCase):
         self.cant_run   = lambda args: StagePredicateResult.failure("can't run")
         self.program_arguments = {'global': {}, 'byStage': {}}
 
-        self.create_pipeline = lambda target_stage, stages: create_pipeline(None, None, self.program_arguments, None, None, None, None, target_stage, stages)
+        self.create_pipeline = lambda target_stage, stages: create_pipeline(
+            None, None, self.program_arguments, None, None, None, None, target_stage, stages)
+        
+        self.create_stage = lambda name, requirements, output, predicate: Stage(
+            name, requirements, output, predicate, program_arguments=[], exposed=False, cacheable=False, invoker=self.do_nothing
+        )
 
     def test_create_pipeline(self):
         #
@@ -26,12 +32,12 @@ class OrchestrationTest(TestCase):
         #    [C] [A][B C]
         #
         stages = {
-            'A': Stage('A',                  [], ['a'], self.cant_run, [], False, self.do_nothing),
-            'B': Stage('B',                  [], ['b'],  self.can_run, [], False, self.do_nothing),
-            'C': Stage('C',                  [], ['c'],  self.can_run, [], False, self.do_nothing),
-            'D': Stage('D', [['a'], ['b', 'c']], ['d'],  self.can_run, [], False, self.do_nothing),
-            'E': Stage('E',             [['c']], ['e'],  self.can_run, [], False, self.do_nothing),
-            'F': Stage('F',        [['e', 'd']],    [],  self.can_run, [], False, self.do_nothing),
+            'A': self.create_stage('A',                  [], ['a'], self.cant_run),
+            'B': self.create_stage('B',                  [], ['b'],  self.can_run),
+            'C': self.create_stage('C',                  [], ['c'],  self.can_run),
+            'D': self.create_stage('D', [['a'], ['b', 'c']], ['d'],  self.can_run),
+            'E': self.create_stage('E',             [['c']], ['e'],  self.can_run),
+            'F': self.create_stage('F',        [['e', 'd']],    [],  self.can_run),
         }
 
         pipeline = self.create_pipeline('F', stages)
@@ -47,27 +53,27 @@ class OrchestrationTest(TestCase):
         #   --[A]
         #
         stages = {
-            'A': Stage('A', [['c']], ['a'], self.can_run, [], False, self.do_nothing),
-            'B': Stage('B', [['a']], ['b'], self.can_run, [], False, self.do_nothing),
-            'C': Stage('C', [['b']], ['c'], self.can_run, [], False, self.do_nothing),
+            'A': self.create_stage('A', [['c']], ['a'], self.can_run),
+            'B': self.create_stage('B', [['a']], ['b'], self.can_run),
+            'C': self.create_stage('C', [['b']], ['c'], self.can_run),
         }
 
         self.assertRaises(CyclicStagesError, self.create_pipeline, 'C', stages)
 
     def test_create_pipeline_with_multiple_suppliers(self):
         stages     = {
-            'A': Stage('A',    [], ['x'], self.can_run, [], False, self.do_nothing),
-            'B': Stage('B',    [], ['x'], self.can_run, [], False, self.do_nothing),
-            'C': Stage('C', ['x'], ['c'], self.can_run, [], False, self.do_nothing),
+            'A': self.create_stage('A',    [], ['x'], self.can_run),
+            'B': self.create_stage('B',    [], ['x'], self.can_run),
+            'C': self.create_stage('C', ['x'], ['c'], self.can_run),
         }
 
         self.assertRaises(MultipleSuppliersError, self.create_pipeline, 'C', stages)
 
     def test_create_pipeline_with_no_suppliers(self):
         stages     = {
-            'A': Stage('A',              [], ['a'], self.can_run, [], False, self.do_nothing),
-            'B': Stage('B',              [], ['b'], self.can_run, [], False, self.do_nothing),
-            'C': Stage('C', ['a', 'b', 'x'], ['c'], self.can_run, [], False, self.do_nothing),
+            'A': self.create_stage('A',              [], ['a'], self.can_run),
+            'B': self.create_stage('B',              [], ['b'], self.can_run),
+            'C': self.create_stage('C', ['a', 'b', 'x'], ['c'], self.can_run),
         }
 
         self.assertRaises(UnsatisfiableStageError, self.create_pipeline, 'C', stages)
@@ -119,33 +125,37 @@ class OrchestrationTest(TestCase):
             arguments.resources['h'] = 'h_value'
 
         stages = {
-            'A': Stage('A', [['b'], ['c', 'd']], ['a'],  self.can_run, [], False, ai),
-            'B': Stage('B',             [['e']], ['b'],  self.can_run, [], False, bi),
-            'C': Stage('C',      [['f'], ['g']], ['c'],  self.can_run, [], True, ci),
-            'D': Stage('D',             [['h']], ['d'],  self.can_run, [], False, di),
-            'E': Stage('E',                [[]], ['e'], self.cant_run, [], False, ei),
-            'F': Stage('F',             [['e']], ['f'],  self.can_run, [], False, fi),
-            'G': Stage('G',                [[]], ['g'],  self.can_run, [], False, gi),
-            'H': Stage('H',                [[]], ['h'],  self.can_run, [], False, hi),
+            'A': Stage('A', [['b'], ['c', 'd']], ['a'],  self.can_run, [], False, False, ai),
+            'B': Stage('B',             [['e']], ['b'],  self.can_run, [], False, False, bi),
+            'C': Stage('C',      [['f'], ['g']], ['c'],  self.can_run, [], True,  True,  ci),
+            'D': Stage('D',             [['h']], ['d'],  self.can_run, [], False, True,  di),
+            'E': Stage('E',                [[]], ['e'], self.cant_run, [], False, False, ei),
+            'F': Stage('F',             [['e']], ['f'],  self.can_run, [], False, False, fi),
+            'G': Stage('G',                [[]], ['g'],  self.can_run, [], False, True,  gi),
+            'H': Stage('H',                [[]], ['h'],  self.can_run, [], False, False, hi),
         }
 
-        working_directory = 'project'
-        file_system       = FileSystemMock({working_directory}, working_directory=working_directory)
+        project_structure = get_project_structure('project', 'org', 'art')
+
+        file_system = FileSystemMock({
+                project_structure.project_directory
+            }, 
+            working_directory=project_structure.project_directory
+        )
+
         program_arguments = {
             'global': {},
             'byStage': {'C': { 'some-argument': 'some_value' }}
         }
 
-        invoke_stage(file_system, None, program_arguments, None, None, None, None, 'A', stages)
+        invoke_stage(file_system, None, program_arguments, None, project_structure, None, None, 'A', stages)
 
         cache_path = join('project', 'target', 'cache.pickle')
 
         expected_cache = {
-            'A': {}, 
             'C': {'c': 'c_value'}, 
             'D': {'d': 'd_value'}, 
             'G': {'g': 'g_value'},
-            'H': {},
         }
 
         self.assertEqual(pickle.loads(file_system.files[cache_path]), expected_cache)
@@ -160,10 +170,10 @@ class OrchestrationTest(TestCase):
         #         D
         #
         stages = {
-            'A': Stage('A', [['c']], ['a'], self.can_run, [], False, self.do_nothing),
-            'B': Stage('B', [['c']], ['b'], self.can_run, [], False, self.do_nothing),
-            'C': Stage('C', [['d']], ['c'], self.can_run, [], False, self.do_nothing),
-            'D': Stage('D', [['b']], ['d'], self.can_run, [], False, self.do_nothing),
+            'A': self.create_stage('A', [['c']], ['a'], self.can_run),
+            'B': self.create_stage('B', [['c']], ['b'], self.can_run),
+            'C': self.create_stage('C', [['d']], ['c'], self.can_run),
+            'D': self.create_stage('D', [['b']], ['d'], self.can_run),
         }
 
         working_directory = 'project'
@@ -173,10 +183,10 @@ class OrchestrationTest(TestCase):
 
     def test_invoke_stage_with_unsatisfiable_disabled_stage(self):
         stages = {
-            'A': Stage('A', [['b', 'c']], ['a'],  self.can_run, [], False, self.do_nothing),
-            'B': Stage('B',      [['d']], ['b'],  self.can_run, [], False, self.do_nothing),
-            'C': Stage('C',      [['d']], ['c'], self.cant_run, [], False, self.do_nothing),
-            'D': Stage('D',         [[]], ['d'],  self.can_run, [], False, self.do_nothing),
+            'A': self.create_stage('A', [['b', 'c']], ['a'],  self.can_run),
+            'B': self.create_stage('B',      [['d']], ['b'],  self.can_run),
+            'C': self.create_stage('C',      [['d']], ['c'], self.cant_run),
+            'D': self.create_stage('D',         [[]], ['d'],  self.can_run),
         }
 
         working_directory = 'project'
@@ -186,10 +196,10 @@ class OrchestrationTest(TestCase):
 
     def test_invoke_stage_with_unsatisfiable_nonexistent_stage(self):
         stages = {
-            'A': Stage('A', [['b', 'c']], ['a'], self.can_run, [], False, self.do_nothing),
-            'B': Stage('B',      [['d']], ['b'], self.can_run, [], False, self.do_nothing),
-            'C': Stage('C',      [['d']], ['c'], self.can_run, [], False, self.do_nothing),
-            'D': Stage('D',         [[]],    [], self.can_run, [], False, self.do_nothing)
+            'A': self.create_stage('A', [['b', 'c']], ['a'], self.can_run),
+            'B': self.create_stage('B',      [['d']], ['b'], self.can_run),
+            'C': self.create_stage('C',      [['d']], ['c'], self.can_run),
+            'D': self.create_stage('D',         [[]],    [], self.can_run),
         }
 
         working_directory = 'project'
