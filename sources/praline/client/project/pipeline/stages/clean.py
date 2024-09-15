@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 
 
-@stage(exposed=True)
+@stage(exposed=True, cacheable=False)
 def clean(arguments: StageArguments):
     target_root = arguments.project_structure.target_root
     

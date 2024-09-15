@@ -63,6 +63,7 @@ class Stage:
     predicate        : Callable[[StagePredicateArguments], StagePredicateResult]
     program_arguments: List[Dict[str, Any]]
     exposed          : bool
+    cacheable        : bool
     invoker          : Callable[[StageArguments], None]
 
 
@@ -81,13 +82,14 @@ def stage(_function        : Callable[[StageArguments], None] = None,
           output           : List[str] = [],
           predicate        : Callable[[StagePredicateArguments], StagePredicateResult] = lambda _: StagePredicateResult.success(),
           program_arguments: List[Dict[str, Any]] = [],
-          exposed          : bool = False):
+          exposed          : bool = False,
+          cacheable        : bool = True):
     def decorator(function: Callable[[StageArguments], None]):
         wrapped = trace(function, parameters=['resources', 'cache', 'program_arguments'])
         name = function.__name__
         if name in registered_stages:
             raise StageNameConflictError(f"multiple stage definitions named '{name}'")
-        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, wrapped)
+        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, cacheable, wrapped)
         return wrapped
     if _function is None:
         return decorator
