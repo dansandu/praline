@@ -5,7 +5,6 @@ from praline.common.project_structure import ProjectStructure
 from praline.common.compiling.compiler import Compiler
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
-from praline.common.tracing import trace
 
 import pkgutil
 from dataclasses import dataclass
@@ -85,12 +84,12 @@ def stage(_function        : Callable[[StageArguments], None] = None,
           exposed          : bool = False,
           cacheable        : bool = True):
     def decorator(function: Callable[[StageArguments], None]):
-        wrapped = trace(function, parameters=['resources', 'cache', 'program_arguments'])
         name = function.__name__
         if name in registered_stages:
-            raise StageNameConflictError(f"multiple stage definitions named '{name}'")
-        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, cacheable, wrapped)
-        return wrapped
+            raise StageNameConflictError(f"Multiple stage definitions named '{name}'")
+        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, cacheable, function)
+        return function
+
     if _function is None:
         return decorator
     return decorator(_function)

@@ -9,9 +9,12 @@ from praline.common.algorithm.graph.simple_traversal import root_last_traversal
 from praline.common.compiling.compiler import Compiler
 from praline.common.file_system import FileSystem, join
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.tracing import trace
 
+import logging
 from typing import Any, Dict, List
+
+
+logger = logging.getLogger(__name__)
 
 
 class MultipleSuppliersError(Exception):
@@ -34,7 +37,6 @@ def get_stage_program_arguments(stage: str, program_arguments: Dict[str, Any]) -
     return arguments
 
 
-@trace(parameters=[])
 def create_pipeline(file_system: FileSystem,
                     configuration: Dict[str, Any],
                     program_arguments: Dict[str, Any],
@@ -45,7 +47,7 @@ def create_pipeline(file_system: FileSystem,
                     target_stage: str,
                     stages: Dict[str, Stage]) -> List[str]:    
     def on_cycle(cycle: List[str]):
-        raise CyclicStagesError(f"cyclic dependencies for stages {cycle}")
+        raise CyclicStagesError(f"Cyclic dependencies for stages {cycle}")
 
     def visitor(stage_name: str):
         requirements_set = stages[stage_name].requirements
@@ -56,10 +58,10 @@ def create_pipeline(file_system: FileSystem,
                 suppliers = [stage.name for stage in stages.values() if requirement in stage.output]
                 if not suppliers:
                     raise UnsatisfiableStageError(
-                        f"stage '{stage_name}' cannot be satisfied because no stage supplies resource '{requirement}'")
+                        f"Stage '{stage_name}' cannot be satisfied because no stage supplies resource '{requirement}'")
                 elif len(suppliers) > 1:
                     raise MultipleSuppliersError(
-                        f"resource '{requirement}' is supplied by multiple stages: {', '.join(suppliers)}")
+                        f"Resource '{requirement}' is supplied by multiple stages: {', '.join(suppliers)}")
                 elif suppliers[0] not in required_stages:
                     required_stages.append(suppliers[0])
             required_stages_set.append(required_stages)
@@ -80,6 +82,7 @@ def create_pipeline(file_system: FileSystem,
         stage_subtree = valid_trees[0]
         stage_order   = root_last_traversal(target_stage, lambda n: stage_subtree[n][1])
         pipeline      = [(stage_subtree[stage][0], stage) for stage in stage_order]
+        logger.debug(f"Created pipepline {pipeline}")
         return pipeline
     else:
         message = f"could not create a pipeline to satisfy stage '{target_stage}':\n"
@@ -89,7 +92,6 @@ def create_pipeline(file_system: FileSystem,
         raise UnsatisfiableStageError(message)
 
 
-@trace
 def invoke_stage(file_system: FileSystem,
                  configuration: Dict[str, Any],
                  program_arguments: Dict[str, Any],
@@ -106,6 +108,7 @@ def invoke_stage(file_system: FileSystem,
     progress_bar_header_length = max(len(stage_name) for _, stage_name in pipeline)
 
     for activation, stage_name in pipeline:
+        logger.debug(f"Starting stage '{stage_name}'")
         stage = stages[stage_name]
         local_resources = {resource : global_resources[resource] for resource in stage.requirements[activation]}
         stage_program_arguments = get_stage_program_arguments(stage_name, program_arguments)
@@ -127,3 +130,4 @@ def invoke_stage(file_system: FileSystem,
                                            progress_bar_supplier=progress_bar_supplier)
                 stage.invoker(arguments)
             global_resources.update(stage_resources.resources)
+        logger.debug(f"Stage '{stage_name}' has ended")

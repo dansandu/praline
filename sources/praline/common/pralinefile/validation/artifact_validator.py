@@ -12,7 +12,7 @@ def validate_artifact_work(pralinefile: Dict[str, Any]):
             f"Pralinefile artifact '{artifact}' has invalid type '{type(artifact)}' -- type must be str")
     if not artifact_pattern.fullmatch(artifact):
         raise PralinefileValidationError(
-            f"pralinefile artifact '{artifact}' is not valid -- artifact must contain lowercase alphanumerics "
+            f"Pralinefile artifact '{artifact}' is not valid -- artifact must contain lowercase alphanumerics "
             "or underscores")
 
 

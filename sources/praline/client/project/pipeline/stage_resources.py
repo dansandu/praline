@@ -37,15 +37,15 @@ class StageResources:
     
     def __getitem__(self, resource: str) -> T:
         if resource not in self.resources:
-            raise ResourceNotPresentError(f"stage '{self.stage}' is requesting resource '{resource}' but it hasn't been supplied yet")
+            raise ResourceNotPresentError(f"Stage '{self.stage}' is requesting resource '{resource}' but it hasn't been supplied yet")
         return self.resources[resource]
 
     def __setitem__(self, resource: str, value) -> None:
-        logger.debug(f"stage '{self.stage}' set resource '{resource}' to {value}")
+        logger.debug(f"Stage '{self.stage}' set resource '{resource}'")
         if resource in self.resources:
-            raise ResourceOverriddenError(f"stage '{self.stage}' is trying to override resource '{resource}'")
+            raise ResourceOverriddenError(f"Stage '{self.stage}' is trying to override resource '{resource}'")
         if resource not in self.constrained_output:
-            raise UndeclaredResourceSuppliedError(f"stage '{self.stage}' is trying to supply resource '{resource}' but it didn't declare it as output")
+            raise UndeclaredResourceSuppliedError(f"Stage '{self.stage}' is trying to supply resource '{resource}' but it didn't declare it as output")
         self.resources[resource] = value
 
     def __contains__(self, resource: str) -> bool:
@@ -55,4 +55,4 @@ class StageResources:
         if not type:
             not_supplied = [resource for resource in self.constrained_output if resource not in self.resources]
             if not_supplied:
-                raise DeclaredResourceNotSuppliedError(f"stage '{self.stage}' did not supply resource '{not_supplied[0]}' despite declaring it as output")
+                raise DeclaredResourceNotSuppliedError(f"Stage '{self.stage}' did not supply resource '{not_supplied[0]}' despite declaring it as output")

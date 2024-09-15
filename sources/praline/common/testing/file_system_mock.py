@@ -102,12 +102,12 @@ class FileSystemMock:
             normalized_path = os.path.normpath(path)
             for directory_path in self.directories:
                 if is_subpath_or_path(normalized_path, directory_path):
-                    raise RuntimeError(f"cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
+                    raise RuntimeError(f"Cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
             directory = os.path.dirname(normalized_path)
             if directory and not self.is_directory(directory):
-                raise RuntimeError(f"directory '{directory}' doesn't exist")
+                raise RuntimeError(f"Directory '{directory}' doesn't exist")
             if self.exists(normalized_path):
-                raise RuntimeError(f"cannot create file '{normalized_path}' -- it already exists")
+                raise RuntimeError(f"Cannot create file '{normalized_path}' -- it already exists")
             self.files[normalized_path] = contents
         
         self.open_files        = set()
@@ -124,7 +124,7 @@ class FileSystemMock:
                                        interactive: bool = False, 
                                        add_to_env: Dict[str, str] = {}) -> None:
         if not self.on_execute(command, add_to_library_path, interactive, add_to_env):
-            raise RuntimeError("command exited with failure")
+            raise RuntimeError("Command exited with failure")
 
     def get_working_directory(self) -> str:
         return self.working_directory
@@ -164,7 +164,7 @@ class FileSystemMock:
         normalized_path = os.path.normpath(path)
         for file_path in self.files:
             if is_subpath_or_path(file_path, normalized_path):
-                raise RuntimeError(f"cannot create directory '{normalized_path}' -- '{file_path}' is a file")
+                raise RuntimeError(f"Cannot create directory '{normalized_path}' -- '{file_path}' is a file")
         if not self.is_directory(normalized_path):
             self.directories.add(normalized_path)
             self.directories = unique_directories(self.directories)
@@ -173,7 +173,7 @@ class FileSystemMock:
         normalized_path = os.path.normpath(path)
         for directory_path in self.directories:
             if is_subpath_or_path(normalized_path, directory_path):
-                raise RuntimeError(f"cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
+                raise RuntimeError(f"Cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
         directory = os.path.dirname(normalized_path)
         if directory:
             self.create_directory_if_missing(directory)
@@ -183,16 +183,16 @@ class FileSystemMock:
     def open_file(self, path: str, mode: str) -> IO[Any]:
         normalized_path = os.path.normpath(path)
         if normalized_path in self.open_files:
-            raise RuntimeError(f"file '{normalized_path}' is already open")
+            raise RuntimeError(f"File '{normalized_path}' is already open")
         if 'r' in mode and normalized_path not in self.files:
             raise FileNotFoundError(normalized_path)
         if 'w' in mode and normalized_path not in self.files:
             for directory_path in self.directories:
                 if is_subpath_or_path(normalized_path, directory_path):
-                    raise RuntimeError(f"cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
+                    raise RuntimeError(f"Cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
             directory = os.path.dirname(normalized_path)
             if directory and not self.is_directory(directory):
-                raise RuntimeError(f"directory '{directory}' doesn't exist")
+                raise RuntimeError(f"Directory '{directory}' doesn't exist")
             self.files[normalized_path] = b''
         
         self.open_files.add(normalized_path)
@@ -207,14 +207,14 @@ class FileSystemMock:
         normalized_path = os.path.normpath(archive_path)
 
         if normalized_path in self.open_files:
-            raise RuntimeError(f"file '{normalized_path}' is already open")
+            raise RuntimeError(f"File '{normalized_path}' is already open")
 
         file_exists = normalized_path in self.files
 
         if mode == 'r:gz':
             if file_exists:
                 if not isinstance(self.files[normalized_path], ArchiveMock):
-                    raise RuntimeError(f"file '{normalized_path}' is not an archive")
+                    raise RuntimeError(f"File '{normalized_path}' is not an archive")
             else:
                 raise FileNotFoundError(normalized_path)
         elif mode == 'w:gz':
@@ -222,10 +222,10 @@ class FileSystemMock:
                 for directory_path in self.directories:
                     if is_subpath_or_path(normalized_path, directory_path):
                         raise RuntimeError(
-                            f"cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
+                            f"Cannot create file '{normalized_path}' -- '{directory_path}' is a directory")
                 directory = os.path.dirname(normalized_path)
                 if directory and not self.is_directory(directory):
-                    raise RuntimeError(f"directory '{directory}' doesn't exist")
+                    raise RuntimeError(f"Directory '{directory}' doesn't exist")
         else:
             raise RuntimeError(f"FileSystemMock doesn't support mode '{mode}'")
     
@@ -254,13 +254,13 @@ class FileSystemMock:
     def remove_directory_recursively(self, directory: str) -> None:
         normalized_path = os.path.normpath(directory)
         if not self.is_directory(normalized_path):
-            raise RuntimeError("'{normalized_path}' is not a directory")
+            raise RuntimeError(f"Path '{normalized_path}' is not a directory")
 
         removed_files = {f for f in self.files if is_subpath_or_path(normalized_path, f)}
         removed_directories = {d for d in self.directories if is_subpath_or_path(normalized_path, d)}
         
         if not removed_files and not removed_directories:
-            raise RuntimeError(f"directory {normalized_path} doesn't exist")
+            raise RuntimeError(f"Directory '{normalized_path}' doesn't exist")
         
         for removed_file in removed_files:
             self.files.pop(removed_file)

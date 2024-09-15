@@ -1,5 +1,3 @@
-from praline.common.tracing import trace
-
 import functools
 
 
@@ -18,7 +16,6 @@ def validator(function):
     return wrapper
 
 
-@trace(validators=[validator.__name__ for validator in registered_validators])
 def validate(pralinefile):
     if not isinstance(pralinefile, dict):
         raise PralinefileValidationError(

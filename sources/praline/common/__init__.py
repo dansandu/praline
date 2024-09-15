@@ -118,7 +118,7 @@ class ArtifactVersion:
     def from_string(cls, string: str):
         match = artifact_version_pattern.fullmatch(string)
         if not match:
-            raise ValueError(f"could not match artifact version against '{string}'")
+            raise ValueError(f"Could not match artifact version against '{string}'")
         return ArtifactVersion(int(match['major']), 
                                int(match['minor']),
                                int(match['patch']),
@@ -137,7 +137,7 @@ class PackageVersion(ArtifactVersion):
     def from_string(cls, string: str):
         match = package_version_pattern.fullmatch(string)
         if not match:
-            raise ValueError(f"could not match package version against '{string}'")
+            raise ValueError(f"Could not match package version against '{string}'")
         snapshot = match['snapshot']
         timestamp = datetime(year=int(snapshot[9:13]), 
                              month=int(snapshot[13:15]), 
@@ -190,7 +190,7 @@ class DependencyVersion(ArtifactVersion):
     def from_string(cls, string: str):
         match = dependency_version_pattern.fullmatch(string)
         if not match:
-            raise ValueError(f"could not match dependency version against '{string}'")
+            raise ValueError(f"Could not match dependency version against '{string}'")
         return DependencyVersion(int(match['major']), 
                                  int(match['minor']), 
                                  match['minor_wildcard'] != None,

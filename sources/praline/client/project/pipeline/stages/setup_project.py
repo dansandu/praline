@@ -9,10 +9,10 @@ class IllformedProjectError(Exception):
 def check_unique(file_system: FileSystem, root: str, organization: str, artifact: str):
     if len(file_system.list_directory(root)) != 1:
         raise IllformedProjectError(
-            f"'{root}' directory must only contain the '{organization}' organization directory")
+            f"Directory '{root}'  must only contain the '{organization}' organization directory")
     if len(file_system.list_directory(join(root, organization))) != 1:
         raise IllformedProjectError(
-            f"'{join(root, organization)}' directory must only contain the '{artifact}'  artifact directory")
+            f"Directory '{join(root, organization)}' must only contain the '{artifact}'  artifact directory")
 
 
 @stage(output=['project_directories'])

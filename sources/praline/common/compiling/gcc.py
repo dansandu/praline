@@ -38,7 +38,7 @@ class GccCompilingStrategy(ICompilingStrategy):
         elif artifact_manifest.exported_symbols == ExportedSymbols.all:
             visibility = 'default'
         else:
-            raise RuntimeError(f"unrecognized exported symbols '{artifact_manifest.exported_symbols}'")
+            raise RuntimeError(f"Unrecognized exported symbols '{artifact_manifest.exported_symbols}'")
 
         self.flags = [
             f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++23',
@@ -52,14 +52,13 @@ class GccCompilingStrategy(ICompilingStrategy):
         elif artifact_manifest.mode == Mode.release:
             self.flags.append('-O3')            
         else:
-            raise RuntimeError(f"unrecognized mode '{artifact_manifest.mode}'")
+            raise RuntimeError(f"Unrecognized mode '{artifact_manifest.mode}'")
         
         if artifact_manifest.platform != Platform.linux:
-            raise CompilerInstantionError(
-                f"the gcc compiler cannot be used on the '{artifact_manifest.platform}' platform")
+            raise CompilerInstantionError(f"The gcc compiler cannot be used on the '{artifact_manifest.platform}' platform")
         
         if file_system.which('g++') == None:
-            raise CompilerInstantionError(f"the gcc compiler could not find the g++ executable in the PATH")
+            raise CompilerInstantionError(f"The gcc compiler could not find the g++ executable in the PATH")
 
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return GccYieldDescriptor()
@@ -78,7 +77,7 @@ class GccCompilingStrategy(ICompilingStrategy):
         if stderror:
             logger.error(stderror.decode())
         if status != 0:
-            raise RuntimeError(f"failed preprocessing source {source_path} -- process exited with status code {status}")
+            raise RuntimeError(f"Failed preprocessing source {source_path} -- process exited with status code {status}")
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool):
