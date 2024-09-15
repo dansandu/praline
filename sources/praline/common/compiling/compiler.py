@@ -132,7 +132,7 @@ class Compiler:
                                     main_executable: bool) -> Tuple[str, str]:
         artifact_identifier = self.artifact_manifest.get_artifact_identifier()
         if not main_executable:
-            artifact_identifier + '.test'
+            artifact_identifier += '.test'
 
         yield_descriptor    = self.compiler_strategy.get_yield_descriptor()
         executable          = self.project_structure.get_executable_path(yield_descriptor, artifact_identifier)

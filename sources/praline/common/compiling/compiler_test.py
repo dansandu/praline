@@ -109,14 +109,10 @@ class CompilerTest(TestCase):
         self.main_object_path = lambda object: join(self.project_structure.main_objects_root, object)
 
         self.test_object_path = lambda object: join(self.project_structure.test_objects_root, object)
-
-        self.executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.exe')
         
         self.library_path = join(self.project_structure.libraries_root, self.artifact_identifier + '.dll')
 
         self.interface_path = join(self.project_structure.libraries_interfaces_root, self.artifact_identifier + '.lib')
-
-        self.symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.pdb')
         
         self.external_library_path = lambda external_library: join(self.project_structure.external_libraries_root, external_library)
 
@@ -285,7 +281,11 @@ class CompilerTest(TestCase):
 
         self.assertEqual(cache, expected_cache)
 
-    def test_link_executable_using_cache(self):
+    def test_link_main_executable_using_cache(self):
+        main_a      = self.main_object_path('org-art-a.obj')
+        library_b   = self.external_library_path('b.dll')
+        interface_b = self.external_interface_path('b.lib')
+
         file_system = FileSystemMock(
             directories={
                 self.project_structure.main_objects_root,
@@ -295,9 +295,9 @@ class CompilerTest(TestCase):
                 self.project_structure.external_libraries_interfaces_root
             },
             files={
-                self.main_object_path('org-art-a.obj'): b'object-a.',
-                self.external_library_path('b.dll'):    b'external-library-b.',
-                self.external_interface_path('c.lib'):  b'external-library-interface-c.'
+                main_a: b'object-a.',
+                library_b:   b'external-library-b.',
+                interface_b: b'external-library-interface-b.',
             }
         )
 
@@ -305,7 +305,7 @@ class CompilerTest(TestCase):
 
         objects                       = [self.main_object_path('org-art-a.obj')]
         external_libraries            = [self.external_library_path('b.dll')]
-        external_libraries_interfaces = [self.external_interface_path('c.lib')]
+        external_libraries_interfaces = [self.external_interface_path('b.lib')]
 
         cache = {}
 
@@ -314,17 +314,82 @@ class CompilerTest(TestCase):
                                                                          external_libraries_interfaces,
                                                                          cache,
                                                                          main_executable=True)
+        
+        executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.exe')
 
-        self.assertEqual(executable, self.executable_path)
+        symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.pdb')
 
-        self.assertEqual(symbols_table, self.symbols_path)
+        self.assertEqual(executable, executable_path)
+
+        self.assertEqual(symbols_table, symbols_path)
 
         expected_files = {
-            self.main_object_path('org-art-a.obj'): b'object-a.',
-            self.external_library_path('b.dll'):    b'external-library-b.',
-            self.external_interface_path('c.lib'):  b'external-library-interface-c.',
-            self.executable_path: b'object-a.external-library-b.external-library-interface-c.exe',
-            self.symbols_path:    b'object-a.external-library-b.external-library-interface-c.pbd'
+            main_a:          b'object-a.',
+            library_b:       b'external-library-b.',
+            interface_b:     b'external-library-interface-b.',
+            executable_path: b'object-a.external-library-b.external-library-interface-b.exe',
+            symbols_path:    b'object-a.external-library-b.external-library-interface-b.pbd'
+        }
+
+        self.assertEqual(file_system.files, expected_files)
+
+        expected_cache = {}
+
+        self.assertEqual(cache, expected_cache)
+
+    def test_link_test_executable_using_cache(self):
+        main_a = self.main_object_path('org-art-a.obj')
+        test_a = self.test_object_path('org-art-a.test.obj')
+        
+        library_b   = self.external_library_path('b.dll')
+        interface_b = self.external_interface_path('b.lib')
+
+        file_system = FileSystemMock(
+            directories={
+                self.project_structure.main_objects_root,
+                self.project_structure.test_objects_root,
+                self.project_structure.executables_root,
+                self.project_structure.symbols_tables_root,
+                self.project_structure.external_libraries_root,
+                self.project_structure.external_libraries_interfaces_root
+            },
+            files={
+                main_a: b'object-a.',
+                test_a: b'object-a-test.',
+                library_b:   b'external-library-b.',
+                interface_b: b'external-library-interface-b.',
+            }
+        )
+
+        compiler = Compiler(file_system, self.project_structure, self.artifact_manifest, CompilingStrategyMock(file_system))
+
+        objects                       = [main_a, test_a]
+        external_libraries            = [library_b]
+        external_libraries_interfaces = [interface_b]
+
+        cache = {}
+
+        executable, symbols_table = compiler.link_executable_using_cache(objects, 
+                                                                         external_libraries,
+                                                                         external_libraries_interfaces,
+                                                                         cache,
+                                                                         main_executable=False)
+
+        executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.test.exe')
+
+        symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.test.pdb')
+
+        self.assertEqual(executable, executable_path)
+
+        self.assertEqual(symbols_table, symbols_path)
+
+        expected_files = {
+            main_a:          b'object-a.',
+            test_a:          b'object-a-test.',
+            library_b:       b'external-library-b.',
+            interface_b:     b'external-library-interface-b.',
+            executable_path: b'object-a.object-a-test.external-library-b.external-library-interface-b.exe',
+            symbols_path:    b'object-a.object-a-test.external-library-b.external-library-interface-b.pbd'
         }
 
         self.assertEqual(file_system.files, expected_files)
@@ -367,7 +432,9 @@ class CompilerTest(TestCase):
 
         self.assertEqual(library_interface, self.interface_path)
 
-        self.assertEqual(symbols_table, self.symbols_path)
+        symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.pdb')
+
+        self.assertEqual(symbols_table, symbols_path)
 
         expected_files = {
             self.main_object_path('org-art-a.obj'): b'object-a.',
@@ -375,7 +442,7 @@ class CompilerTest(TestCase):
             self.external_interface_path('c.lib'):  b'external-library-interface-c.',
             self.library_path:   b'object-a.external-library-b.external-library-interface-c.dll',
             self.interface_path: b'object-a.external-library-b.external-library-interface-c.lib',
-            self.symbols_path:   b'object-a.external-library-b.external-library-interface-c.pbd',
+            symbols_path:        b'object-a.external-library-b.external-library-interface-c.pbd',
         }
 
         self.assertEqual(file_system.files, expected_files)
