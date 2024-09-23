@@ -47,18 +47,21 @@ def delta(keys: List[str],
           key_hasher: Callable[[str],str], 
           cache: Dict[str, str], 
           new_cache: Dict[str, str]) -> Generator[DeltaItem, None, None]:
+    result = []
     for key in cache:
         if key not in keys:
-            yield DeltaItem(key, DeltaType.Removed)
+            result.append(DeltaItem(key, DeltaType.Removed))
     
     for key in keys:
         new_cache[key] = key_hash = key_hasher(key)
         if key not in cache:
-            yield DeltaItem(key, DeltaType.Added)
+            result.append(DeltaItem(key, DeltaType.Added))
         elif cache[key] != key_hash:
-            yield DeltaItem(key, DeltaType.Modified)
+            result.append(DeltaItem(key, DeltaType.Modified))
         else:
-            yield DeltaItem(key, DeltaType.UpToDate)
+            result.append(DeltaItem(key, DeltaType.UpToDate))
+            
+    return result
 
 
 def progression_resolution(keys: List[str], cache: Dict[str, str]):
