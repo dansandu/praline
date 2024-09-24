@@ -165,20 +165,9 @@ class PackageVersion(ArtifactVersion):
         return super().__str__() + timestamp
     
     def __lt__(self, other) -> bool:
-        if not self.snapshot and not other.snapshot:
-            a = b = 1
-        elif self.snapshot and not other.snapshot:
-            a = 1
-            b = 2
-        elif not self.snapshot and other.snapshot:
-            a = b = 1
-        elif self.timestamp < other.timestamp:
-            a = 1
-            b = 2
-        else:
-            a = b = 1
-
-        return (self.major, self.minor, self.patch, a) < (other.major, other.minor, other.patch, b)
+        a = (self.major, self.minor, self.patch, not self.snapshot, self.timestamp)
+        b = (other.major, other.minor, other.patch, not other.snapshot, other.timestamp)
+        return a < b
 
 
 @dataclass(frozen=True, init=False)
