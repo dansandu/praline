@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common.file_system import join
-from praline.common.hashing import delta, DeltaType, progression_resolution
+from praline.common.hashing import DeltaItem, DeltaType, delta, progression_resolution
 from praline.common.package import clean_up_package, get_package_contents, unpack
 
 
@@ -40,8 +40,10 @@ def pull_dependencies(arguments: StageArguments):
     packages   = package_hashes.keys()
     resolution = progression_resolution(packages, cache)
 
+    hasher = lambda p: package_hashes[p]
+
     with progress_bar_supplier.create(resolution) as progress_bar:
-        for item in delta(packages, lambda p: package_hashes[p], cache, new_cache):
+        def consumer(item: DeltaItem):
             package = item.key
             progress_bar.update_summary(package)
             package_path = join(project_structure.external_packages_root, package)
@@ -72,6 +74,9 @@ def pull_dependencies(arguments: StageArguments):
                 clean_up_package(file_system, package_path, external_root)
 
             progress_bar.advance()
+
+        delta(packages, hasher, cache, new_cache, consumer)
+            
     
     cache.clear()
     cache.update(new_cache)

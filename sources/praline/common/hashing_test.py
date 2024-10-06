@@ -42,14 +42,16 @@ class HashingTest(TestCase):
         key_hasher = lambda x: f'new_{x}'
         cache      = {'b': 'old_b', 'c': 'new_c', 'd': 'new_d'}
         new_cache  = {}
-        deltas = {d for d in delta(keys, key_hasher, cache, new_cache)}
+        deltas = set()
 
-        expected_deltas = set({
+        delta(keys, key_hasher, cache, new_cache, lambda x: deltas.add(x))
+
+        expected_deltas = {
             DeltaItem('a', DeltaType.Added),
             DeltaItem('b', DeltaType.Modified),
             DeltaItem('c', DeltaType.UpToDate),
             DeltaItem('d', DeltaType.Removed),
-        })
+        }
 
         self.assertEqual(deltas, expected_deltas)
 
