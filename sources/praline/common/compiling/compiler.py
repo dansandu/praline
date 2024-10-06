@@ -3,7 +3,7 @@ from praline.common.yield_descriptor import IYieldDescriptor
 from praline.common.project_structure import ProjectStructure
 from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.file_system import FileSystem
-from praline.common.hashing import hash_binary, delta, DeltaType, progression_resolution
+from praline.common.hashing import DeltaItem, DeltaType, delta, hash_binary, progression_resolution
 from praline.common.reflection import subclasses_of
 
 import logging
@@ -98,8 +98,8 @@ class Compiler:
             def hasher(source_path: str):
                 progress_bar.update_summary(source_path)
                 return hash_binary(self.compiler_strategy.preprocess(headers, source_path, main_sources))
-            
-            for item in delta(sources, hasher, cache, new_cache):
+
+            def consumer(item: DeltaItem):
                 source_path = item.key
                 object_path = object_path_supplier(yield_descriptor, source_path)
 
@@ -120,6 +120,9 @@ class Compiler:
                         self.file_system.remove_file(object_path)
                 
                 progress_bar.advance()
+
+            delta(sources, hasher, cache, new_cache, consumer)
+
         cache.clear()
         cache.update(new_cache)
         return objects

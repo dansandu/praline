@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
-from praline.common.hashing import DeltaType, delta, hash_file, progression_resolution
+from praline.common.hashing import DeltaItem, DeltaType, delta, hash_file, progression_resolution
 
 
 @stage(requirements=[['clang_format_executable', 'main_executable_source']],
@@ -18,12 +18,14 @@ def format_main_executable_source(arguments: StageArguments):
 
     resolution = progression_resolution([main_executable_source], cache)
     with progress_bar_supplier.create(resolution) as progress_bar:
-        for item in delta([main_executable_source], hasher, cache, new_cache):
+        def consumer(item: DeltaItem):
             main_source = item.key
             if item.delta_type in [DeltaType.Added, DeltaType.Modified]:
                 progress_bar.update_summary(main_source)
                 file_system.execute_and_fail_on_bad_return([clang_format, '-i', '-style=file', main_source])
             progress_bar.advance()
+
+        delta([main_executable_source], hasher, cache, new_cache, consumer)
 
     resources['formatted_main_executable_source'] = resources['main_executable_source']
 

@@ -3,7 +3,7 @@ from praline.common.file_system import FileSystem
 from dataclasses import dataclass
 from enum import Enum
 from hashlib import sha3_256
-from typing import Callable, Dict, Generator, List
+from typing import Callable, Dict, List
 
 
 def hash_file(file_system: FileSystem, file_path: str) -> str:
@@ -46,22 +46,20 @@ class DeltaItem:
 def delta(keys: List[str], 
           key_hasher: Callable[[str],str], 
           cache: Dict[str, str], 
-          new_cache: Dict[str, str]) -> Generator[DeltaItem, None, None]:
-    result = []
+          new_cache: Dict[str, str],
+          consumer: Callable[[DeltaItem],None]) -> None:
     for key in cache:
         if key not in keys:
-            result.append(DeltaItem(key, DeltaType.Removed))
+            consumer(DeltaItem(key, DeltaType.Removed))
     
     for key in keys:
         new_cache[key] = key_hash = key_hasher(key)
         if key not in cache:
-            result.append(DeltaItem(key, DeltaType.Added))
+            consumer(DeltaItem(key, DeltaType.Added))
         elif cache[key] != key_hash:
-            result.append(DeltaItem(key, DeltaType.Modified))
+            consumer(DeltaItem(key, DeltaType.Modified))
         else:
-            result.append(DeltaItem(key, DeltaType.UpToDate))
-            
-    return result
+            consumer(DeltaItem(key, DeltaType.UpToDate))
 
 
 def progression_resolution(keys: List[str], cache: Dict[str, str]):
