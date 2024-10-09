@@ -92,6 +92,13 @@ def create_pipeline(file_system: FileSystem,
         raise UnsatisfiableStageError(message)
 
 
+def format_progress_bar_title(index, total, stage_name):
+    index_str = str(index)
+    total_str = str(total)
+    padding = (len(total_str) - len(index_str)) * ' '
+    return f"{padding}({index_str}/{total_str}) {stage_name.replace('_', ' ')}" 
+
+
 def invoke_stage(file_system: FileSystem,
                  configuration: Dict[str, Any],
                  program_arguments: Dict[str, Any],
@@ -103,19 +110,40 @@ def invoke_stage(file_system: FileSystem,
                  stages: Dict[str, Stage]):
     global_resources = {}
     pipeline  = create_pipeline(
-        file_system, configuration, program_arguments, remote_proxy, project_structure, artifact_manifest, compiler, target_stage, stages)
+        file_system, configuration, program_arguments, remote_proxy, 
+        project_structure, artifact_manifest, compiler, target_stage, stages
+    )
+    
+    progress_bar_count = sum(1 for (_, stage_name) in pipeline if stages[stage_name].has_progress_bar)
+    progress_bar_index = 0
 
-    progress_bar_header_length = max(len(stage_name) for _, stage_name in pipeline)
+    progress_bar_titles = {}
 
+    for _, stage_name in pipeline:
+        if stages[stage_name].has_progress_bar:
+            progress_bar_index += 1
+            progress_bar_titles[stage_name] = format_progress_bar_title(progress_bar_index, progress_bar_count, stage_name)
+
+    if len(progress_bar_titles) > 0:
+        progress_bar_title_length = max(len(title) for title in progress_bar_titles.values())
+    else:
+        progress_bar_title_length = 0
+    
     for activation, stage_name in pipeline:
         logger.debug(f"Starting stage '{stage_name}'")
         stage = stages[stage_name]
         local_resources = {resource : global_resources[resource] for resource in stage.requirements[activation]}
         stage_program_arguments = get_stage_program_arguments(stage_name, program_arguments)
+
         with StageResources(stage_name, activation, local_resources, stage.output) as stage_resources:        
-            progress_bar_header   = stage_name.replace('_', ' ')
-            progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_header, progress_bar_header_length)
+            if stage.has_progress_bar:
+                progress_bar_title = progress_bar_titles[stage_name]
+                progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_title, progress_bar_title_length)
+            else:
+                progress_bar_supplier = None
+
             cache_path = join(project_structure.target_root, 'cache.pickle')
+
             with FileCache(file_system, cache_path, stage.cacheable) as cache:
                 cache[stage_name] = stage_cache = cache.get(stage_name, {})
                 arguments = StageArguments(file_system=file_system,
@@ -129,5 +157,7 @@ def invoke_stage(file_system: FileSystem,
                                            cache=stage_cache,
                                            progress_bar_supplier=progress_bar_supplier)
                 stage.invoker(arguments)
+            
             global_resources.update(stage_resources.resources)
+        
         logger.debug(f"Stage '{stage_name}' has ended")

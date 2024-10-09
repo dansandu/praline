@@ -7,11 +7,11 @@ class StagesTest(TestCase):
     def test_get_stages(self):
         expected_stages = {
             'clean', 
-            'compile_main_executable_source',
+            'compile_main_executable',
             'compile_main_sources', 
             'compile_test_sources', 
             'deploy', 
-            'format_main_executable_source',
+            'format_main_executable',
             'format_main_headers', 
             'format_main_sources', 
             'format_test_headers', 

@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.compile_main_executable_source import compile_main_executable_source
+from praline.client.project.pipeline.stages.compile_main_executable import compile_main_executable
 from praline.common.project_structure import get_project_structure
 from praline.common.progress_bar import ProgressBarSupplier
 
@@ -59,7 +59,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
         )
 
         with StageResources(
-            stage='compile_main_executable_source',
+            stage='compile_main_executable',
             activation=0,
             resources={
                 'project_directories': True,
@@ -75,7 +75,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
             constrained_output=['main_executable_object']
         ) as resources:
             stage_arguments = StageArguments(compiler=compiler, resources=resources)
-            compile_main_executable_source(stage_arguments)
+            compile_main_executable(stage_arguments)
 
         self.assertCountEqual(resources['main_executable_object'], object_executable)
 
@@ -102,7 +102,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
         )
 
         with StageResources(
-            stage='compile_main_executable_source',
+            stage='compile_main_executable',
             activation=1,
             resources={
                 'project_directories': True,
@@ -118,6 +118,6 @@ class CompileMainExecutableSourceStageTest(TestCase):
             constrained_output=['main_executable_object']
         ) as resources:            
             stage_arguments = StageArguments(compiler=compiler, resources=resources)
-            compile_main_executable_source(stage_arguments)
+            compile_main_executable(stage_arguments)
 
         self.assertCountEqual(resources['main_executable_object'], object_executable)

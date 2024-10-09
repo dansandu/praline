@@ -15,6 +15,22 @@ from typing import Any, IO, List, Dict
 logger = getLogger(__name__)
 
 
+class ProcessExecutionError(Exception):
+    def __init__(self, status, stderror):
+        self.status = status
+        self.stderror = stderror
+
+    def __str__(self):
+        if self.status != 0 and self.stderror:
+            return f"Command exited with return code {self.status} and standard error output:\n{self.stderror.decode()}"
+        elif self.status == 0 and self.stderror:
+            return f"Command exited with standard error output:\n{self.stderror.decode()}"
+        elif self.status != 0 and not self.stderror:
+            return f"Command exited with return code {self.status}"
+        else:
+            return "Command execution error"
+
+
 def directory_name(path : str) -> str:
     return os.path.dirname(path)
 
@@ -87,17 +103,18 @@ class FileSystem:
                                   add_to_library_path=add_to_library_path, 
                                   interactive=True, 
                                   add_to_env=add_to_env)
+            
+            if status != 0:
+                raise ProcessExecutionError(status, stderror=None)
         else:
             status, stdout, stderror = self.execute(command, 
                                                     add_to_library_path=add_to_library_path, 
                                                     add_to_env=add_to_env)
             if stdout:
                 logger.info(stdout.decode())
-            if stderror:
-                logger.error(stderror.decode())
-        
-        if status != 0:
-            raise RuntimeError(f"Command exited with return code {status}")
+            
+            if status != 0 or stderror:
+                raise ProcessExecutionError(status, stderror)
 
     def exists(self, path: str) -> bool:
         return path != None and os.path.exists(path)
@@ -189,6 +206,4 @@ class FileSystem:
         shutil.copyfileobj(source, destination)
 
     def print(self, *args, **kwargs):
-        if kwargs.pop('clear_current_line', True):
-            print('\033[2K', end='')
         print(*args, **kwargs)

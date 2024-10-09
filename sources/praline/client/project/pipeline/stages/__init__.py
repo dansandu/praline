@@ -63,6 +63,7 @@ class Stage:
     program_arguments: List[Dict[str, Any]]
     exposed          : bool
     cacheable        : bool
+    has_progress_bar : bool
     invoker          : Callable[[StageArguments], None]
 
 
@@ -82,12 +83,13 @@ def stage(_function        : Callable[[StageArguments], None] = None,
           predicate        : Callable[[StagePredicateArguments], StagePredicateResult] = lambda _: StagePredicateResult.success(),
           program_arguments: List[Dict[str, Any]] = [],
           exposed          : bool = False,
-          cacheable        : bool = True):
+          cacheable        : bool = True,
+          has_progress_bar : bool = False):
     def decorator(function: Callable[[StageArguments], None]):
         name = function.__name__
         if name in registered_stages:
             raise StageNameConflictError(f"Multiple stage definitions named '{name}'")
-        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, cacheable, function)
+        registered_stages[name] = Stage(name, requirements, output, predicate, program_arguments, exposed, cacheable, has_progress_bar, function)
         return function
 
     if _function is None:

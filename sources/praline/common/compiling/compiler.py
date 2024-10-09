@@ -1,8 +1,8 @@
-from praline.common import ArtifactManifest, CompilerType, Platform, get_duplicates
+from praline.common import ArtifactManifest, CompilerType, DirectUserMessageException, Platform, get_duplicates
 from praline.common.yield_descriptor import IYieldDescriptor
 from praline.common.project_structure import ProjectStructure
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem
+from praline.common.file_system import FileSystem, ProcessExecutionError
 from praline.common.hashing import DeltaItem, DeltaType, delta, hash_binary, progression_resolution
 from praline.common.reflection import subclasses_of
 
@@ -12,6 +12,21 @@ from typing import Any, Dict, List, Tuple
 
 
 logger = logging.getLogger(__name__)
+
+
+class PreprocessingError(ProcessExecutionError, DirectUserMessageException):
+    def __init__(self, status, stderror):
+        super().__init__(status, stderror)
+
+
+class CompilationError(ProcessExecutionError, DirectUserMessageException):
+    def __init__(self, status, stderror):
+        super().__init__(status, stderror)
+
+
+class LinkingError(ProcessExecutionError, DirectUserMessageException):
+    def __init__(self, status, stderror):
+        super().__init__(status, stderror)
 
 
 class CompilerInstantionError(Exception):
@@ -96,7 +111,7 @@ class Compiler:
 
         with progress_bar_supplier.create(resolution) as progress_bar:
             def hasher(source_path: str):
-                progress_bar.update_summary(source_path)
+                progress_bar.update_description(source_path)
                 return hash_binary(self.compiler_strategy.preprocess(headers, source_path, main_sources))
 
             def consumer(item: DeltaItem):
@@ -132,42 +147,52 @@ class Compiler:
                                     external_libraries: List[str],
                                     external_libraries_interfaces: List[str],
                                     cache: Dict[str, Any],
+                                    progress_bar_supplier: ProgressBarSupplier,
                                     main_executable: bool) -> Tuple[str, str]:
         artifact_identifier = self.artifact_manifest.get_artifact_identifier()
         if not main_executable:
             artifact_identifier += '.test'
 
-        yield_descriptor    = self.compiler_strategy.get_yield_descriptor()
-        executable          = self.project_structure.get_executable_path(yield_descriptor, artifact_identifier)
-        symbols_table       = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
+        yield_descriptor   = self.compiler_strategy.get_yield_descriptor()
+        executable_path    = self.project_structure.get_executable_path(yield_descriptor, artifact_identifier)
+        symbols_table_path = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
 
-        self.compiler_strategy.link_executable(objects, external_libraries, external_libraries_interfaces, executable, symbols_table)
+        with progress_bar_supplier.create(resolution=1) as progress_bar:
+            progress_bar.update_description(executable_path)
+            self.compiler_strategy.link_executable(objects, external_libraries, external_libraries_interfaces, executable_path, symbols_table_path)
+            progress_bar.advance()
 
-        if self.file_system.exists(symbols_table):
-            return (executable, symbols_table)
+        if self.file_system.exists(symbols_table_path):
+            return (executable_path, symbols_table_path)
         else:
-            return (executable, None)
+            return (executable_path, None)
 
     def link_library_using_cache(self,
                                  objects: List[str],
                                  external_libraries: List[str],
                                  external_libraries_interfaces: List[str],
-                                 cache: Dict[str, Any]) -> Tuple[str, str, str]:
-        artifact_identifier = self.artifact_manifest.get_artifact_identifier()
-        yield_descriptor    = self.compiler_strategy.get_yield_descriptor()
-        library             = self.project_structure.get_library_path(yield_descriptor, artifact_identifier)
-        library_interface   = self.project_structure.get_library_interface_path(yield_descriptor, artifact_identifier)
-        symbols_table       = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
-        self.compiler_strategy.link_library(objects,
-                                            external_libraries,
-                                            external_libraries_interfaces,
-                                            library,
-                                            library_interface,
-                                            symbols_table)
-        if self.file_system.exists(symbols_table):
-            return (library, library_interface, symbols_table)
+                                 cache: Dict[str, Any],
+                                 progress_bar_supplier: ProgressBarSupplier) -> Tuple[str, str, str]:
+        artifact_identifier    = self.artifact_manifest.get_artifact_identifier()
+        yield_descriptor       = self.compiler_strategy.get_yield_descriptor()
+        library_path           = self.project_structure.get_library_path(yield_descriptor, artifact_identifier)
+        library_interface_path = self.project_structure.get_library_interface_path(yield_descriptor, artifact_identifier)
+        symbols_table_path     = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
+
+        with progress_bar_supplier.create(resolution=1) as progress_bar:
+            progress_bar.update_description(library_path)
+            self.compiler_strategy.link_library(objects,
+                                                external_libraries,
+                                                external_libraries_interfaces,
+                                                library_path,
+                                                library_interface_path,
+                                                symbols_table_path)
+            progress_bar.advance()
+        
+        if self.file_system.exists(symbols_table_path):
+            return (library_path, library_interface_path, symbols_table_path)
         else:
-            return (library, library_interface, None)
+            return (library_path, library_interface_path, None)
 
 
 def get_compiling_strategy_suppliers() -> List[ICompilingStrategySupplier]:

@@ -10,7 +10,7 @@ from typing import Dict, List
 from unittest import TestCase
 
 
-class FormatMainExecutableStageTest(TestCase):
+class FormatMainExecutableSourceStageTest(TestCase):
     def test_format_main_executable_stale(self):
         project_structure = get_project_structure('project', 'org', 'art')
 

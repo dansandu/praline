@@ -1,6 +1,9 @@
 from praline.common import Architecture, ArtifactManifest, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
-from praline.common.compiling.compiler import CompilerInstantionError, ICompilingStrategy, IYieldDescriptor
+from praline.common.compiling.compiler import (
+    CompilationError, CompilerInstantionError, ICompilingStrategy, 
+    IYieldDescriptor, LinkingError, PreprocessingError
+)
 from praline.common.file_system import FileSystem, join, directory_name
 from typing import List
 
@@ -113,9 +116,9 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             include_paths
         )
 
-        if status != 0:
-            logger.error(stderror.decode())
-            raise RuntimeError(f"Command exited with return code {status}")
+        if  status != 0 or stderror:
+            raise PreprocessingError(status, stderror)
+
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> None:
@@ -129,10 +132,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             include_paths
         )
 
-        if status != 0:
-            logger.info(stdout.decode())
-            logger.error(stderror.decode())
-            raise RuntimeError(f"Command exited with return code {status}")
+        if  status != 0 or stderror:
+            raise CompilationError(status, stderror)
 
     def link_executable(self,
                         objects: List[str],
@@ -165,13 +166,13 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         status, stdout, stderror = self.file_system.execute(
             [self.environment_file, '>nul', '2>&1', '&&', 'lld-link', f'@{link_executable_rsp_file}']
         )
-
-        if status != 0:
-            logger.info(stdout.decode())
-            logger.error(stderror.decode())
-            raise RuntimeError(f"Command exited with return code {status}")
+        
+        if  status != 0 or stderror:
+            raise LinkingError(status, stderror)
+        
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
+        
         if self.file_system.exists(library_interface):
             self.file_system.remove_file(library_interface)
 
@@ -208,12 +209,12 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             [self.environment_file, '>nul', '2>&1', '&&', 'lld-link', f'@{link_library_rsp_file}']
         )
 
-        if status != 0:
-            logger.info(stdout.decode())
-            logger.error(stderror.decode())
-            raise RuntimeError(f"Command exited with return code {status}")
+        if  status != 0 or stderror:
+            raise LinkingError(status, stderror)
+        
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
+        
         if not self.file_system.exists(library_interface):
             logger.warn(f"No library interface file '{library_interface}' was created because there are no symbols to"
                         "export -- use PRALINE_EXPORT to export symbols")
