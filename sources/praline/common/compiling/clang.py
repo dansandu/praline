@@ -1,6 +1,10 @@
 from praline.common import ArtifactManifest, CompilerType, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
-from praline.common.compiling.compiler import CompilerInstantionError, ICompilingStrategy, ICompilingStrategySupplier, IYieldDescriptor
+from praline.common.compiling.compiler import (
+    CompilationError, CompilerInstantionError, ICompilingStrategy, 
+    ICompilingStrategySupplier, IYieldDescriptor, LinkingError,
+    PreprocessingError, ProcessExecutionError
+)
 from praline.common.file_system import basename, FileSystem
 from typing import List
 
@@ -75,10 +79,9 @@ class ClangCompilingStrategy(ICompilingStrategy):
             include_paths
         )
         
-        if stderror:
-            logger.error(stderror.decode())
-        if status != 0:
-            raise RuntimeError(f"Failed preprocessing source {source_path} -- process exited with status code {status}")
+        if  status != 0 or stderror:
+            raise PreprocessingError(status, stderror)
+        
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool):
@@ -86,11 +89,14 @@ class ClangCompilingStrategy(ICompilingStrategy):
         if not main_source:
             include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
 
-        self.file_system.execute_and_fail_on_bad_return(
-            ['clang++', '-o', object_path, '-c', source_path] + 
-            self.flags + 
-            include_paths
-        )
+        try:
+            self.file_system.execute_and_fail_on_bad_return(
+                ['clang++', '-o', object_path, '-c', source_path] + 
+                self.flags + 
+                include_paths
+            )
+        except ProcessExecutionError as exception:
+            raise CompilationError(exception.status, exception.stderror)
 
     def link_executable(self,
                         objects: List[str],
@@ -98,14 +104,17 @@ class ClangCompilingStrategy(ICompilingStrategy):
                         external_libraries_interfaces: List[str],
                         executable: str,
                         symbols_table: str):
-        self.file_system.execute_and_fail_on_bad_return(
-            ['clang++', '-o', executable, '-rpath', 
-             '@executable_path/../libraries',
-             '-rpath', '@executable_path/../external/libraries'] +
-            self.flags + objects + 
-            [f'-L{self.project_structure.external_libraries_root}'] +
-            [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
-        )
+        try:
+            self.file_system.execute_and_fail_on_bad_return(
+                ['clang++', '-o', executable, '-rpath', 
+                '@executable_path/../libraries',
+                '-rpath', '@executable_path/../external/libraries'] +
+                self.flags + objects + 
+                [f'-L{self.project_structure.external_libraries_root}'] +
+                [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
+            )
+        except ProcessExecutionError as exception:
+            raise LinkingError(exception.status, exception.stderror)
 
     def link_library(self,
                      objects: List[str],
@@ -114,13 +123,15 @@ class ClangCompilingStrategy(ICompilingStrategy):
                      library: str,
                      library_interface: str,
                      symbols_table: str):
-        self.file_system.execute_and_fail_on_bad_return(
-            ['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] + 
-            self.flags + objects + 
-            [f'-L{self.project_structure.external_libraries_root}'] +
-            [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
-        )
-
+        try:
+            self.file_system.execute_and_fail_on_bad_return(
+                ['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] + 
+                self.flags + objects + 
+                [f'-L{self.project_structure.external_libraries_root}'] +
+                [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
+            )
+        except ProcessExecutionError as exception:
+            raise LinkingError(exception.status, exception.stderror)
 
 class ClangCompilingStrategySupplier(ICompilingStrategySupplier):
     def get_type(self) -> CompilerType:

@@ -18,7 +18,8 @@ program_arguments = [
 @stage(requirements=[['project_directories', 'test_executable']], 
        output=['tests_passed'],
        exposed=True, 
-       program_arguments=program_arguments)
+       program_arguments=program_arguments,
+       has_progress_bar=True)
 def test(arguments: StageArguments):
     file_system           = arguments.file_system
     resources             = arguments.resources
@@ -35,7 +36,7 @@ def test(arguments: StageArguments):
         add_to_library_path=[external_libraries_root],
         interactive=True,
         add_to_env={
-            'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(progress_bar_supplier.header_length),
+            'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(progress_bar_supplier.title_length),
         })
     
     resources['tests_passed'] = 'success'

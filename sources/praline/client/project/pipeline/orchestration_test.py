@@ -1,5 +1,8 @@
-from praline.client.project.pipeline.orchestration import (create_pipeline, invoke_stage, CyclicStagesError, 
-                                                           MultipleSuppliersError, UnsatisfiableStageError)
+from praline.client.project.pipeline.orchestration import (
+    create_pipeline, invoke_stage, CyclicStagesError, 
+    MultipleSuppliersError, UnsatisfiableStageError,
+    format_progress_bar_title
+)
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateResult
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.project_structure import get_project_structure
@@ -20,7 +23,9 @@ class OrchestrationTest(TestCase):
             None, None, self.program_arguments, None, None, None, None, target_stage, stages)
         
         self.create_stage = lambda name, requirements, output, predicate: Stage(
-            name, requirements, output, predicate, program_arguments=[], exposed=False, cacheable=False, invoker=self.do_nothing
+            name, requirements, output, predicate, program_arguments=[], 
+            exposed=False, cacheable=False, has_progress_bar=False, 
+            invoker=self.do_nothing
         )
 
     def test_create_pipeline(self):
@@ -78,6 +83,15 @@ class OrchestrationTest(TestCase):
 
         self.assertRaises(UnsatisfiableStageError, self.create_pipeline, 'C', stages)
 
+    def test_format_progress_bar_title(self):
+        self.assertEqual(format_progress_bar_title(5, 7, 'stage'), '(5/7) stage')
+
+        self.assertEqual(format_progress_bar_title(  0, 100, 'my_stage'), '  (0/100) my stage')
+
+        self.assertEqual(format_progress_bar_title( 50, 100, 'my_stage'), ' (50/100) my stage')
+
+        self.assertEqual(format_progress_bar_title(100, 100, 'my_stage'), '(100/100) my stage')
+
     def test_invoke_stage(self):
         #
         #         [A]
@@ -125,14 +139,14 @@ class OrchestrationTest(TestCase):
             arguments.resources['h'] = 'h_value'
 
         stages = {
-            'A': Stage('A', [['b'], ['c', 'd']], ['a'],  self.can_run, [], False, False, ai),
-            'B': Stage('B',             [['e']], ['b'],  self.can_run, [], False, False, bi),
-            'C': Stage('C',      [['f'], ['g']], ['c'],  self.can_run, [], True,  True,  ci),
-            'D': Stage('D',             [['h']], ['d'],  self.can_run, [], False, True,  di),
-            'E': Stage('E',                [[]], ['e'], self.cant_run, [], False, False, ei),
-            'F': Stage('F',             [['e']], ['f'],  self.can_run, [], False, False, fi),
-            'G': Stage('G',                [[]], ['g'],  self.can_run, [], False, True,  gi),
-            'H': Stage('H',                [[]], ['h'],  self.can_run, [], False, False, hi),
+            'A': Stage('A', [['b'], ['c', 'd']], ['a'],  self.can_run, [], False, False, False, ai),
+            'B': Stage('B',             [['e']], ['b'],  self.can_run, [], False, False, False, bi),
+            'C': Stage('C',      [['f'], ['g']], ['c'],  self.can_run, [], True,  True,  False, ci),
+            'D': Stage('D',             [['h']], ['d'],  self.can_run, [], False, True,  False, di),
+            'E': Stage('E',                [[]], ['e'], self.cant_run, [], False, False, False, ei),
+            'F': Stage('F',             [['e']], ['f'],  self.can_run, [], False, False, False, fi),
+            'G': Stage('G',                [[]], ['g'],  self.can_run, [], False, True,  False, gi),
+            'H': Stage('H',                [[]], ['h'],  self.can_run, [], False, False, False, hi),
         }
 
         project_structure = get_project_structure('project', 'org', 'art')

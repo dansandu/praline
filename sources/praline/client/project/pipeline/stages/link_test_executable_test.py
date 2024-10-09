@@ -3,6 +3,7 @@ from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_test_executable import link_test_executable
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.project_structure import get_project_structure
 
 from os.path import join
@@ -26,6 +27,7 @@ class CompilerMock:
                                     external_libraries: List[str],
                                     external_libraries_interfaces: List[str],
                                     cache: Dict[str, Any],
+                                    progress_bar_supplier: ProgressBarSupplier,
                                     main_executable: bool) -> Tuple[str, str]:
         self.test_case.assertFalse(main_executable)
         self.test_case.assertCountEqual(objects, self.expected_objects)

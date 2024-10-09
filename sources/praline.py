@@ -16,6 +16,7 @@ from praline.client.project.pipeline.configuration import get_compiler
 from praline.client.project.pipeline.program_arguments import get_program_arguments
 from praline.client.project.pipeline.stages import get_stages
 from praline.client.repository.remote_proxy import RemoteProxy
+from praline.common import DirectUserMessageException
 from praline.common.pralinefile import read_pralinefile
 from praline.common.file_system import FileSystem, join
 
@@ -44,6 +45,9 @@ if __name__ == '__main__':
         invoke_stage(file_system, configuration, program_arguments, remote_proxy, project_structure, artifact_manifest, compiler, stage, stages)
 
         exit(0)
+
+    except DirectUserMessageException as exception:
+        logger.error(f"{type(exception).__name__} was raised with message: {exception}")
     except Exception:
         traceback.print_exc()
         exit(-1)

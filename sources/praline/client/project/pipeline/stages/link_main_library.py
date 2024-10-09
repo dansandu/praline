@@ -21,11 +21,14 @@ def predicate(arguments: StagePredicateArguments):
 
 @stage(requirements=[['project_directories', 'main_objects', 'external_libraries', 'external_libraries_interfaces']],
        output=['main_library', 'main_library_interface', 'main_library_symbols_table'],
-       predicate=predicate)
+       predicate=predicate,
+       has_progress_bar=True)
 def link_main_library(arguments: StageArguments):
-    compiler          = arguments.compiler
-    resources         = arguments.resources
-    cache             = arguments.cache
+    compiler  = arguments.compiler
+    resources = arguments.resources
+    cache     = arguments.cache
+
+    progress_bar_supplier = arguments.progress_bar_supplier
 
     main_objects                  = resources['main_objects']
     external_libraries            = resources['external_libraries']
@@ -36,4 +39,5 @@ def link_main_library(arguments: StageArguments):
      resources['main_library_symbols_table']) = compiler.link_library_using_cache(main_objects,
                                                                                   external_libraries,
                                                                                   external_libraries_interfaces,
-                                                                                  cache)
+                                                                                  cache,
+                                                                                  progress_bar_supplier)

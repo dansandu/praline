@@ -1,13 +1,18 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 
 
-@stage(requirements=[['project_directories', 'main_objects', 'main_executable_object', 'external_libraries', 'external_libraries_interfaces']],
-       output=['main_executable', 'main_executable_symbols_table'])
+@stage(requirements=[['project_directories', 'main_objects', 
+                      'main_executable_object', 'external_libraries', 
+                      'external_libraries_interfaces']],
+       output=['main_executable', 'main_executable_symbols_table'],
+       has_progress_bar=True)
 def link_main_executable(arguments: StageArguments):
-    compiler          = arguments.compiler
-    resources         = arguments.resources
-    cache             = arguments.cache
+    compiler  = arguments.compiler
+    resources = arguments.resources
+    cache     = arguments.cache
     
+    progress_bar_supplier = arguments.progress_bar_supplier
+
     main_objects                  = resources['main_objects'] + [resources['main_executable_object']]
     external_libraries            = resources['external_libraries']
     external_libraries_interfaces = resources['external_libraries_interfaces']
@@ -17,4 +22,5 @@ def link_main_executable(arguments: StageArguments):
                                                                                         external_libraries,
                                                                                         external_libraries_interfaces,
                                                                                         cache,
+                                                                                        progress_bar_supplier,
                                                                                         main_executable=True)

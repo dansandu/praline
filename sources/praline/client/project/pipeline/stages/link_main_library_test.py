@@ -3,6 +3,7 @@ from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_main_library import link_main_library, predicate
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 
@@ -26,7 +27,8 @@ class CompilerMock:
                                  objects: List[str],
                                  external_libraries: List[str],
                                  external_libraries_interfaces: List[str],
-                                 cache: Dict[str, Any]) -> Tuple[str, str]:
+                                 cache: Dict[str, Any],
+                                 progress_bar_supplier: ProgressBarSupplier) -> Tuple[str, str]:
         self.test_case.assertCountEqual(objects, self.expected_objects)
         self.test_case.assertCountEqual(external_libraries, self.external_libraries)
         self.test_case.assertCountEqual(external_libraries_interfaces, self.external_libraries_interfaces)

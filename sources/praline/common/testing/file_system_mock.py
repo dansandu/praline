@@ -22,12 +22,12 @@ class DirEntryMock:
 
 class FileMock(io.BytesIO):
     def __init__(self, contents: bytes, on_close: Callable[[Any], None]):
-        super(FileMock, self).__init__(contents)
+        super().__init__(contents)
         self.on_close = on_close
 
     def __exit__(self, type, value, traceback):
         self.on_close(self)
-        super(FileMock, self).__exit__(type, value, traceback)
+        super().__exit__(type, value, traceback)
 
 
 class ArchiveMemberMock:
@@ -279,6 +279,4 @@ class FileSystemMock:
             self.remove_directory_recursively(directory)
 
     def print(self, *args, **kwargs):
-        if kwargs.pop('clear_current_line', True):
-            print('\033[2K', end='', file=self.stdout)
         print(*args, **kwargs, file=self.stdout)

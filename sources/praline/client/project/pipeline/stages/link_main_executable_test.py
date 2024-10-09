@@ -1,3 +1,4 @@
+from praline.common.progress_bar import ProgressBarSupplier
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_main_executable import link_main_executable
@@ -20,6 +21,7 @@ class CompilerMock:
                                     external_libraries: List[str],
                                     external_libraries_interfaces: List[str],
                                     cache: Dict[str, Any],
+                                    progress_bar_supplier: ProgressBarSupplier,
                                     main_executable: bool) -> Tuple[str, str]:
         self.test_case.assertTrue(main_executable)
         self.test_case.assertCountEqual(objects, self.expected_objects)

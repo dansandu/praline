@@ -10,7 +10,7 @@ class ProgressBarMock:
     def __enter__(self):
         return self
     
-    def update_summary(self, summary: str):
+    def update_description(self, description: str):
         pass
 
     def advance(self, amount: int = 1):
@@ -22,10 +22,10 @@ class ProgressBarMock:
 
 
 class ProgressBarSupplierMock:
-    def __init__(self, test_case: TestCase, expected_resolution: int, header_length: int = 10):
+    def __init__(self, test_case: TestCase, expected_resolution: int, title_length: int = 10):
         self.test_case = test_case
         self.expected_resolution = expected_resolution
-        self.header_length = header_length
+        self.title_length = title_length
 
     def create(self, resolution: int):
         self.test_case.assertEqual(resolution, self.expected_resolution)

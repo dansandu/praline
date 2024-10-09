@@ -3,7 +3,8 @@ from praline.client.project.pipeline.stages import StageArguments, stage
 
 @stage(requirements=[['project_directories', 'formatted_main_headers', 'formatted_main_sources', 'external_headers'],
                      ['project_directories',           'main_headers',           'main_sources', 'external_headers']],
-       output=['main_objects'])
+       output=['main_objects'],
+       has_progress_bar=True)
 def compile_main_sources(arguments: StageArguments):
     resources = arguments.resources
     compiler  = arguments.compiler

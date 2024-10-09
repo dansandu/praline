@@ -309,10 +309,13 @@ class CompilerTest(TestCase):
 
         cache = {}
 
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=1)
+
         executable, symbols_table = compiler.link_executable_using_cache(objects, 
                                                                          external_libraries,
                                                                          external_libraries_interfaces,
                                                                          cache,
+                                                                         progress_bar_supplier,
                                                                          main_executable=True)
         
         executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.exe')
@@ -369,10 +372,13 @@ class CompilerTest(TestCase):
 
         cache = {}
 
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=1)
+
         executable, symbols_table = compiler.link_executable_using_cache(objects, 
                                                                          external_libraries,
                                                                          external_libraries_interfaces,
                                                                          cache,
+                                                                         progress_bar_supplier,
                                                                          main_executable=False)
 
         executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.test.exe')
@@ -423,10 +429,13 @@ class CompilerTest(TestCase):
 
         cache = {}
 
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=1)
+
         library, library_interface, symbols_table = compiler.link_library_using_cache(objects,
                                                                                       external_libraries,
                                                                                       external_libraries_interfaces,
-                                                                                      cache)
+                                                                                      cache,
+                                                                                      progress_bar_supplier)
         
         self.assertEqual(library, self.library_path)
 

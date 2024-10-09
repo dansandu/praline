@@ -19,6 +19,10 @@ test_source_file_extension = '.test.cpp'
 package_extension = '.tar.gz'
 
 
+class DirectUserMessageException(Exception):
+    pass
+
+
 class Architecture(StrEnum):
     arm = auto()
     x32 = auto()

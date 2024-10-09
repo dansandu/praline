@@ -1,20 +1,30 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
+from praline.common import DirectUserMessageException
 from praline.common.file_system import join
 from praline.common.hashing import DeltaItem, DeltaType, delta, progression_resolution
 from praline.common.package import clean_up_package, get_package_contents, unpack
 
+from requests.exceptions import ConnectionError
+
+
+class PullDependenciesNoConnectionException(DirectUserMessageException):
+    pass
+
 
 @stage(requirements=[['project_directories']],
-       output=['external_resources', 'external_headers', 'external_executables', 'external_libraries', 
-               'external_libraries_interfaces', 'external_symbols_tables'],
-       exposed=True)
+       output=['external_resources', 'external_headers', 'external_executables', 
+               'external_libraries',  'external_libraries_interfaces', 
+               'external_symbols_tables'],
+       exposed=True,
+       has_progress_bar=True)
 def pull_dependencies(arguments: StageArguments):
-    file_system           = arguments.file_system
-    resources             = arguments.resources
-    artifact_manifest     = arguments.artifact_manifest
-    project_structure     = arguments.project_structure
-    remote_proxy          = arguments.remote_proxy
-    cache                 = arguments.cache
+    file_system       = arguments.file_system
+    resources         = arguments.resources
+    artifact_manifest = arguments.artifact_manifest
+    project_structure = arguments.project_structure
+    remote_proxy      = arguments.remote_proxy
+    cache             = arguments.cache
+
     progress_bar_supplier = arguments.progress_bar_supplier
 
     resources['external_resources']            = external_resources            = []
@@ -32,7 +42,10 @@ def pull_dependencies(arguments: StageArguments):
         external_libraries_interfaces.extend(contents['libraries_interfaces'])
         external_symbols_tables.extend(contents['symbols_tables'])
 
-    package_hashes = remote_proxy.solve_dependencies(artifact_manifest)
+    try:
+        package_hashes = remote_proxy.solve_dependencies(artifact_manifest)
+    except ConnectionError as exception:
+        raise PullDependenciesNoConnectionException(exception)
 
     external_root = project_structure.external_root
     
@@ -45,7 +58,7 @@ def pull_dependencies(arguments: StageArguments):
     with progress_bar_supplier.create(resolution) as progress_bar:
         def consumer(item: DeltaItem):
             package = item.key
-            progress_bar.update_summary(package)
+            progress_bar.update_description(package)
             package_path = join(project_structure.external_packages_root, package)
 
             if item.delta_type == DeltaType.Added:

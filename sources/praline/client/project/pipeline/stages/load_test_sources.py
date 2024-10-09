@@ -118,7 +118,10 @@ def predicate(arguments: StagePredicateArguments):
         return StagePredicateResult.failure("there are no test sources and the skip_unit_tests flag was used")
 
 
-@stage(requirements=[['project_directories']], output=['test_sources'], predicate=predicate)
+@stage(requirements=[['project_directories']], 
+       output=['test_sources'], 
+       predicate=predicate,
+       has_progress_bar=True)
 def load_test_sources(arguments: StageArguments):
     file_system       = arguments.file_system
     project_structure = arguments.project_structure
