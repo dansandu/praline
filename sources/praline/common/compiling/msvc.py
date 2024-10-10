@@ -13,11 +13,10 @@ logger = logging.getLogger(__name__)
 class MsvcCompilingStrategy(BaseMsvcCompilingStrategy):
     def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
         super().__init__(compiler_name='cl', 
-                         skipWhichCheck=True, 
                          file_system=file_system, 
                          artifact_manifest=artifact_manifest,
                          project_structure=project_structure)
-        
+
 
 class MsvcCompilingStrategySupplier(ICompilingStrategySupplier):
     def get_type(self) -> CompilerType:

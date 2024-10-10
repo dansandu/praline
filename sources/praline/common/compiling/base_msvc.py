@@ -54,7 +54,7 @@ class BaseMsvcYieldDescriptor(IYieldDescriptor):
 
 
 class BaseMsvcCompilingStrategy(ICompilingStrategy):
-    def __init__(self, compiler_name: str, skipWhichCheck: bool,  file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
+    def __init__(self, compiler_name: str, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
         self.compiler_name     = compiler_name
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
@@ -96,7 +96,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         if not file_system.exists(self.environment_file):
             raise CompilerInstantionError(f"The {compiler_name} compiler could not find environment configuration batch file")
 
-        if not skipWhichCheck and file_system.which(compiler_name) == None:
+        if compiler_name != 'cl' and file_system.which(compiler_name) == None:
             raise CompilerInstantionError(f"The {compiler_name} compiler could not find the {compiler_name} executable in the PATH")
 
         if artifact_manifest.exported_symbols == ExportedSymbols.all:
@@ -116,7 +116,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             include_paths
         )
 
-        if  status != 0 or stderror:
+        if  status != 0 or (self.compiler_name != 'cl' and len(stderror) > 0):
             raise PreprocessingError(status, stderror)
 
         return stdout
@@ -132,8 +132,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             include_paths
         )
 
-        if  status != 0 or stderror:
-            raise CompilationError(status, stderror)
+        if  status != 0 or len(stderror) > 0:
+            raise CompilationError(status, stdout, stderror)
 
     def link_executable(self,
                         objects: List[str],
@@ -167,8 +167,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             [self.environment_file, '>nul', '2>&1', '&&', 'lld-link', f'@{link_executable_rsp_file}']
         )
         
-        if  status != 0 or stderror:
-            raise LinkingError(status, stderror)
+        if  status != 0 or len(stderror) > 0:
+            raise LinkingError(status, stdout, stderror)
         
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
@@ -209,8 +209,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             [self.environment_file, '>nul', '2>&1', '&&', 'lld-link', f'@{link_library_rsp_file}']
         )
 
-        if  status != 0 or stderror:
-            raise LinkingError(status, stderror)
+        if  status != 0 or len(stderror) > 0:
+            raise LinkingError(status, stdout, stderror)
         
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)

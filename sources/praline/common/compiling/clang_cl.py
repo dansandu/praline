@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 class ClangClCompilingStrategy(BaseMsvcCompilingStrategy):
     def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
         super().__init__(compiler_name='clang-cl', 
-                         skipWhichCheck=False, 
                          file_system=file_system, 
                          artifact_manifest=artifact_manifest,
                          project_structure=project_structure)
