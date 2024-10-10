@@ -15,18 +15,18 @@ logger = logging.getLogger(__name__)
 
 
 class PreprocessingError(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status, stderror):
-        super().__init__(status, stderror)
+    def __init__(self, status: int, stderror: bytes):
+        super().__init__(status, stdout=b'', stderror=stderror)
 
 
 class CompilationError(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status, stderror):
-        super().__init__(status, stderror)
+    def __init__(self, status: int, stdout: bytes, stderror: bytes):
+        super().__init__(status, stdout, stderror)
 
 
 class LinkingError(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status, stderror):
-        super().__init__(status, stderror)
+    def __init__(self, status: int, stdout: bytes, stderror: bytes):
+        super().__init__(status, stdout, stderror)
 
 
 class CompilerInstantionError(Exception):

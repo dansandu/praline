@@ -79,7 +79,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
             include_paths
         )
         
-        if  status != 0 or stderror:
+        if  status != 0 or len(stderror) > 0:
             raise PreprocessingError(status, stderror)
         
         return stdout
@@ -96,7 +96,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
                 include_paths
             )
         except ProcessExecutionError as exception:
-            raise CompilationError(exception.status, exception.stderror)
+            raise CompilationError(exception.status, exception.stdout, exception.stderror)
 
     def link_executable(self,
                         objects: List[str],
@@ -114,7 +114,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
                 [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
             )
         except ProcessExecutionError as exception:
-            raise LinkingError(exception.status, exception.stderror)
+            raise LinkingError(exception.status, exception.stdout, exception.stderror)
 
     def link_library(self,
                      objects: List[str],
@@ -131,7 +131,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
                 [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
             )
         except ProcessExecutionError as exception:
-            raise LinkingError(exception.status, exception.stderror)
+            raise LinkingError(exception.status, exception.stdout, exception.stderror)
 
 class ClangCompilingStrategySupplier(ICompilingStrategySupplier):
     def get_type(self) -> CompilerType:
