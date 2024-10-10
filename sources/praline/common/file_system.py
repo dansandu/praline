@@ -107,7 +107,7 @@ class FileSystem:
                                   add_to_env=add_to_env)
             
             if status != 0:
-                raise ProcessExecutionError(status, stdout=None, stderror=None)
+                raise ProcessExecutionError(status, stdout=b'', stderror=b'')
         else:
             status, stdout, stderror = self.execute(command, 
                                                     add_to_library_path=add_to_library_path, 
