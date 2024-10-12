@@ -11,9 +11,13 @@ bar_length = 50
 
 description_length = 40
 
-move_cursor_up_two_lines = "\033[2F"
+default_success_text = 'done'
 
-delete_two_lines = "\033[2M"
+failure_text = 'failed'
+
+move_cursor_up_two_lines = "\x1B[2F"
+
+delete_two_lines = "\x1B[2M"
 
 
 class TextHighlight(Enum):
@@ -27,11 +31,11 @@ def format_text(text: str, highlight=TextHighlight.No):
     if len(text) == 0 or highlight == TextHighlight.No:
         return text
     elif highlight == TextHighlight.Red:
-        return '\033[31m' + text + '\033[0m'
+        return '\x1B[31m' + text + '\x1B[0m'
     elif highlight == TextHighlight.Green:
-        return '\033[32m' + text + '\033[0m'
+        return '\x1B[32m' + text + '\x1B[0m'
     elif highlight == TextHighlight.Blue:
-        return '\033[34m' + text + '\033[0m'
+        return '\x1B[34m' + text + '\x1B[0m'
     else:
         raise ValueError(f"Invalid TextHighlight provided: {highlight}")  
 
@@ -67,7 +71,7 @@ def format_timedelta(td: timedelta):
 
 
 class ProgressBar:
-    def __init__(self, file_system: FileSystem, title: str, title_length: int, display_elapsed_time: bool, resolution: int):
+    def __init__(self, file_system: FileSystem, title: str, title_length: int, resolution: int, display_elapsed_time: bool, success_text: str):
         if title_length <= 0:
             raise ValueError("Progress bar header length must be greater than 0")
         
@@ -77,11 +81,13 @@ class ProgressBar:
         self.file_system          = file_system
         self.title                = title
         self.title_length         = title_length
-        self.display_elapsed_time = display_elapsed_time
         self.resolution           = resolution
         self.progress             = 0
         self.description          = ''
+        self.summary              = ''
         self.time_start           = datetime.now()
+        self.display_elapsed_time = display_elapsed_time
+        self.success_text         = success_text
 
     def __enter__(self):
         self.display(first_print=True)
@@ -89,6 +95,10 @@ class ProgressBar:
     
     def update_description(self, description: str):
         self.description = description
+        self.display()
+
+    def update_summary(self, summary: str):
+        self.summary = summary
         self.display()
 
     def advance(self, amount: int = 1):
@@ -104,9 +114,8 @@ class ProgressBar:
     def display(self, first_print: bool = False):
         header = f"{self.title: <{self.title_length}}"
 
-        description = format_description(self.description)
-        if len(description) > 0:
-            header = f"{header} {description}"
+        if len(self.description) > 0:
+            header = f"{header} {format_description(self.description)}"
 
         if not first_print:
             header = move_cursor_up_two_lines + delete_two_lines + header
@@ -124,7 +133,12 @@ class ProgressBar:
 
     def __exit__(self, type, value, traceback):
         if type == None:
-            header = f"{move_cursor_up_two_lines}{delete_two_lines}{self.title: <{self.title_length}} {format_text('done', TextHighlight.Green)}"
+            header = f"{move_cursor_up_two_lines}{delete_two_lines}{self.title: <{self.title_length}}"
+
+            if len(self.summary) > 0:
+                header = f"{header} {self.summary}"
+
+            header = f"{header} {format_text(self.success_text, TextHighlight.Green)}"
 
             if self.display_elapsed_time:
                header = f"{header} {format_timedelta(datetime.now() - self.time_start)}"
@@ -133,11 +147,10 @@ class ProgressBar:
         else:
             header = f"{move_cursor_up_two_lines}{delete_two_lines}{self.title: <{self.title_length}}"
 
-            description = format_description(self.description)
-            if len(description) > 0:
-                header = f"{header} {description}"
+            if len(self.description) > 0:
+                header = f"{header} {format_description(self.description)}"
 
-            header = f"{header} {format_text('failed', TextHighlight.Red)}"
+            header = f"{header} {format_text(failure_text, TextHighlight.Red)}"
 
             if self.resolution > 0:
                 percentage = self.progress / self.resolution
@@ -152,11 +165,12 @@ class ProgressBar:
 
 
 class ProgressBarSupplier:
-    def __init__(self, file_system: FileSystem, title: str, title_length: int, display_elapsed_time: bool = True):
+    def __init__(self, file_system: FileSystem, title: str, title_length: int, display_elapsed_time: bool = True, success_text: str=default_success_text):
         self.file_system          = file_system
         self.title                = title
         self.title_length         = title_length
         self.display_elapsed_time = display_elapsed_time
+        self.success_text         = success_text
     
     def create(self, resolution: int) -> ProgressBar:
-        return ProgressBar(self.file_system, self.title, self.title_length, self.display_elapsed_time, resolution)
+        return ProgressBar(self.file_system, self.title, self.title_length, resolution, self.display_elapsed_time, self.success_text)
