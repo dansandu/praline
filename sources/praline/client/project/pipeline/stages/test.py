@@ -36,7 +36,9 @@ def test(arguments: StageArguments):
         add_to_library_path=[external_libraries_root],
         interactive=True,
         add_to_env={
-            'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(progress_bar_supplier.title_length),
+            'PRALINE_PROGRESS_BAR_STAGE_INDEX': str(progress_bar_supplier.stage_index),
+            'PRALINE_PROGRESS_BAR_STAGE_COUNT': str(progress_bar_supplier.stage_count),
+            'PRALINE_PROGRESS_BAR_STAGE_NAME': progress_bar_supplier.stage_name,
         })
     
     resources['tests_passed'] = 'success'

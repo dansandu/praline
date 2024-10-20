@@ -92,13 +92,6 @@ def create_pipeline(file_system: FileSystem,
         raise UnsatisfiableStageError(message)
 
 
-def format_progress_bar_title(index, total, stage_name):
-    index_str = str(index)
-    total_str = str(total)
-    padding = (len(total_str) - len(index_str)) * ' '
-    return f"{padding}({index_str}/{total_str}) {stage_name.replace('_', ' ')}" 
-
-
 def invoke_stage(file_system: FileSystem,
                  configuration: Dict[str, Any],
                  program_arguments: Dict[str, Any],
@@ -114,21 +107,9 @@ def invoke_stage(file_system: FileSystem,
         project_structure, artifact_manifest, compiler, target_stage, stages
     )
     
-    progress_bar_count = sum(1 for (_, stage_name) in pipeline if stages[stage_name].has_progress_bar)
-    progress_bar_index = 0
+    progress_bar_stage_count = sum(1 for (_, stage_name) in pipeline if stages[stage_name].has_progress_bar)
+    progress_bar_stage_index = 1
 
-    progress_bar_titles = {}
-
-    for _, stage_name in pipeline:
-        if stages[stage_name].has_progress_bar:
-            progress_bar_index += 1
-            progress_bar_titles[stage_name] = format_progress_bar_title(progress_bar_index, progress_bar_count, stage_name)
-
-    if len(progress_bar_titles) > 0:
-        progress_bar_title_length = max(len(title) for title in progress_bar_titles.values())
-    else:
-        progress_bar_title_length = 0
-    
     for activation, stage_name in pipeline:
         logger.debug(f"Starting stage '{stage_name}'")
         stage = stages[stage_name]
@@ -137,8 +118,11 @@ def invoke_stage(file_system: FileSystem,
 
         with StageResources(stage_name, activation, local_resources, stage.output) as stage_resources:        
             if stage.has_progress_bar:
-                progress_bar_title = progress_bar_titles[stage_name]
-                progress_bar_supplier = ProgressBarSupplier(file_system, progress_bar_title, progress_bar_title_length)
+                progress_bar_supplier = ProgressBarSupplier(file_system, 
+                                                            progress_bar_stage_index, 
+                                                            progress_bar_stage_count, 
+                                                            stage_name)
+                progress_bar_stage_index += 1
             else:
                 progress_bar_supplier = None
 

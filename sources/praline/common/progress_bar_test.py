@@ -1,6 +1,6 @@
 from unittest import TestCase
 from praline.common.progress_bar import (
-    description_length, format_description, format_timedelta, ProgressBarSupplier
+    format_description, format_timedelta, ProgressBarSupplier
 )
 from praline.common.testing.file_system_mock import FileSystemMock
 
@@ -37,6 +37,8 @@ class ProgressBarTest(TestCase):
 
         self.assertEqual(format_time(milliseconds=28), "28ms")
 
+        self.assertEqual(format_time(milliseconds=1760), "1s 760ms")
+
         self.assertEqual(format_time(seconds=10, milliseconds=250), "10s 250ms")
 
         self.assertEqual(format_time(minutes=7, seconds=27, milliseconds=58), "7m 27s")
@@ -49,14 +51,15 @@ class ProgressBarTest(TestCase):
 
     def test_early_exit(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='stage', title_length=5, display_elapsed_time=False)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=2, stage_count=10, 
+                                                    stage_name='stage', display_elapsed_time=False)
 
         expected_lines = [
-            "stage\n",
+            " (2/10) stage\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mstage\n",
+            "\x1B[2F\x1B[2M (2/10) stage\n",
             "  \x1B[34m==========\x1B[0m========================================  20.00%\n",
-            "\x1B[2F\x1B[2Mstage \x1B[32mdone\x1B[0m\n",
+            "\x1B[2F\x1B[2M (2/10) stage \x1B[32mdone\x1B[0m\n",
         ]
 
         with progress_bar_supplier.create(resolution=5) as progress_bar:
@@ -69,14 +72,15 @@ class ProgressBarTest(TestCase):
 
     def test_exception(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='stage', title_length=5, display_elapsed_time=False)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=5, stage_count=5, 
+                                                    stage_name='stage', display_elapsed_time=False)
 
         expected_lines = [
-            "stage\n",
+            "(5/5) stage\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mstage\n",
+            "\x1B[2F\x1B[2M(5/5) stage\n",
             "  \x1B[34m==========\x1B[0m========================================  20.00%\n",
-            "\x1B[2F\x1B[2Mstage \x1B[31mfailed\x1B[0m\n",
+            "\x1B[2F\x1B[2M(5/5) stage \x1B[31mfailed\x1B[0m\n",
             "  \x1B[31m==========\x1B[0m========================================  20.00%\n",
         ]
 
@@ -96,16 +100,17 @@ class ProgressBarTest(TestCase):
 
     def test_last_inch_exception(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='stage', title_length=5, display_elapsed_time=False)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=50, stage_count=100, 
+                                                    stage_name='stage', display_elapsed_time=False)
 
         expected_lines = [
-            "stage\n",
+            " (50/100) stage\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mstage short_text\n",
+            "\x1B[2F\x1B[2M (50/100) stage short_text\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mstage short_text\n",
+            "\x1B[2F\x1B[2M (50/100) stage short_text\n",
             "  \x1B[34m=================================================\x1B[0m=  99.99%\n",
-            "\x1B[2F\x1B[2Mstage short_text \x1B[31mfailed\x1B[0m\n",
+            "\x1B[2F\x1B[2M (50/100) stage short_text \x1B[31mfailed\x1B[0m\n",
             "  \x1B[31m=================================================\x1B[0m=  99.99%\n",
         ]
 
@@ -128,20 +133,21 @@ class ProgressBarTest(TestCase):
 
     def test_nonzero_resolution(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='stage', title_length=5, display_elapsed_time=False)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=5, stage_count=100, 
+                                                    stage_name='stage', display_elapsed_time=False)
 
         expected_lines = [
-            "stage\n",
+            "  (5/100) stage\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mstage short_text\n",
+            "\x1B[2F\x1B[2M  (5/100) stage short_text\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mstage short_text\n",
+            "\x1B[2F\x1B[2M  (5/100) stage short_text\n",
             "  \x1B[34m=========================\x1B[0m=========================  50.00%\n",
-            "\x1B[2F\x1B[2Mstage ...ng_to_display_inside_the_progress_bar\n",
+            "\x1B[2F\x1B[2M  (5/100) stage ...ng_to_display_inside_the_progress_bar\n",
             "  \x1B[34m=========================\x1B[0m=========================  50.00%\n",
-            "\x1B[2F\x1B[2Mstage ...ng_to_display_inside_the_progress_bar\n",
+            "\x1B[2F\x1B[2M  (5/100) stage ...ng_to_display_inside_the_progress_bar\n",
             "  \x1B[34m=================================================\x1B[0m=  99.99%\n",
-            "\x1B[2F\x1B[2Mstage \x1B[32mdone\x1B[0m\n",
+            "\x1B[2F\x1B[2M  (5/100) stage \x1B[32mdone\x1B[0m\n",
         ]
 
         with progress_bar_supplier.create(resolution=2) as progress_bar:
@@ -165,13 +171,14 @@ class ProgressBarTest(TestCase):
         file_system = FileSystemMock()
 
         expected_lines = [
-            "stage name  \n",
+            "(1/1) stage name\n",
             "  ==================================================\n",
-            "\x1B[2F\x1B[2Mstage name   \x1B[31mfailed\x1B[0m\n",
+            "\x1B[2F\x1B[2M(1/1) stage name \x1B[31mfailed\x1B[0m\n",
             "  \x1B[31m==================================================\x1B[0m\n",
         ]
 
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='stage name', title_length=12, display_elapsed_time=False)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=1, stage_count=1, 
+                                                    stage_name='stage name', display_elapsed_time=False)
 
         exception_raised = False
         try:
@@ -187,12 +194,13 @@ class ProgressBarTest(TestCase):
         file_system = FileSystemMock()
 
         expected_lines = [
-            "stage name  \n",
+            "(2/2) stage name\n",
             "  ==================================================\n",
-            "\x1B[2F\x1B[2Mstage name   \x1B[32mdone\x1B[0m\n",
+            "\x1B[2F\x1B[2M(2/2) stage name \x1B[32mdone\x1B[0m\n",
         ]
 
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='stage name', title_length=12, display_elapsed_time=False)
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=2, stage_count=2, 
+                                                    stage_name='stage name', display_elapsed_time=False)
         with progress_bar_supplier.create(resolution=0) as progress_bar:
             self.assertEqual(file_system.stdout.getvalue(), ''.join(expected_lines[:2]))
 
@@ -202,18 +210,19 @@ class ProgressBarTest(TestCase):
 
     def test_summary(self):
         file_system = FileSystemMock()
-        progress_bar_supplier = ProgressBarSupplier(file_system, title='test', title_length=6, display_elapsed_time=False, success_text='passed')
+        progress_bar_supplier = ProgressBarSupplier(file_system, stage_index=11, stage_count=12, 
+                                                    stage_name='test', display_elapsed_time=False)
 
         expected_lines = [
-            "test  \n",
+            "(11/12) test\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mtest   myTestCase\n",
+            "\x1B[2F\x1B[2M(11/12) test myTestCase\n",
             "  ==================================================   0.00%\n",
-            "\x1B[2F\x1B[2Mtest   myTestCase\n",
+            "\x1B[2F\x1B[2M(11/12) test myTestCase\n",
             "  \x1B[34m=================================================\x1B[0m=  99.99%\n",
-            "\x1B[2F\x1B[2Mtest   myTestCase\n",
+            "\x1B[2F\x1B[2M(11/12) test myTestCase\n",
             "  \x1B[34m=================================================\x1B[0m=  99.99%\n",
-            "\x1B[2F\x1B[2Mtest   5356 asserts in 21 tests \x1B[32mpassed\x1B[0m\n",
+            "\x1B[2F\x1B[2M(11/12) test 5356 asserts in 21 tests \x1B[32mdone\x1B[0m\n",
         ]
 
         with progress_bar_supplier.create(resolution=1) as progress_bar:
