@@ -20,7 +20,6 @@ class TestStageTest(TestCase):
         expected_env = {
             'PRALINE_PROGRESS_BAR_STAGE_INDEX': '1',
             'PRALINE_PROGRESS_BAR_STAGE_COUNT': '5',
-            'PRALINE_PROGRESS_BAR_STAGE_NAME': 'test',
         }
 
         def on_execute(command: List[str], 
@@ -53,8 +52,7 @@ class TestStageTest(TestCase):
         progress_bar_supplier = ProgressBarSupplierMock(self, 
                                                         expected_resolution=0, 
                                                         stage_index=1, 
-                                                        stage_count=5, 
-                                                        stage_name='test')
+                                                        stage_count=5)
 
         with StageResources(stage='test', 
                             activation=0, 

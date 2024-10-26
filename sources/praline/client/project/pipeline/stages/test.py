@@ -1,5 +1,12 @@
 from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stages import StageArguments, stage
+from praline.common import DirectUserMessageException
+from praline.common.file_system import ProcessExecutionError
+
+
+class TestProcessExecutionException(ProcessExecutionError, DirectUserMessageException):
+    def __init__(self, status: int, stdout: bytes, stderror: bytes):
+        super().__init__(status, stdout, stderror)
 
 
 program_arguments = [
@@ -31,14 +38,16 @@ def test(arguments: StageArguments):
     arguments               = program_arguments['byStage']['arguments']
     external_libraries_root = project_structure.external_libraries_root
 
-    file_system.execute_and_fail_on_bad_return(
-        [test_executable] + arguments,
-        add_to_library_path=[external_libraries_root],
-        interactive=True,
-        add_to_env={
-            'PRALINE_PROGRESS_BAR_STAGE_INDEX': str(progress_bar_supplier.stage_index),
-            'PRALINE_PROGRESS_BAR_STAGE_COUNT': str(progress_bar_supplier.stage_count),
-            'PRALINE_PROGRESS_BAR_STAGE_NAME': progress_bar_supplier.stage_name,
-        })
-    
+    try:
+        file_system.execute_and_fail_on_bad_return(
+            [test_executable] + arguments,
+            add_to_library_path=[external_libraries_root],
+            interactive=True,
+            add_to_env={
+                'PRALINE_PROGRESS_BAR_STAGE_INDEX': str(progress_bar_supplier.stage_index),
+                'PRALINE_PROGRESS_BAR_STAGE_COUNT': str(progress_bar_supplier.stage_count),
+            })
+    except ProcessExecutionError as exception:
+        raise TestProcessExecutionException(exception.status, exception.stdout, exception.stderror)
+
     resources['tests_passed'] = 'success'
