@@ -17,10 +17,9 @@ class TestStageTest(TestCase):
         test_executable        = join(project_structure.executables_root, 'test.exe')
         test_program_arguments = ['test', 'program', 'arguments']
 
-        header_length = 101
-
         expected_env = {
-            'PRALINE_PROGRESS_BAR_HEADER_LENGTH': str(header_length),
+            'PRALINE_PROGRESS_BAR_STAGE_INDEX': '1',
+            'PRALINE_PROGRESS_BAR_STAGE_COUNT': '5',
         }
 
         def on_execute(command: List[str], 
@@ -50,7 +49,10 @@ class TestStageTest(TestCase):
             }
         }
 
-        progress_bar_supplier = ProgressBarSupplierMock(self, 0, header_length)
+        progress_bar_supplier = ProgressBarSupplierMock(self, 
+                                                        expected_resolution=0, 
+                                                        stage_index=1, 
+                                                        stage_count=5)
 
         with StageResources(stage='test', 
                             activation=0, 

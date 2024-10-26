@@ -48,6 +48,7 @@ if __name__ == '__main__':
 
     except DirectUserMessageException as exception:
         logger.error(f"{type(exception).__name__} was raised with message: {exception}")
+        exit(-1)
     except Exception:
         traceback.print_exc()
         exit(-1)

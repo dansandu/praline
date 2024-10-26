@@ -1,7 +1,6 @@
 from praline.client.project.pipeline.orchestration import (
     create_pipeline, invoke_stage, CyclicStagesError, 
     MultipleSuppliersError, UnsatisfiableStageError,
-    format_progress_bar_title
 )
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateResult
 from praline.common.testing.file_system_mock import FileSystemMock
@@ -82,15 +81,6 @@ class OrchestrationTest(TestCase):
         }
 
         self.assertRaises(UnsatisfiableStageError, self.create_pipeline, 'C', stages)
-
-    def test_format_progress_bar_title(self):
-        self.assertEqual(format_progress_bar_title(5, 7, 'stage'), '(5/7) stage')
-
-        self.assertEqual(format_progress_bar_title(  0, 100, 'my_stage'), '  (0/100) my stage')
-
-        self.assertEqual(format_progress_bar_title( 50, 100, 'my_stage'), ' (50/100) my stage')
-
-        self.assertEqual(format_progress_bar_title(100, 100, 'my_stage'), '(100/100) my stage')
 
     def test_invoke_stage(self):
         #
