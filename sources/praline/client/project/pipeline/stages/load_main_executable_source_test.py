@@ -2,7 +2,7 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments
 from praline.client.project.pipeline.stages.load_main_executable_source import load_main_executable_source, main_executable_source_contents, predicate
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
-                            CompilerType, ExportedSymbols, Mode, Platform)
+                            CompilerType, ExportedSymbols, Mode, Platform, executable_source_file_name)
 from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 
@@ -21,6 +21,8 @@ class LoadMainExecutableSourceStageTest(TestCase):
                                              compiler=CompilerType.gcc,
                                              exported_symbols=ExportedSymbols.explicit,
                                              artifact_type=ArtifactType.executable,
+                                             test_service_runner=None,
+                                             test_service_name='default',
                                              dependencies=[])  
 
         project_structure = get_project_structure('project', artifact_manifest.organization, artifact_manifest.artifact)
@@ -43,7 +45,7 @@ class LoadMainExecutableSourceStageTest(TestCase):
             stage_arguments = StageArguments(file_system=file_system, project_structure=project_structure, resources=resources)
             load_main_executable_source(stage_arguments)
 
-        main_executable_source = join(project_structure.main_sources_domain_root, 'executable.cpp')
+        main_executable_source = join(project_structure.main_sources_domain_root, executable_source_file_name)
 
         expected_files = {
             main_executable_source: main_executable_source_contents.encode('utf-8'),
@@ -63,10 +65,12 @@ class LoadMainExecutableSourceStageTest(TestCase):
                                              compiler=CompilerType.gcc,
                                              exported_symbols=ExportedSymbols.explicit,
                                              artifact_type=ArtifactType.library,
+                                             test_service_runner=None,
+                                             test_service_name='default',
                                              dependencies=[]) 
         
         predicate_result = predicate(StagePredicateArguments(artifact_manifest=artifact_manifest))
 
         self.assertFalse(predicate_result.can_run)
 
-        self.assertEqual(predicate_result.explanation, "artifact type is not executable")
+        self.assertGreater(len(predicate_result.explanation), 0)

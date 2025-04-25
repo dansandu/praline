@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_main_executable import compile_main_executable
+from praline.common import executable_source_file_name
 from praline.common.project_structure import get_project_structure
 from praline.common.progress_bar import ProgressBarSupplier
 
@@ -40,7 +41,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
         header_a = self.main_source_path('a.hpp')
         header_b = self.main_source_path('b.hpp')
         
-        source_executable = self.main_source_path('executable.cpp')
+        source_executable = self.main_source_path(executable_source_file_name)
 
         object_executable = self.main_object_path('org-art-executable.obj')
 
@@ -83,7 +84,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
         header_a = self.main_source_path('a.hpp')
         header_b = self.main_source_path('b.hpp')
 
-        source_executable = self.main_source_path('executable.cpp')
+        source_executable = self.main_source_path(executable_source_file_name)
 
         object_executable = self.main_object_path('org-art-executable.obj')
 

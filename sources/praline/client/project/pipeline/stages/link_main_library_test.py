@@ -28,7 +28,9 @@ class CompilerMock:
                                  external_libraries: List[str],
                                  external_libraries_interfaces: List[str],
                                  cache: Dict[str, Any],
-                                 progress_bar_supplier: ProgressBarSupplier) -> Tuple[str, str]:
+                                 progress_bar_supplier: ProgressBarSupplier,
+                                 test_library: bool = False) -> Tuple[str, str]:
+        self.test_case.assertFalse(test_library)
         self.test_case.assertCountEqual(objects, self.expected_objects)
         self.test_case.assertCountEqual(external_libraries, self.external_libraries)
         self.test_case.assertCountEqual(external_libraries_interfaces, self.external_libraries_interfaces)
@@ -98,6 +100,8 @@ class LinkMainLibraryStageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
+            test_service_runner=None,
+            test_service_name='default',
             dependencies=[]
         )
 

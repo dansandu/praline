@@ -18,16 +18,13 @@ class ClangYieldDescriptor(IYieldDescriptor):
     def get_object(self, source_relative_path: str) -> str:
         return super().get_object(source_relative_path) + '.o'
 
-    def get_executable(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.out'
+    def get_executable_and_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.out', None
 
-    def get_library(self, artifact_identifier: str) -> str:
-        return f'lib{artifact_identifier}.dylib'
+    def get_library_and_symbols_table(self, artifact_identifier: str) -> str:
+        return f'lib{artifact_identifier}.dylib', None
 
     def get_library_interface(self, artifact_identifier: str) -> str:
-        return None
-
-    def get_symbols_table(self, artifact_identifier: str) -> str:
         return None
 
 

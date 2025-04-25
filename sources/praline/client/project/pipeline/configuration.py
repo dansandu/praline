@@ -41,6 +41,10 @@ def get_compiler(file_system: FileSystem, program_arguments: Dict[str, Any], pra
     if artifact_type == None:
         artifact_type = pralinefile['artifact_type']
 
+    test_service_runner = pralinefile['test_service_runner']
+
+    test_service_name = pralinefile['test_service_name']
+
     dependencies = []
     for dependency in pralinefile['dependencies']:
         dependencies.append(ArtifactDependency(**dependency))
@@ -54,6 +58,8 @@ def get_compiler(file_system: FileSystem, program_arguments: Dict[str, Any], pra
                                          compiler=None,
                                          exported_symbols=exported_symbols,
                                          artifact_type=artifact_type,
+                                         test_service_runner=test_service_runner,
+                                         test_service_name=test_service_name,
                                          dependencies=dependencies)
     
     project_structure = get_project_structure(file_system.get_working_directory(), organization, artifact)

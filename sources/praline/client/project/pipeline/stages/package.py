@@ -3,19 +3,30 @@ from praline.common.package import manifest_file_name, pack, write_artifact_mani
 from praline.common.file_system import join, relative_path
 
 
-@stage(requirements=[['project_directories', 'main_resources', 'formatted_main_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
-                     ['project_directories', 'main_resources', 'formatted_main_headers', 'main_executable', 'main_executable_symbols_table'],
-                     ['project_directories', 'main_resources',           'main_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
-                     ['project_directories', 'main_resources',           'main_headers', 'main_executable', 'main_executable_symbols_table'],
-                     ['project_directories', 'main_resources', 'formatted_main_headers',    'main_library',        'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
-                     ['project_directories', 'main_resources', 'formatted_main_headers',    'main_library',        'main_library_interface', 'main_library_symbols_table'],
-                     ['project_directories', 'main_resources',           'main_headers',    'main_library',        'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
-                     ['project_directories', 'main_resources',           'main_headers',    'main_library',        'main_library_interface', 'main_library_symbols_table'],
-                     ['project_directories', 'main_resources', 'formatted_main_headers',    'tests_passed'],
-                     ['project_directories', 'main_resources', 'formatted_main_headers'],
-                     ['project_directories', 'main_resources',           'main_headers',    'tests_passed'],
-                     ['project_directories', 'main_resources',           'main_headers']],
-       output=['package'], exposed=True)
+@stage(
+    requirements=[
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table'],
+        ['project_directories', 'main_resources',           'main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table'],
+
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
+        ['project_directories', 'main_resources',           'main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
+
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'main_executable', 'main_executable_symbols_table'],
+        ['project_directories', 'main_resources',           'main_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'main_executable', 'main_executable_symbols_table'],
+
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers'],
+        ['project_directories', 'main_resources',           'main_headers', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers']
+    ],
+    output=['package'], 
+    exposed=True)
 def package(arguments: StageArguments):
     file_system       = arguments.file_system
     artifact_manifest = arguments.artifact_manifest
@@ -40,7 +51,7 @@ def package(arguments: StageArguments):
 
     package_files.append((manifest_file_path, manifest_file_name))
 
-    if resources.activation in [0, 1, 2, 3]:
+    if 'main_executable' in resources:
         main_executable               = resources['main_executable']
         main_executable_symbols_table = resources['main_executable_symbols_table']
 
@@ -49,7 +60,7 @@ def package(arguments: StageArguments):
         if main_executable_symbols_table:
             package_files.append((main_executable_symbols_table, relative_path(main_executable_symbols_table, target_root)))
 
-    elif resources.activation in [4, 5, 6, 7]:
+    if 'main_library' in resources:
         main_library               = resources['main_library']
         main_library_interface     = resources['main_library_interface']
         main_library_symbols_table = resources['main_library_symbols_table']

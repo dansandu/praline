@@ -40,17 +40,14 @@ class BaseMsvcYieldDescriptor(IYieldDescriptor):
     def get_object(self, source_relative_path: str) -> str:
         return super().get_object(source_relative_path) + '.obj'
 
-    def get_executable(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.exe'
+    def get_executable_and_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.exe', artifact_identifier + '.exe.pdb'
 
-    def get_library(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.dll'
+    def get_library_and_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.dll', artifact_identifier + '.dll.pdb'
 
     def get_library_interface(self, artifact_identifier: str) -> str:
         return artifact_identifier + '.lib'
-
-    def get_symbols_table(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.pdb'
 
 
 class BaseMsvcCompilingStrategy(ICompilingStrategy):

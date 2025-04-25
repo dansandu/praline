@@ -1,6 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.format_main_executable import format_main_executable
+from praline.common import executable_source_file_name
 from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
@@ -17,7 +18,7 @@ class FormatMainExecutableStageTest(TestCase):
         main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
 
         source_math = main_source_path('math.cpp')
-        source_exe  = main_source_path('executable.cpp')
+        source_exe  = main_source_path(executable_source_file_name)
 
         calls = [source_exe]
 
@@ -78,7 +79,7 @@ class FormatMainExecutableStageTest(TestCase):
         main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
 
         source_map = main_source_path('map.cpp')
-        source_exe = main_source_path('executable.cpp')
+        source_exe = main_source_path(executable_source_file_name)
 
         calls = []
 

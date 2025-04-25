@@ -45,17 +45,22 @@ class ProjectStructure:
         test_source_relative_path = relative_path(test_source_path, self.test_sources_root)
         return join(self.test_objects_root, yield_descriptor.get_object(test_source_relative_path))
 
-    def get_executable_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
-        return join(self.executables_root, yield_descriptor.get_executable(artifact_identifier))
+    def get_executable_and_symbols_table_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
+        executable, symbols_table = yield_descriptor.get_executable_and_symbols_table(artifact_identifier)
+        if symbols_table:
+            return (join(self.executables_root, executable), join(self.symbols_tables_root, symbols_table))
+        else:
+            return (join(self.executables_root, executable), None)
 
-    def get_library_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
-        return join(self.libraries_root, yield_descriptor.get_library(artifact_identifier))
+    def get_library_and_symbols_table_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
+        library, symbols_table = yield_descriptor.get_library_and_symbols_table(artifact_identifier)
+        if symbols_table:
+            return (join(self.libraries_root, library), join(self.symbols_tables_root, symbols_table))
+        else:
+            return (join(self.libraries_root, library), None)
     
     def get_library_interface_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
         return join(self.libraries_interfaces_root, yield_descriptor.get_library_interface(artifact_identifier))
-
-    def get_symbols_table_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
-        return join(self.symbols_tables_root, yield_descriptor.get_symbols_table(artifact_identifier))
 
 
 def get_project_structure(project_directory: str, organization: str, artifact: str) -> ProjectStructure:

@@ -67,23 +67,25 @@ class FileSystem:
                 add_to_library_path: List[str] = [], 
                 interactive: bool = False, 
                 add_to_env: Dict[str, str] = {}):
-        environment_copy = dict(os.environ)
+        environment = dict(os.environ)
         if add_to_library_path:
             if sys.platform == 'linux' or sys.platform == 'darwin':
-                environment_copy['LD_LIBRARY_PATH'] = os.pathsep + os.pathsep.join(add_to_library_path)
+                environment['LD_LIBRARY_PATH'] = os.pathsep + os.pathsep.join(add_to_library_path)
             elif sys.platform == 'win32':
-                environment_copy['PATH'] += os.pathsep + os.pathsep.join(add_to_library_path)
+                environment['PATH'] += os.pathsep + os.pathsep.join(add_to_library_path)
             else:
                 raise RuntimeError(f"Couldn't change library path -- unsupported platform '{sys.platform}'")
         
         for key, value in add_to_env.items():
-            if key in environment_copy:
+            if key in environment:
                 raise RuntimeError(f"Variable '{key}' already present in environment")
             else:
-                environment_copy[key] = value
+                environment[key] = value
         
+        logger.debug(f"Creating subprocess with arguments {command} and environment {environment}")
+
         if interactive:
-            process = subprocess.Popen(command, shell=(os.name == 'nt'), env=environment_copy)
+            process = subprocess.Popen(command, shell=(os.name == 'nt'), env=environment)
             process.wait()
             return process.returncode
         else:
@@ -91,7 +93,7 @@ class FileSystem:
                                        shell=(os.name == 'nt'), 
                                        stdout=subprocess.PIPE, 
                                        stderr=subprocess.PIPE, 
-                                       env=environment_copy)
+                                       env=environment)
             stdout, stderror = process.communicate()
             return process.returncode, stdout, stderror
 
