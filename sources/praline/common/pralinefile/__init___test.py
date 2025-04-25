@@ -34,6 +34,8 @@ class PralinefileTest(TestCase):
             'compilers': list(CompilerType),
             'exported_symbols': ExportedSymbols.explicit,
             'artifact_type': ArtifactType.library,
+            'test_service_runner': None,
+            'test_service_name': 'default',
             'dependencies': [
                 {
                     'organization': 'org',
@@ -62,6 +64,8 @@ class PralinefileTest(TestCase):
                     compilers: [gcc, clang]
                     exported_symbols: all
                     artifact_type: executable
+                    test_service_runner: org-art
+                    test_service_name: custom_service
                     dependencies:
                     - organization: org
                       artifact: art
@@ -81,6 +85,8 @@ class PralinefileTest(TestCase):
             'compilers': [CompilerType.gcc, CompilerType.clang],
             'exported_symbols': ExportedSymbols.all,
             'artifact_type': ArtifactType.executable,
+            'test_service_runner': 'org-art',
+            'test_service_name': 'custom_service',
             'dependencies': [
                 {
                     'organization': 'org',

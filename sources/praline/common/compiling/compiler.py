@@ -153,10 +153,10 @@ class Compiler:
         if not main_executable:
             artifact_identifier += '.test'
 
-        yield_descriptor   = self.compiler_strategy.get_yield_descriptor()
-        executable_path    = self.project_structure.get_executable_path(yield_descriptor, artifact_identifier)
-        symbols_table_path = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
+        yield_descriptor = self.compiler_strategy.get_yield_descriptor()
 
+        executable_path, symbols_table_path = self.project_structure.get_executable_and_symbols_table_path(yield_descriptor, artifact_identifier)
+    
         with progress_bar_supplier.create(resolution=1) as progress_bar:
             progress_bar.update_description(executable_path)
             self.compiler_strategy.link_executable(objects, external_libraries, external_libraries_interfaces, executable_path, symbols_table_path)
@@ -172,12 +172,18 @@ class Compiler:
                                  external_libraries: List[str],
                                  external_libraries_interfaces: List[str],
                                  cache: Dict[str, Any],
-                                 progress_bar_supplier: ProgressBarSupplier) -> Tuple[str, str, str]:
+                                 progress_bar_supplier: ProgressBarSupplier,
+                                 test_library: bool = False) -> Tuple[str, str, str]:
         artifact_identifier    = self.artifact_manifest.get_artifact_identifier()
-        yield_descriptor       = self.compiler_strategy.get_yield_descriptor()
-        library_path           = self.project_structure.get_library_path(yield_descriptor, artifact_identifier)
+
+        if test_library:
+            artifact_identifier += '.test'
+
+        yield_descriptor = self.compiler_strategy.get_yield_descriptor()
+
+        library_path, symbols_table_path = self.project_structure.get_library_and_symbols_table_path(yield_descriptor, artifact_identifier)
+
         library_interface_path = self.project_structure.get_library_interface_path(yield_descriptor, artifact_identifier)
-        symbols_table_path     = self.project_structure.get_symbols_table_path(yield_descriptor, artifact_identifier)
 
         with progress_bar_supplier.create(resolution=1) as progress_bar:
             progress_bar.update_description(library_path)

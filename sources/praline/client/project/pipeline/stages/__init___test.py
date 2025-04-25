@@ -19,7 +19,7 @@ class StagesTest(TestCase):
             'format', 
             'link_main_executable', 
             'link_main_library', 
-            'link_test_executable', 
+            'link_test_library', 
             'load_clang_format', 
             'load_main_executable_source',
             'load_main_headers', 

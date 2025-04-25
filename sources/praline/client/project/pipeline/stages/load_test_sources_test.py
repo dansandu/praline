@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.load_test_sources import load_test_sources, test_executable_contents, predicate
+from praline.client.project.pipeline.stages.load_test_sources import load_test_sources, predicate
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments
 from praline.common.project_structure import get_project_structure
 from praline.common.testing.file_system_mock import FileSystemMock
@@ -20,7 +20,6 @@ class LoadTestSourcesStageTest(TestCase):
         source_math = main_source_path('math.cpp')
 
         test_math = test_source_path('math.test.cpp')
-        test_main = test_source_path('executable.test.cpp')
 
         file_system = FileSystemMock(
             directories={
@@ -55,7 +54,6 @@ class LoadTestSourcesStageTest(TestCase):
 
         expected_test_sources = {
             test_math,
-            test_main,
         }
 
         self.assertCountEqual(resources['test_sources'], expected_test_sources)
@@ -64,7 +62,6 @@ class LoadTestSourcesStageTest(TestCase):
             header_math: b'',
             source_math: b'',
             test_math:   b'',
-            test_main:   test_executable_contents.encode('utf-8')
         }
 
         self.assertEqual(file_system.files, expected_files)

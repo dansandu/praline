@@ -28,6 +28,8 @@ class PackageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
+            test_service_runner=None,
+            test_service_name='default',
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',
@@ -57,6 +59,8 @@ class PackageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
+            test_service_runner=None,
+            test_service_name='default',
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',
@@ -165,6 +169,8 @@ class PackageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
+            test_service_runner=None,
+            test_service_name='default',
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',

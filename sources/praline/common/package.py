@@ -211,18 +211,26 @@ def clean_up_package(file_system: FileSystem, package_path: str, extraction_path
         artifact_identifer = package_name[:-7]
 
     compiler_supplier = get_compiling_strategy_supplier(compiler)
-    yield_descriptor  = compiler_supplier.get_yield_descriptor()
-    
-    library = join(extraction_path, 'libraries', yield_descriptor.get_library(artifact_identifer))
-    
-    library_interface = join(extraction_path, 'libraries_interfaces', yield_descriptor.get_library_interface(artifact_identifer))
-    
-    symbols_table = join(extraction_path, 'symbols_tables', yield_descriptor.get_symbols_table(artifact_identifer)) 
-    
-    executable = join(extraction_path, 'executables', yield_descriptor.get_executable(artifact_identifer))
 
-    file_system.remove_file_if_it_exists(executable)
-    file_system.remove_file_if_it_exists(library)
-    file_system.remove_file_if_it_exists(library_interface)
-    file_system.remove_file_if_it_exists(symbols_table)
+    yield_descriptor = compiler_supplier.get_yield_descriptor()
+
+    executable, executable_symbols_table = yield_descriptor.get_executable_and_symbols_table(artifact_identifer)
+
+    executable_path = join(extraction_path, 'executables', executable)
+
+    executable_symbols_table_path = join(extraction_path, 'symbols_tables', executable_symbols_table) 
+
+    library, library_symbols_table = yield_descriptor.get_library_and_symbols_table(artifact_identifer)
+    
+    library_path = join(extraction_path, 'libraries', library)
+
+    library_symbols_table_path = join(extraction_path, 'symbols_tables', library_symbols_table) 
+
+    library_interface_path = join(extraction_path, 'libraries_interfaces', yield_descriptor.get_library_interface(artifact_identifer))
+    
+    file_system.remove_file_if_it_exists(executable_path)
+    file_system.remove_file_if_it_exists(executable_symbols_table_path)
+    file_system.remove_file_if_it_exists(library_path)
+    file_system.remove_file_if_it_exists(library_symbols_table_path)
+    file_system.remove_file_if_it_exists(library_interface_path)
     file_system.remove_file_if_it_exists(package_path)

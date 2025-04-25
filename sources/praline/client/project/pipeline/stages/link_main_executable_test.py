@@ -31,7 +31,7 @@ class CompilerMock:
 
 
 class LinkMainExecutableStageTest(TestCase):
-    def test_link_main_executable(self):
+    def test_link_main_executable_without_main_library(self):
         project_structure = get_project_structure('project', 'theorg', 'theart')
 
         main_object_path = lambda object: join(project_structure.main_objects_root, object)
@@ -40,8 +40,6 @@ class LinkMainExecutableStageTest(TestCase):
 
         external_interface_path = lambda external_interface: join(project_structure.external_libraries_interfaces_root, external_interface)
 
-        object_a = main_object_path('theorg-theart-a.obj')
-        object_b = main_object_path('theorg-theart-b.obj')
         object_x = main_object_path('theorg-theart-executable.obj')
 
         external_library = external_library_path('theorg-theart-arm-linux-gcc-debug.0.0.1.dll')
@@ -51,8 +49,6 @@ class LinkMainExecutableStageTest(TestCase):
         compiler = CompilerMock(
             self,
             expected_objects=[
-                object_a,
-                object_b,
                 object_x,
             ],
             external_libraries=[
@@ -65,13 +61,9 @@ class LinkMainExecutableStageTest(TestCase):
 
         with StageResources(
             stage='link_main_executable',
-            activation=0,
+            activation=1,
             resources={
                 'project_directories': True,
-                'main_objects': [
-                    object_a,
-                    object_b,
-                ],
                 'main_executable_object': object_x,
                 'external_libraries': [
                     external_library,

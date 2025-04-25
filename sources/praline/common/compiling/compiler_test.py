@@ -14,17 +14,14 @@ class YieldDescriptorMock(IYieldDescriptor):
     def get_object(self, source_relative_path: str) -> str:
         return super().get_object(source_relative_path) + '.obj'
 
-    def get_executable(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.exe'
+    def get_executable_and_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.exe', artifact_identifier + '.exe.pdb'
 
-    def get_library(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.dll'
+    def get_library_and_symbols_table(self, artifact_identifier: str) -> str:
+        return artifact_identifier + '.dll', artifact_identifier + '.dll.pdb'
 
     def get_library_interface(self, artifact_identifier: str) -> str:
         return artifact_identifier + '.lib'
-
-    def get_symbols_table(self, artifact_identifier: str) -> str:
-        return artifact_identifier + '.pdb'
 
 
 class CompilingStrategyMock(ICompilingStrategy):
@@ -95,6 +92,8 @@ class CompilerTest(TestCase):
             compiler=CompilerType.msvc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
+            test_service_runner=None,
+            test_service_name='default',
             dependencies=[]
         )
 
@@ -318,20 +317,20 @@ class CompilerTest(TestCase):
                                                                          progress_bar_supplier,
                                                                          main_executable=True)
         
-        executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.exe')
+        expected_executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.exe')
 
-        symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.pdb')
+        expected_symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.exe.pdb')
 
-        self.assertEqual(executable, executable_path)
+        self.assertEqual(executable, expected_executable_path)
 
-        self.assertEqual(symbols_table, symbols_path)
+        self.assertEqual(symbols_table, expected_symbols_path)
 
         expected_files = {
             main_a:          b'object-a.',
             library_b:       b'external-library-b.',
             interface_b:     b'external-library-interface-b.',
-            executable_path: b'object-a.external-library-b.external-library-interface-b.exe',
-            symbols_path:    b'object-a.external-library-b.external-library-interface-b.pbd'
+            expected_executable_path: b'object-a.external-library-b.external-library-interface-b.exe',
+            expected_symbols_path: b'object-a.external-library-b.external-library-interface-b.pbd'
         }
 
         self.assertEqual(file_system.files, expected_files)
@@ -381,21 +380,21 @@ class CompilerTest(TestCase):
                                                                          progress_bar_supplier,
                                                                          main_executable=False)
 
-        executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.test.exe')
+        expected_executable_path = join(self.project_structure.executables_root, self.artifact_identifier + '.test.exe')
 
-        symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.test.pdb')
+        expected_symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.test.exe.pdb')
 
-        self.assertEqual(executable, executable_path)
+        self.assertEqual(executable, expected_executable_path)
 
-        self.assertEqual(symbols_table, symbols_path)
+        self.assertEqual(symbols_table, expected_symbols_path)
 
         expected_files = {
             main_a:          b'object-a.',
             test_a:          b'object-a-test.',
             library_b:       b'external-library-b.',
             interface_b:     b'external-library-interface-b.',
-            executable_path: b'object-a.object-a-test.external-library-b.external-library-interface-b.exe',
-            symbols_path:    b'object-a.object-a-test.external-library-b.external-library-interface-b.pbd'
+            expected_executable_path: b'object-a.object-a-test.external-library-b.external-library-interface-b.exe',
+            expected_symbols_path: b'object-a.object-a-test.external-library-b.external-library-interface-b.pbd'
         }
 
         self.assertEqual(file_system.files, expected_files)
@@ -441,9 +440,9 @@ class CompilerTest(TestCase):
 
         self.assertEqual(library_interface, self.interface_path)
 
-        symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.pdb')
+        expected_symbols_path = join(self.project_structure.symbols_tables_root, self.artifact_identifier + '.dll.pdb')
 
-        self.assertEqual(symbols_table, symbols_path)
+        self.assertEqual(symbols_table, expected_symbols_path)
 
         expected_files = {
             self.main_object_path('org-art-a.obj'): b'object-a.',
@@ -451,7 +450,7 @@ class CompilerTest(TestCase):
             self.external_interface_path('c.lib'):  b'external-library-interface-c.',
             self.library_path:   b'object-a.external-library-b.external-library-interface-c.dll',
             self.interface_path: b'object-a.external-library-b.external-library-interface-c.lib',
-            symbols_path:        b'object-a.external-library-b.external-library-interface-c.pbd',
+            expected_symbols_path: b'object-a.external-library-b.external-library-interface-c.pbd',
         }
 
         self.assertEqual(file_system.files, expected_files)

@@ -46,6 +46,8 @@ def create_pipeline(file_system: FileSystem,
                     compiler: Compiler,
                     target_stage: str,
                     stages: Dict[str, Stage]) -> List[str]:    
+    logger.debug(f"Creating pipepline")
+
     def on_cycle(cycle: List[str]):
         raise CyclicStagesError(f"Cyclic dependencies for stages {cycle}")
 
@@ -73,6 +75,10 @@ def create_pipeline(file_system: FileSystem,
             file_system, configuration, stage_program_arguments, remote_proxy, project_structure, artifact_manifest, compiler)
         
         stage_predicate_result = stages[stage].predicate(stage_predicate_arguments)
+        
+        if not stage_predicate_result.can_run:
+            logger.debug(f"Stage '{stage}' cannot run because: {stage_predicate_result.explanation}")
+
         return InstanceValidationResult(valid=stage_predicate_result.can_run, explanation=stage_predicate_result.explanation)
 
     instances = multiple_instance_depth_first_traversal(target_stage, visitor, validator, on_cycle)

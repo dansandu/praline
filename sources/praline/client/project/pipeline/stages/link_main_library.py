@@ -1,22 +1,18 @@
 from praline.client.project.pipeline.stages import stage
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
-from praline.common import ArtifactType, source_file_extension, test_source_file_extension
+from praline.common import executable_source_file_name, source_file_extension, test_source_file_extension
+from praline.common.file_system import basename
 
 
 def predicate(arguments: StagePredicateArguments):
     main_sources_root = arguments.project_structure.main_sources_root
     files             = arguments.file_system.files_in_directory(main_sources_root)
-    is_library        = arguments.artifact_manifest.artifact_type == ArtifactType.library
-    has_sources       = any(f.endswith(source_file_extension) and not f.endswith(test_source_file_extension) for f in files)
+    has_nonexecutable_main_sources = any(basename(f) != executable_source_file_name and f.endswith(source_file_extension) and not f.endswith(test_source_file_extension) for f in files)
 
-    if is_library and has_sources:
+    if has_nonexecutable_main_sources:
         return StagePredicateResult.success()
-    elif is_library:
-        return StagePredicateResult.failure("there are no source files to link")
-    elif has_sources:
-        return StagePredicateResult.failure("artifact type is not a library")
     else:
-        return StagePredicateResult.failure("artifact type is not a library and there are no source files to link")
+        return StagePredicateResult.failure("there are no nonexecutable main source files to link")
 
 
 @stage(requirements=[['project_directories', 'main_objects', 'external_libraries', 'external_libraries_interfaces']],

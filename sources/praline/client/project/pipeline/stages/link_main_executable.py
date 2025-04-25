@@ -1,9 +1,8 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 
 
-@stage(requirements=[['project_directories', 'main_objects', 
-                      'main_executable_object', 'external_libraries', 
-                      'external_libraries_interfaces']],
+@stage(requirements=[['project_directories', 'main_executable_object', 'main_library', 'main_library_interface', 'external_libraries', 'external_libraries_interfaces'],
+                     ['project_directories', 'main_executable_object',                                           'external_libraries', 'external_libraries_interfaces']],
        output=['main_executable', 'main_executable_symbols_table'],
        has_progress_bar=True)
 def link_main_executable(arguments: StageArguments):
@@ -13,9 +12,13 @@ def link_main_executable(arguments: StageArguments):
     
     progress_bar_supplier = arguments.progress_bar_supplier
 
-    main_objects                  = resources['main_objects'] + [resources['main_executable_object']]
+    main_objects                  = [resources['main_executable_object']]
     external_libraries            = resources['external_libraries']
     external_libraries_interfaces = resources['external_libraries_interfaces']
+
+    if resources.activation == 0:
+        external_libraries.append(resources['main_library'])
+        external_libraries_interfaces.append(resources['main_library_interface'])
 
     (resources['main_executable'], 
      resources['main_executable_symbols_table']) = compiler.link_executable_using_cache(main_objects,

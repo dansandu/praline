@@ -3,9 +3,9 @@ from praline.client.project.pipeline.stages import StageArguments, stage
 
 @stage(requirements=[['project_directories', 'main_objects', 'test_objects', 
                       'external_libraries', 'external_libraries_interfaces']],
-       output=['test_executable', 'test_executable_symbols_table'],
+       output=['test_library', 'test_library_symbols_table'],
        has_progress_bar=True)
-def link_test_executable(arguments: StageArguments):
+def link_test_library(arguments: StageArguments):
     artifact_manifest = arguments.artifact_manifest
     compiler          = arguments.compiler
     resources         = arguments.resources
@@ -20,10 +20,5 @@ def link_test_executable(arguments: StageArguments):
     external_libraries            = resources['external_libraries']
     external_libraries_interfaces = resources['external_libraries_interfaces']
 
-    (resources['test_executable'], 
-     resources['test_executable_symbols_table']) = compiler.link_executable_using_cache(objects,
-                                                                                        external_libraries,
-                                                                                        external_libraries_interfaces,
-                                                                                        cache,
-                                                                                        progress_bar_supplier,
-                                                                                        main_executable=False)
+    (resources['test_library'],  _, resources['test_library_symbols_table']) = compiler.link_library_using_cache(
+        objects, external_libraries, external_libraries_interfaces, cache, progress_bar_supplier, test_library=True)

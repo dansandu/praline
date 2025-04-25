@@ -24,6 +24,8 @@ class SetupProjectStageTest(TestCase):
                                                   compiler=CompilerType.gcc,
                                                   exported_symbols=ExportedSymbols.explicit,
                                                   artifact_type=ArtifactType.executable,
+                                                  test_service_runner=None,
+                                                  test_service_name='default',
                                                   dependencies=[])
         
         self.project_structure = get_project_structure(project_directory='directory', organization=organization, artifact=artifact)

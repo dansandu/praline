@@ -3,19 +3,13 @@ from praline.common import test_header_file_extension, test_source_file_extensio
 from praline.common.file_system import join
 
 
-test_executable_contents = """\
-#define DANSANDU_RADIANCE_SUPPLY_DEFAULT_MAIN
-#include "dansandu/radiance/main.hpp"
-"""
-
-
 def predicate(arguments: StagePredicateArguments):
     file_system       = arguments.file_system
     project_structure = arguments.project_structure
     skip_unit_tests   = arguments.program_arguments['global']['skip_unit_tests']
     any_test_sources  = any(
-        f for f in file_system.files_in_directory(project_structure.test_sources_root) 
-            if f.endswith(test_header_file_extension) or f.endswith(test_source_file_extension)
+        f.endswith(test_header_file_extension) or f.endswith(test_source_file_extension) 
+            for f in file_system.files_in_directory(project_structure.test_sources_root) 
     )
     
     if not skip_unit_tests and any_test_sources:
@@ -33,9 +27,5 @@ def load_test_sources(arguments: StageArguments):
     file_system       = arguments.file_system
     project_structure = arguments.project_structure
     resources         = arguments.resources
-
-    test_executable_source = join(project_structure.test_sources_domain_root, 'executable.test.cpp')
-        
-    file_system.create_file_if_missing(test_executable_source, test_executable_contents)
 
     resources['test_sources'] = [f for f in file_system.files_in_directory(project_structure.test_sources_root) if f.endswith(test_source_file_extension)]

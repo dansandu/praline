@@ -9,17 +9,13 @@ class IYieldDescriptor(ABC):
         return source_relative_path.replace(get_separator(), '-')[:-len(source_file_extension)]
 
     @abstractmethod
-    def get_executable(self, artifact_identifier: str) -> str:
+    def get_executable_and_symbols_table(self, artifact_identifier: str) -> str:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_library(self, artifact_identifier: str) -> str:
+    def get_library_and_symbols_table(self, artifact_identifier: str) -> str:
         raise NotImplementedError()
 
     @abstractmethod
     def get_library_interface(self, artifact_identifier: str) -> str:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def get_symbols_table(self, artifact_identifier: str) -> str:
         raise NotImplementedError()

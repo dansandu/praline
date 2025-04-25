@@ -12,6 +12,8 @@ header_file_extension = '.hpp'
 
 source_file_extension = '.cpp'
 
+executable_source_file_name = 'executable.cpp'
+
 test_header_file_extension = '.test.hpp'
 
 test_source_file_extension = '.test.cpp'
@@ -237,6 +239,8 @@ class ArtifactManifest:
     compiler: CompilerType
     exported_symbols: ExportedSymbols
     artifact_type: ArtifactType
+    test_service_runner: str
+    test_service_name: str
     dependencies: List[ArtifactDependency]
 
     def get_artifact_identifier(self, 
