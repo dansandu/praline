@@ -91,7 +91,7 @@ def get_package_dependencies_recursively(file_system: FileSystem,
 
     candidate_packages = get_packages_from_directory(file_system, repository_path)
 
-    def no_version_conflicts(package, dependency_tree):
+    def no_version_conflicts(package, dependency_tree, path):
         package_identifier, package_version = split_package_version(package)
         for dependency in dependency_tree:
             dependency_identifier, dependency_version = split_package_version(dependency)

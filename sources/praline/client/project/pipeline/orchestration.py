@@ -69,7 +69,7 @@ def create_pipeline(file_system: FileSystem,
             required_stages_set.append(required_stages)
         return required_stages_set
 
-    def validator(stage: str, subtree: Dict[str, List[str]]):
+    def validator(stage: str, subtree: Dict[str, List[str]], path: List[str]):
         stage_program_arguments   = get_stage_program_arguments(stage, program_arguments)
         stage_predicate_arguments = StagePredicateArguments(
             file_system, configuration, stage_program_arguments, remote_proxy, project_structure, artifact_manifest, compiler)
@@ -77,7 +77,7 @@ def create_pipeline(file_system: FileSystem,
         stage_predicate_result = stages[stage].predicate(stage_predicate_arguments)
         
         if not stage_predicate_result.can_run:
-            logger.debug(f"Stage '{stage}' cannot run because: {stage_predicate_result.explanation}")
+            logger.debug(f"Stage chain {[(subtree[stage][0], stage) for stage in path]} cannot run because: {stage_predicate_result.explanation}")
 
         return InstanceValidationResult(valid=stage_predicate_result.can_run, explanation=stage_predicate_result.explanation)
 
