@@ -37,7 +37,7 @@ class InstanceTraversalTest(TestCase):
         instances = multiple_instance_depth_first_traversal(
             start_node='A', 
             node_visitor=tree.__getitem__, 
-            instance_validator=lambda _, __: InstanceValidationResult.success(), 
+            instance_validator=lambda _, __, ___: InstanceValidationResult.success(), 
             on_cycle=error_on_cycle
         )
         
@@ -59,6 +59,16 @@ class InstanceTraversalTest(TestCase):
         self.assertEqual(tree0, valid_trees[0])
 
         tree1 = {
+            'A': (0, ['B', 'C']),
+            'B': (0, ['F']),
+            'C': (1, ['I']),
+            'F': (0, []),
+            'I': (0, [])
+        }
+
+        self.assertEqual(tree1, valid_trees[1])
+
+        tree2 = {
             'A': (1, ['D', 'E']),
             'C': (0, ['G', 'H']),
             'D': (0, ['C']),
@@ -70,19 +80,20 @@ class InstanceTraversalTest(TestCase):
             'M': (0, [])
         }
 
-        self.assertEqual(tree1, valid_trees[1])
-
-        tree2 = {
-            'A': (0, ['B', 'C']),
-            'B': (0, ['F']),
-            'C': (1, ['I']),
-            'F': (0, []),
-            'I': (0, [])
-        }
-
         self.assertEqual(tree2, valid_trees[2])
 
         tree3 = {
+            'A': (1, ['D', 'E']),
+            'C': (1, ['I']),
+            'D': (0, ['C']),
+            'E': (0, ['J']),
+            'I': (0, []),
+            'J': (0, [])
+        }
+
+        self.assertEqual(tree3, valid_trees[3])
+
+        tree4 = {
             'A': (1, ['D', 'E']),
             'C': (0, ['G', 'H']),
             'D': (0, ['C']),
@@ -92,17 +103,6 @@ class InstanceTraversalTest(TestCase):
             'H': (0, ['M']),
             'L': (0, []),
             'M': (0, [])
-        }
-
-        self.assertEqual(tree3, valid_trees[3])
-
-        tree4 = {
-            'A': (1, ['D', 'E']),
-            'C': (1, ['I']),
-            'D': (0, ['C']),
-            'E': (0, ['J']),
-            'I': (0, []),
-            'J': (0, [])
         }
 
         self.assertEqual(tree4, valid_trees[4])
@@ -147,7 +147,7 @@ class InstanceTraversalTest(TestCase):
         instances = multiple_instance_depth_first_traversal(
             start_node='A', 
             node_visitor=tree.__getitem__, 
-            instance_validator=lambda _, __: InstanceValidationResult.success(), 
+            instance_validator=lambda _, __, ___: InstanceValidationResult.success(), 
             on_cycle=cycles.append
         )
 
@@ -169,6 +169,16 @@ class InstanceTraversalTest(TestCase):
         self.assertEqual(tree0, valid_trees[0])
 
         tree1 = {
+            'A': (0, ['B', 'C']),
+            'B': (0, ['F']),
+            'C': (1, ['I']),
+            'F': (0, []),
+            'I': (0, [])
+        }
+
+        self.assertEqual(tree1, valid_trees[1])
+
+        tree2 = {
             'A': (1, ['D', 'E']),
             'C': (0, ['G', 'H']),
             'D': (0, ['C']),
@@ -178,19 +188,20 @@ class InstanceTraversalTest(TestCase):
             'H': (0, [])
         }
 
-        self.assertEqual(tree1, valid_trees[1])
-
-        tree2 = {
-            'A': (0, ['B', 'C']),
-            'B': (0, ['F']),
-            'C': (1, ['I']),
-            'F': (0, []),
-            'I': (0, [])
-        }
-
         self.assertEqual(tree2, valid_trees[2])
 
         tree3 = {
+            'A': (1, ['D', 'E']),
+            'C': (1, ['I']),
+            'D': (0, ['C']),
+            'E': (0, ['J']),
+            'I': (0, []),
+            'J': (0, [])
+        }
+
+        self.assertEqual(tree3, valid_trees[3])
+
+        tree4 = {
             'A': (1, ['D', 'E']),
             'C': (0, ['G', 'H']),
             'D': (0, ['C']),
@@ -198,17 +209,6 @@ class InstanceTraversalTest(TestCase):
             'K': (0, []),
             'G': (0, []),
             'H': (0, [])
-        }
-
-        self.assertEqual(tree3, valid_trees[3])
-
-        tree4 = {
-            'A': (1, ['D', 'E']),
-            'C': (1, ['I']),
-            'D': (0, ['C']),
-            'E': (0, ['J']),
-            'I': (0, []),
-            'J': (0, [])
         }
 
         self.assertEqual(tree4, valid_trees[4])

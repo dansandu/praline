@@ -50,12 +50,15 @@ def multiple_instance_depth_first_traversal(start_node        : str,
                                             node_visitor      : Callable[[str], List[List[str]]],
                                             instance_validator: Callable[[str, Dict[str, Tuple[int, List[str]]]], InstanceValidationResult],
                                             on_cycle          : Callable[[List[str]], None]) -> List[Instance]:
-    global_tree = {}
-    instances   = [Instance.fresh(start_node)]
+    global_tree    = {}
+    instances      = [Instance.fresh(start_node)]
+    instance_index = 0
 
-    def instance_depth_first_traversal(instance: Instance):
+    def instance_depth_first_traversal():
+        instance = instances[instance_index]
+
         if instance.current_node != None:
-            instance.validation_result = instance_validator(instance.current_node, instance.tree)
+            instance.validation_result = instance_validator(instance.current_node, instance.tree, instance.path)
             if not instance.validation_result.valid:
                 return
             update_path(instance, on_cycle)
@@ -73,20 +76,21 @@ def multiple_instance_depth_first_traversal(start_node        : str,
                 instance.tree[instance.current_node] = (0, [])
             else:
                 instance.tree[instance.current_node] = (0, children[0])
+                new_instances = []
                 for i in range(1, len(children)):
                     new_instance = Instance.copy_from(instance)
                     new_instance.tree[new_instance.current_node] = (i, children[i])
-                    instances.append(new_instance)
+                    new_instances.append(new_instance)
+                instances[instance_index+1:instance_index+1] = new_instances
             
-            instance.validation_result = instance_validator(instance.current_node, instance.tree)
+            instance.validation_result = instance_validator(instance.current_node, instance.tree, instance.path)
             if not instance.validation_result.valid:
                 return
             update_path(instance, on_cycle)
             instance.stack.extend((child, instance.current_node) for child in instance.tree[instance.current_node][1])
 
-    instance_index = 0
     while instance_index < len(instances):
-        instance_depth_first_traversal(instances[instance_index])
+        instance_depth_first_traversal()
         instance_index += 1
     
     return instances
