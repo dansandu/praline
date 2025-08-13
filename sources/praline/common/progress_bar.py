@@ -57,25 +57,24 @@ def format_description(text: str):
 
 
 def format_timedelta(td: timedelta):
-    promotions = [(1000.0, 's'), (60.0, 'm'), (60.0, 'h'), (24.0, 'd')]
-    elapsed = td / timedelta(milliseconds=1)
+    promotions = [(1000, 's'), (60, 'm'), (60, 'h'), (24, 'd')]
+    elapsed = int(td / timedelta(milliseconds=1))
     elapsed_unit = 'ms'
-    elapsed_fraction = 0.0
-    elapsed_fraction_unit = None
+    elapsed_remainder = 0
+    elapsed_remainder_unit = None
     for factor, unit in promotions:
         if elapsed > factor:
-            elapsed_fraction = elapsed % factor
-            elapsed_fraction_unit = elapsed_unit
-            elapsed = math.floor(elapsed / factor)
+            elapsed_remainder = elapsed % factor
+            elapsed_remainder_unit = elapsed_unit
+            elapsed = elapsed // factor
             elapsed_unit = unit
         else:
             break
     
-    result = f"{int(elapsed)}{elapsed_unit}"
-    if int(elapsed_fraction) > 0:
-        result = f"{result} {int(elapsed_fraction)}{elapsed_fraction_unit}"
-
-    return result
+    if elapsed_remainder > 0:
+        return f"{elapsed}{elapsed_unit} {elapsed_remainder}{elapsed_remainder_unit}"
+    else:
+        return f"{elapsed}{elapsed_unit}"
 
 
 class ProgressBar:
