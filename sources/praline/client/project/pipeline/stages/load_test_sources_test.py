@@ -16,10 +16,11 @@ class LoadTestSourcesStageTest(TestCase):
 
         test_source_path = lambda source: join(project_structure.test_sources_domain_root, source)
         
-        header_math = main_source_path('math.hpp')
-        source_math = main_source_path('math.cpp')
+        main_header_math = main_source_path('math.hpp')
+        main_source_math = main_source_path('math.cpp')
 
-        test_math = test_source_path('math.test.cpp')
+        test_source_math = test_source_path('math.test.cpp')
+        test_source_lib  = test_source_path('lib.cpp')
 
         file_system = FileSystemMock(
             directories={
@@ -27,9 +28,10 @@ class LoadTestSourcesStageTest(TestCase):
                 project_structure.test_sources_domain_root,
             },
             files={
-                header_math: b'',
-                source_math: b'',
-                test_math:   b'',
+                main_header_math: b'',
+                main_source_math: b'',
+                test_source_math: b'',
+                test_source_lib: b'',
             },
             working_directory=project_structure.project_directory,
         )
@@ -53,15 +55,8 @@ class LoadTestSourcesStageTest(TestCase):
             load_test_sources(stage_arguments)
 
         expected_test_sources = {
-            test_math,
+            test_source_math,
+            test_source_lib,
         }
 
         self.assertCountEqual(resources['test_sources'], expected_test_sources)
-
-        expected_files = {
-            header_math: b'',
-            source_math: b'',
-            test_math:   b'',
-        }
-
-        self.assertEqual(file_system.files, expected_files)

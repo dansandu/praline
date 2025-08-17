@@ -14,10 +14,6 @@ source_file_extension = '.cpp'
 
 executable_source_file_name = 'executable.cpp'
 
-test_header_file_extension = '.test.hpp'
-
-test_source_file_extension = '.test.cpp'
-
 package_extension = '.tar.gz'
 
 

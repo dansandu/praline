@@ -26,8 +26,8 @@ class LoadTestHeadersStageTest(TestCase):
             },
             files={
                 main_resource_path('precomp.hpp'): b'',
-                test_source_path('a.test.hpp'): b'',
-                test_source_path('a.test.cpp'): b'',
+                test_source_path('a.hpp'): b'',
+                test_source_path('a.cpp'): b'',
                 test_source_path('b.test.hpp'): b'',
                 test_source_path('b.test.cpp'): b'',
                 test_source_path('executable.test.cpp'): b'',
@@ -43,7 +43,7 @@ class LoadTestHeadersStageTest(TestCase):
             load_test_headers(stage_arguments)
 
         expected_headers = {
-            test_source_path('a.test.hpp'): b'',
+            test_source_path('a.hpp'): b'',
             test_source_path('b.test.hpp'): b'',
         }
 
