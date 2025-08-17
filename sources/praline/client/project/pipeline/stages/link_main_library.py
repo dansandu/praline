@@ -1,13 +1,13 @@
 from praline.client.project.pipeline.stages import stage
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
-from praline.common import executable_source_file_name, source_file_extension, test_source_file_extension
+from praline.common import executable_source_file_name, source_file_extension
 from praline.common.file_system import basename
 
 
 def predicate(arguments: StagePredicateArguments):
     main_sources_root = arguments.project_structure.main_sources_root
     files             = arguments.file_system.files_in_directory(main_sources_root)
-    has_nonexecutable_main_sources = any(basename(f) != executable_source_file_name and f.endswith(source_file_extension) and not f.endswith(test_source_file_extension) for f in files)
+    has_nonexecutable_main_sources = any(basename(f) != executable_source_file_name and f.endswith(source_file_extension) for f in files)
 
     if has_nonexecutable_main_sources:
         return StagePredicateResult.success()
