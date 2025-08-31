@@ -4,7 +4,7 @@ from praline.client.project.pipeline.stages.link_test_library import link_test_l
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 
 from os.path import join
 from typing import Any, Dict, List, Tuple
@@ -40,7 +40,7 @@ class CompilerMock:
 
 class LinkTestLibraryStageTest(TestCase):
     def test_link_test_library(self):
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         main_object_path = lambda object: join(project_structure.main_objects_root, object)
 
@@ -60,8 +60,8 @@ class LinkTestLibraryStageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            test_service_runner=None,
-            test_service_name='default',
+            main_service=None,
+            test_service=None,
             dependencies=[]
         )
 

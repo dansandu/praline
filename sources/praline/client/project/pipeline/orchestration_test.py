@@ -4,7 +4,7 @@ from praline.client.project.pipeline.orchestration import (
 )
 from praline.client.project.pipeline.stages import Stage, StageArguments, StagePredicateResult
 from praline.common.testing.file_system_mock import FileSystemMock
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 
 import pickle
 from os.path import join
@@ -139,7 +139,7 @@ class OrchestrationTest(TestCase):
             'H': Stage('H',                [[]], ['h'],  self.can_run, [], False, False, False, hi),
         }
 
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         file_system = FileSystemMock({
                 project_structure.project_directory

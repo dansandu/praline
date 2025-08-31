@@ -2,7 +2,7 @@ from praline.common.progress_bar import ProgressBarSupplier
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.link_main_executable import link_main_executable
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 
 from os.path import join
 from typing import Any, Dict, List, Tuple
@@ -32,7 +32,7 @@ class CompilerMock:
 
 class LinkMainExecutableStageTest(TestCase):
     def test_link_main_executable_without_main_library(self):
-        project_structure = get_project_structure('project', 'theorg', 'theart')
+        project_structure = ProjectStructure('project', 'theorg', 'theart')
 
         main_object_path = lambda object: join(project_structure.main_objects_root, object)
         

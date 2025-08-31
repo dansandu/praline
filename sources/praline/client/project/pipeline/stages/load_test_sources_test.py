@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.load_test_sources import load_test_sources, predicate
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
@@ -10,7 +10,7 @@ from unittest import TestCase
 
 class LoadTestSourcesStageTest(TestCase):
     def test_load_test_sources(self):        
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
 

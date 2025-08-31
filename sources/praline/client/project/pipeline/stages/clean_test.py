@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stages.clean import clean
 from praline.client.project.pipeline.stages import StageArguments
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
@@ -9,7 +9,7 @@ from unittest import TestCase
 
 class CleanStageTest(TestCase):
     def test_clean_stage_with_target_folder(self):
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         file_system = FileSystemMock(
             directories={
@@ -31,7 +31,7 @@ class CleanStageTest(TestCase):
         self.assertEqual(len(file_system.files), 0)
 
     def test_clean_stage_without_target_folder(self):
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         file_system = FileSystemMock(
             directories={

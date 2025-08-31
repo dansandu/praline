@@ -1,0 +1,16 @@
+from praline.common import ServiceConfiguration
+from praline.common.pralinefile.validation.validator import validator
+from praline.common.pralinefile.validation.service_validator import validate_service
+from typing import Any, Dict
+
+
+default_service_configuration = ServiceConfiguration(
+    executable_to_run='dansandu-service_runner',
+    library_to_load=None,
+    service_name='dansandu-radiance-run_unit_tests'
+)
+
+
+@validator
+def validate_test_service(pralinefile: Dict[str, Any]):
+    validate_service(pralinefile, 'test_service', default_service_configuration=default_service_configuration)

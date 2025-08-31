@@ -12,8 +12,8 @@ allowed_fields = [
     'compilers',
     'exported_symbols',
     'artifact_type',
-    'test_service_runner',
-    'test_service_name',
+    'main_service',
+    'test_service',
     'dependencies'
 ]
 

@@ -1,7 +1,8 @@
 from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common import DirectUserMessageException
-from praline.common.file_system import ProcessExecutionError, basename
+from praline.common.file_system import ProcessExecutionError
+from praline.common.service_runner import get_test_service_runner_executable
 
 
 class TestProcessExecutionException(ProcessExecutionError, DirectUserMessageException):
@@ -40,26 +41,18 @@ def test(arguments: StageArguments):
     progress_bar_supplier = arguments.progress_bar_supplier
     program_arguments     = arguments.program_arguments
 
-    test_library         = resources['test_library']
-    external_executables = resources['external_executables']
+    test_library = resources['test_library']
     
     external_libraries_root = project_structure.external_libraries_root
 
-    test_service_runner_executable = None
+    test_service_runner_executable = get_test_service_runner_executable(artifact_manifest, resources)
 
-    if artifact_manifest.test_service_runner != None:
-        root_prefix = artifact_manifest.organization + '-' + artifact_manifest.artifact
-        if artifact_manifest.test_service_runner == root_prefix and 'main_executable' in resources:
-            test_service_runner_executable = resources['main_executable']
-        else:
-            test_service_runner_executable = next(exe for exe in external_executables if basename(exe).startswith(artifact_manifest.test_service_runner))
-    
     if test_service_runner_executable == None:
-        raise TestServiceRunnerNotSetException(f"The test service runner is not set -- set it inside the Pralinefile using the test_service_runner field")
+        raise TestServiceRunnerNotSetException(f"The test service runner is not set -- set it inside the Pralinefile using the test_service field")
 
     try:
         file_system.execute_and_fail_on_bad_return(
-            [test_service_runner_executable, test_library, artifact_manifest.test_service_name] + program_arguments['byStage']['arguments'],
+            [test_service_runner_executable, test_library, artifact_manifest.test_service.service_name] + program_arguments['byStage']['arguments'],
             add_to_library_path=[external_libraries_root],
             interactive=True,
             add_to_env={

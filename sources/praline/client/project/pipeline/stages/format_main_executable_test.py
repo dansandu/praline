@@ -2,7 +2,7 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stages.format_main_executable import format_main_executable
 from praline.common import executable_source_file_name
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -13,7 +13,7 @@ from unittest import TestCase
 
 class FormatMainExecutableSourceStageTest(TestCase):
     def test_format_main_executable_stale(self):
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
 
@@ -74,7 +74,7 @@ class FormatMainExecutableSourceStageTest(TestCase):
         self.assertEqual(cache, expected_cache)
 
     def test_format_main_executable_fresh(self):
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
 

@@ -60,6 +60,13 @@ class DependencyScope(StrEnum):
     test = auto()
 
 
+@dataclass(frozen=True)
+class ServiceConfiguration:
+    executable_to_run: str
+    library_to_load: str
+    service_name: str
+
+
 number_regex = r"0|[1-9]\d*"
 
 
@@ -235,8 +242,8 @@ class ArtifactManifest:
     compiler: CompilerType
     exported_symbols: ExportedSymbols
     artifact_type: ArtifactType
-    test_service_runner: str
-    test_service_name: str
+    main_service: ServiceConfiguration
+    test_service: ServiceConfiguration
     dependencies: List[ArtifactDependency]
 
     def get_artifact_identifier(self, 
@@ -268,7 +275,6 @@ class ArtifactManifest:
             self.platform == other.platform and
             self.compiler == other.compiler
         )
-
 
 
 T = TypeVar('T')

@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stages.setup_project import setup_project, 
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
@@ -15,20 +15,22 @@ class SetupProjectStageTest(TestCase):
         organization = 'my_organization'
         artifact = 'my_artifact'
 
-        self.artifact_manifest = ArtifactManifest(organization=organization,
-                                                  artifact=artifact,
-                                                  version=ArtifactVersion.from_string('0.0.0'),
-                                                  mode=Mode.debug,
-                                                  architecture=Architecture.arm,
-                                                  platform=Platform.linux,
-                                                  compiler=CompilerType.gcc,
-                                                  exported_symbols=ExportedSymbols.explicit,
-                                                  artifact_type=ArtifactType.executable,
-                                                  test_service_runner=None,
-                                                  test_service_name='default',
-                                                  dependencies=[])
+        self.artifact_manifest = ArtifactManifest(
+            organization=organization,
+            artifact=artifact,
+            version=ArtifactVersion.from_string('0.0.0'),
+            mode=Mode.debug,
+            architecture=Architecture.arm,
+            platform=Platform.linux,
+            compiler=CompilerType.gcc,
+            exported_symbols=ExportedSymbols.explicit,
+            artifact_type=ArtifactType.executable,
+            main_service=None,
+            test_service=None,
+            dependencies=[]
+        )
         
-        self.project_structure = get_project_structure(project_directory='directory', organization=organization, artifact=artifact)
+        self.project_structure = ProjectStructure(project_directory='directory', organization=organization, artifact=artifact)
 
     def test_project_setup(self):
         file_system = FileSystemMock(

@@ -2,7 +2,7 @@ from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_main_executable import compile_main_executable
 from praline.common import executable_source_file_name
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 from praline.common.progress_bar import ProgressBarSupplier
 
 from os.path import join
@@ -29,7 +29,7 @@ class CompilerMock:
 
 class CompileMainExecutableSourceStageTest(TestCase):
     def setUp(self):
-        self.project_structure = get_project_structure('project', 'org', 'art')
+        self.project_structure = ProjectStructure('project', 'org', 'art')
 
         self.main_source_path = lambda source: join(self.project_structure.main_sources_domain_root, source)
 

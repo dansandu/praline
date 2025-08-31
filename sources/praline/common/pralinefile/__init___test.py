@@ -1,6 +1,6 @@
 from praline.common import (
     Architecture, ArtifactVersion, ArtifactType, CompilerType, DependencyScope, DependencyVersion, ExportedSymbols, 
-    Mode, Platform
+    Mode, Platform, ServiceConfiguration
 )
 from praline.common.pralinefile import read_pralinefile
 from praline.common.testing.file_system_mock import FileSystemMock 
@@ -17,8 +17,8 @@ class PralinefileTest(TestCase):
                     artifact: another_artifact
                     version: 7.3.4.SNAPSHOT
                     dependencies:
-                    - organization: org
-                      artifact: art
+                    - organization: dansandu
+                      artifact: service_runner
                       version: 3.+5.+5
                     """
             }
@@ -34,12 +34,20 @@ class PralinefileTest(TestCase):
             'compilers': list(CompilerType),
             'exported_symbols': ExportedSymbols.explicit,
             'artifact_type': ArtifactType.library,
-            'test_service_runner': None,
-            'test_service_name': 'default',
+            'main_service': ServiceConfiguration(
+                executable_to_run=None,
+                library_to_load=None,
+                service_name=None,
+            ),
+            'test_service': ServiceConfiguration(
+                executable_to_run='dansandu-service_runner',
+                library_to_load=None,
+                service_name='dansandu-radiance-run_unit_tests',
+            ),
             'dependencies': [
                 {
-                    'organization': 'org',
-                    'artifact': 'art',
+                    'organization': 'dansandu',
+                    'artifact': 'service_runner',
                     'scope': DependencyScope.main,
                     'version': DependencyVersion.from_string('3.+5.+5')
                 }
@@ -64,8 +72,14 @@ class PralinefileTest(TestCase):
                     compilers: [gcc, clang]
                     exported_symbols: all
                     artifact_type: executable
-                    test_service_runner: org-art
-                    test_service_name: custom_service
+                    main_service:
+                        executable_to_run: org-art
+                        library_to_load: org-art
+                        service_name: the-main-service
+                    test_service:
+                        executable_to_run: org-art
+                        library_to_load: org-art
+                        service_name: the-test-service
                     dependencies:
                     - organization: org
                       artifact: art
@@ -85,8 +99,16 @@ class PralinefileTest(TestCase):
             'compilers': [CompilerType.gcc, CompilerType.clang],
             'exported_symbols': ExportedSymbols.all,
             'artifact_type': ArtifactType.executable,
-            'test_service_runner': 'org-art',
-            'test_service_name': 'custom_service',
+            'main_service': ServiceConfiguration(
+                executable_to_run='org-art',
+                library_to_load='org-art',
+                service_name='the-main-service',
+            ),
+            'test_service': ServiceConfiguration(
+                executable_to_run='org-art',
+                library_to_load='org-art',
+                service_name='the-test-service',
+            ),
             'dependencies': [
                 {
                     'organization': 'org',

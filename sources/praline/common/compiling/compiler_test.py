@@ -2,7 +2,7 @@ from praline.common import (Architecture, ArtifactManifest, ArtifactType, Artifa
                             CompilerType, ExportedSymbols, Mode, Platform)
 from praline.common.compiling.compiler import ICompilingStrategy, IYieldDescriptor, Compiler
 from praline.common.file_system import join
-from praline.common.project_structure import get_project_structure
+from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
 
@@ -92,14 +92,14 @@ class CompilerTest(TestCase):
             compiler=CompilerType.msvc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            test_service_runner=None,
-            test_service_name='default',
+            main_service=None,
+            test_service=None,
             dependencies=[]
         )
 
         self.artifact_identifier = self.artifact_manifest.get_artifact_identifier()
 
-        self.project_structure = get_project_structure('project', self.artifact_manifest.organization, self.artifact_manifest.artifact)
+        self.project_structure = ProjectStructure('project', self.artifact_manifest.organization, self.artifact_manifest.artifact)
 
         self.main_source_path = lambda source: join(self.project_structure.main_sources_domain_root, source)
 

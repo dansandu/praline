@@ -28,13 +28,15 @@ class PackageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            test_service_runner=None,
-            test_service_name='default',
+            main_service=None,
+            test_service=None,
             dependencies=[
-                ArtifactDependency(organization='org2',
-                                   artifact='art2',
-                                   version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
-                                   scope=DependencyScope.main)
+                ArtifactDependency(
+                    organization='org2',
+                    artifact='art2',
+                    version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
+                    scope=DependencyScope.main
+                )
             ]
         )
 
@@ -59,13 +61,15 @@ class PackageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            test_service_runner=None,
-            test_service_name='default',
+            main_service=None,
+            test_service=None,
             dependencies=[
-                ArtifactDependency(organization='org2',
-                                   artifact='art2',
-                                   version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
-                                   scope=DependencyScope.main)
+                ArtifactDependency(
+                    organization='org2',
+                    artifact='art2',
+                    version=DependencyVersion.from_string('1.2.4.SNAPSHOT'),
+                    scope=DependencyScope.main
+                )
             ]
         )
 
@@ -169,8 +173,8 @@ class PackageTest(TestCase):
             compiler=CompilerType.gcc,
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
-            test_service_runner=None,
-            test_service_name='default',
+            main_service=None,
+            test_service=None,
             dependencies=[
                 ArtifactDependency(organization='org2',
                                    artifact='art2',
