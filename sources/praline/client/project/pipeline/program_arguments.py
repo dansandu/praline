@@ -66,7 +66,43 @@ def get_program_arguments(stages: Dict[str, Stage]) -> Dict[str, Any]:
                 'choices': list(ExportedSymbols),
                 'help'   : "If set to explicit only symbols marked by the PRALINE_EXPORT macro will be exported " +
                     "otherwise all symbols are exported. Overrides Pralinefile exported_symbols."
-            }
+            },
+            {
+                'name'  : '--main-service-executable-to-run',
+                'dest'  : 'main_service_executable_to_run',
+                'type'   : str,
+                'help'  : 'The artifact used to run services for the main application.'
+            },
+            {
+                'name'  : '--main-service-library-to-load',
+                'dest'  : 'main_service_library_to_load',
+                'type'   : str,
+                'help'  : 'The name of the service to be run by the main service runner.'
+            },
+            {
+                'name'  : '--main-service-name',
+                'dest'  : 'main_service_name',
+                'type'   : str,
+                'help'  : 'The name of the service to be run by the main service runner.'
+            },
+            {
+                'name'  : '--test-service-executable-to-run',
+                'dest'  : 'test_service_executable_to_run',
+                'type'   : str,
+                'help'  : 'The artifact used to run services for the test application.'
+            },
+            {
+                'name'  : '--test-service-library-to-load',
+                'dest'  : 'test_service_library_to_load',
+                'type'   : str,
+                'help'  : 'The name of the service to be run by the test service runner.'
+            },
+            {
+                'name'  : '--test-service-name',
+                'dest'  : 'test_service_name',
+                'type'   : str,
+                'help'  : 'The name of the service to be run by the test service runner.'
+            },
         ],
         'byStage': {name : stage.program_arguments for name, stage in stages.items() if stage.exposed}
     }

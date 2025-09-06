@@ -12,13 +12,13 @@ with open(f"{os.path.dirname(__file__)}/../resources/praline-client.config", 'r'
 
 
 from praline.client.project.pipeline.orchestration import invoke_stage
-from praline.client.project.pipeline.configuration import get_compiler
 from praline.client.project.pipeline.program_arguments import get_program_arguments
 from praline.client.project.pipeline.stages import get_stages
 from praline.client.repository.remote_proxy import RemoteProxy
 from praline.common import DirectUserMessageException
 from praline.common.pralinefile import read_pralinefile
 from praline.common.file_system import FileSystem, join
+from praline.common.configuration import get_compiler
 
 
 if __name__ == '__main__':

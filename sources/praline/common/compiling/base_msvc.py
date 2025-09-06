@@ -103,9 +103,14 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         return BaseMsvcYieldDescriptor()
 
     def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
-        include_paths = ['/I', self.project_structure.main_sources_root, '/I', self.project_structure.external_headers_root]
+        include_paths = [
+            '/I', self.project_structure.main_sources_root,
+            '/I', self.project_structure.main_generated_sources_root,
+            '/I', self.project_structure.external_headers_root
+        ]
         if not main_source:
             include_paths.extend(['/I', self.project_structure.test_sources_root])
+            include_paths.extend(['/I', self.project_structure.test_generated_sources_root])
 
         status, stdout, stderror = self.file_system.execute(
             [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, '/EP', source_path] + 
@@ -119,9 +124,14 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> None:
-        include_paths = ['/I', self.project_structure.main_sources_root, '/I', self.project_structure.external_headers_root]
+        include_paths = [
+            '/I', self.project_structure.main_sources_root, 
+            '/I', self.project_structure.main_generated_sources_root,
+            '/I', self.project_structure.external_headers_root,
+        ]
         if not main_source:
             include_paths.extend(['/I', self.project_structure.test_sources_root])
+            include_paths.extend(['/I', self.project_structure.test_generated_sources_root])
 
         status, stdout, stderror = self.file_system.execute(
             [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, f'/Fo{object_path}', '/c', source_path] + 

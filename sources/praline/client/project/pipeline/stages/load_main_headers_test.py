@@ -1,8 +1,8 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.load_main_headers import load_main_headers
 from praline.client.project.pipeline.stages import StageArguments
-from praline.common import executable_source_file_name
-from praline.common.project_structure import get_project_structure
+from praline.common import main_executable_source_file_name
+from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 
 from os.path import join
@@ -11,7 +11,7 @@ from unittest import TestCase
 
 class LoadMainHeadersStageTest(TestCase):
     def test_load_main_headers_stage(self):
-        project_structure = get_project_structure('project', 'org', 'art')
+        project_structure = ProjectStructure('project', 'org', 'art')
 
         main_resource_path = lambda resource: join(project_structure.main_resources_domain_root, resource)
 
@@ -31,7 +31,7 @@ class LoadMainHeadersStageTest(TestCase):
                 main_source_path('a.cpp'): b'',
                 main_source_path('b.hpp'): b'',
                 main_source_path('b.cpp'): b'',
-                main_source_path(executable_source_file_name): b'',
+                main_source_path(main_executable_source_file_name): b'',
                 test_source_path('c.test.hpp'): b'',
             }
         )

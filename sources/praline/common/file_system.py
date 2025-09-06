@@ -2,6 +2,7 @@ from praline.common import Architecture, Platform
 
 import os
 import os.path
+import pathlib
 import platform
 import shutil
 import subprocess
@@ -59,6 +60,14 @@ def normalized_path(path: str) -> str:
 
 def common_path(paths: List[str]) -> str:
     return os.path.commonpath(paths)
+
+
+def get_path_with_extension(path: str) -> str:
+    index = path.rfind('.')
+    if index >= 0:
+        return path[:index]
+    else:
+        return path
 
 
 class FileSystem:

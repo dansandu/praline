@@ -9,7 +9,7 @@ def predicate(arguments: StagePredicateArguments):
     skip_unit_tests   = arguments.program_arguments['global']['skip_unit_tests']
     any_test_sources  = any(
         f.endswith(header_file_extension) or f.endswith(source_file_extension) 
-            for f in file_system.files_in_directory(project_structure.test_sources_root) 
+            for f in file_system.files_in_directory(project_structure.test_sources_domain_root) 
     )
     
     if not skip_unit_tests and any_test_sources:
@@ -28,4 +28,7 @@ def load_test_sources(arguments: StageArguments):
     project_structure = arguments.project_structure
     resources         = arguments.resources
 
-    resources['test_sources'] = [f for f in file_system.files_in_directory(project_structure.test_sources_root) if f.endswith(source_file_extension)]
+    resources['test_sources'] = [
+        f for f in file_system.files_in_directory(project_structure.test_sources_domain_root) 
+            if f.endswith(source_file_extension)
+    ]
