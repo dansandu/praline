@@ -111,6 +111,7 @@ class LinkTestLibraryStageTest(TestCase):
             },
             constrained_output=[
                 'test_library', 
+                'test_library_interface',
                 'test_library_symbols_table',
             ]
         ) as resources:
@@ -118,5 +119,7 @@ class LinkTestLibraryStageTest(TestCase):
             link_test_library(stage_arguments)
 
         self.assertEqual(resources['test_library'], 'org-art-arm-linux-gcc-debug-1.3.0.test.dll')
+
+        self.assertEqual(resources['test_library_interface'], 'org-art-arm-linux-gcc-debug-1.3.0.test.lib')
 
         self.assertEqual(resources['test_library_symbols_table'], 'org-art-arm-linux-gcc-debug-1.3.0.test.pdb')

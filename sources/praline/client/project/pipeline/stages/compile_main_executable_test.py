@@ -1,7 +1,7 @@
 from praline.client.project.pipeline.stages import StageArguments
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages.compile_main_executable import compile_main_executable
-from praline.common import executable_source_file_name
+from praline.common import main_executable_source_file_name
 from praline.common.project_structure import ProjectStructure
 from praline.common.progress_bar import ProgressBarSupplier
 
@@ -31,6 +31,8 @@ class CompileMainExecutableSourceStageTest(TestCase):
     def setUp(self):
         self.project_structure = ProjectStructure('project', 'org', 'art')
 
+        self.main_generated_source_path = lambda source: join(self.project_structure.main_generated_sources_root, source)
+
         self.main_source_path = lambda source: join(self.project_structure.main_sources_domain_root, source)
 
         self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
@@ -38,10 +40,12 @@ class CompileMainExecutableSourceStageTest(TestCase):
         self.main_object_path = lambda object: join(self.project_structure.main_objects_root, object)
 
     def test_with_formatted_sources(self):
+        farseer_header = self.main_generated_source_path('far.seer')
+
         header_a = self.main_source_path('a.hpp')
         header_b = self.main_source_path('b.hpp')
         
-        source_executable = self.main_source_path(executable_source_file_name)
+        source_executable = self.main_source_path(main_executable_source_file_name)
 
         object_executable = self.main_object_path('org-art-executable.obj')
 
@@ -50,6 +54,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
         compiler = CompilerMock(
             self,
             expected_headers=[
+                farseer_header,
                 header_a,
                 header_b,
                 header_c,
@@ -63,6 +68,9 @@ class CompileMainExecutableSourceStageTest(TestCase):
             stage='compile_main_executable',
             activation=0,
             resources={
+                'generated_main_farseer_cpp_headers': [
+                    farseer_header,
+                ],
                 'project_directories': True,
                 'formatted_main_headers': [
                     header_a,
@@ -81,10 +89,12 @@ class CompileMainExecutableSourceStageTest(TestCase):
         self.assertCountEqual(resources['main_executable_object'], object_executable)
 
     def test_with_unformatted_sources(self):
+        farseer_header = self.main_generated_source_path('far.seer')
+
         header_a = self.main_source_path('a.hpp')
         header_b = self.main_source_path('b.hpp')
 
-        source_executable = self.main_source_path(executable_source_file_name)
+        source_executable = self.main_source_path(main_executable_source_file_name)
 
         object_executable = self.main_object_path('org-art-executable.obj')
 
@@ -93,6 +103,7 @@ class CompileMainExecutableSourceStageTest(TestCase):
         compiler = CompilerMock(
             self,
             expected_headers=[
+                farseer_header,
                 header_a,
                 header_b,
                 header_c,
@@ -106,6 +117,9 @@ class CompileMainExecutableSourceStageTest(TestCase):
             stage='compile_main_executable',
             activation=1,
             resources={
+                'generated_main_farseer_cpp_headers': [
+                    farseer_header,
+                ],
                 'project_directories': True,
                 'main_headers': [
                     header_a,

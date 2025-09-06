@@ -8,11 +8,15 @@ import re
 
 snapshot_datetime_format = "%Y%m%d%H%M%S%f"
 
+farseer_file_extension = '.seer'
+
 header_file_extension = '.hpp'
 
 source_file_extension = '.cpp'
 
-executable_source_file_name = 'executable.cpp'
+main_executable_source_file_name = 'executable.cpp'
+
+test_executable_source_file_name = 'executable.test.cpp'
 
 package_extension = '.tar.gz'
 
@@ -60,10 +64,26 @@ class DependencyScope(StrEnum):
     test = auto()
 
 
+@dataclass(eq=True)
+class ArtifactPrefix:
+    def __init__(self, prefix: str):
+        if ':' in prefix:
+            self.scope, self.prefix = prefix.split(':')
+        else:
+            self.scope = 'main'
+            self.prefix = prefix
+
+    def __str__(self):
+        return f"{self.scope}:{self.prefix}"
+    
+    def __repr__(self):
+        return f"{type(self).__name__}({self.__str__().__repr__()})"
+
+
 @dataclass(frozen=True)
 class ServiceConfiguration:
-    executable_to_run: str
-    library_to_load: str
+    executable_to_run: ArtifactPrefix
+    library_to_load: ArtifactPrefix
     service_name: str
 
 

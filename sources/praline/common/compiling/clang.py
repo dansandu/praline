@@ -66,9 +66,15 @@ class ClangCompilingStrategy(ICompilingStrategy):
         return ClangYieldDescriptor()
 
     def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
-        include_paths = [f'-I{self.project_structure.main_sources_root}', f'-I{self.project_structure.external_headers_root}']
+        include_paths = [
+            f'-I{self.project_structure.main_sources_root}', 
+            f'-I{self.project_structure.main_generated_sources_root}', 
+            f'-I{self.project_structure.external_headers_root}'
+        ]
+        
         if not main_source:
             include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
+            include_paths.extend([f'-I{self.project_structure.test_generated_sources_root}'])
 
         status, stdout, stderror = self.file_system.execute(
             ['clang++', '-E', '-P', source_path] + 
@@ -82,9 +88,15 @@ class ClangCompilingStrategy(ICompilingStrategy):
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool):
-        include_paths = [f'-I{self.project_structure.main_sources_root}', f'-I{self.project_structure.external_headers_root}']
+        include_paths = [
+            f'-I{self.project_structure.main_sources_root}',
+            f'-I{self.project_structure.main_generated_sources_root}',
+            f'-I{self.project_structure.external_headers_root}'
+        ]
+        
         if not main_source:
             include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
+            include_paths.extend([f'-I{self.project_structure.test_generated_sources_root}'])
 
         try:
             self.file_system.execute_and_fail_on_bad_return(

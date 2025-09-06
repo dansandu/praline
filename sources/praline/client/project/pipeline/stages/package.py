@@ -5,6 +5,26 @@ from praline.common.file_system import join, relative_path
 
 @stage(
     requirements=[
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table'],
+
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table'],
+
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'main_executable', 'main_executable_symbols_table'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'main_executable', 'main_executable_symbols_table'],
+
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers', 'tests_passed'],
+        ['project_directories', 'main_resources', 'formatted_main_headers', 'generated_main_farseer_cpp_headers'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers', 'tests_passed'],
+        ['project_directories', 'main_resources',           'main_headers', 'generated_main_farseer_cpp_headers'],
+
         ['project_directories', 'main_resources', 'formatted_main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
         ['project_directories', 'main_resources', 'formatted_main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table'],
         ['project_directories', 'main_resources',           'main_headers', 'main_library', 'main_library_interface', 'main_library_symbols_table', 'main_executable', 'main_executable_symbols_table', 'tests_passed'],
@@ -23,7 +43,7 @@ from praline.common.file_system import join, relative_path
         ['project_directories', 'main_resources', 'formatted_main_headers', 'tests_passed'],
         ['project_directories', 'main_resources', 'formatted_main_headers'],
         ['project_directories', 'main_resources',           'main_headers', 'tests_passed'],
-        ['project_directories', 'main_resources',           'main_headers']
+        ['project_directories', 'main_resources',           'main_headers'],
     ],
     output=['package'], 
     exposed=True)
@@ -40,10 +60,15 @@ def package(arguments: StageArguments):
 
     write_artifact_manifest(file_system, manifest_file_path, artifact_manifest)
 
+    headers = []
+
     if 'formatted_main_headers' in resources:
-        headers = resources['formatted_main_headers']
+        headers.extend(resources['formatted_main_headers'])
     else:
-        headers = resources['main_headers']
+        headers.extend(resources['main_headers'])
+
+    if 'generated_main_farseer_cpp_headers' in resources:
+        headers.extend(resources['generated_main_farseer_cpp_headers'])
 
     package_files = [(path, relative_path(path, project_root)) for path in resources['main_resources']]
 

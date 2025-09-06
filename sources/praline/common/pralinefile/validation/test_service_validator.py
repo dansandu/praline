@@ -1,13 +1,13 @@
-from praline.common import ServiceConfiguration
+from praline.common import ArtifactPrefix, ServiceConfiguration
 from praline.common.pralinefile.validation.validator import validator
 from praline.common.pralinefile.validation.service_validator import validate_service
 from typing import Any, Dict
 
 
 default_service_configuration = ServiceConfiguration(
-    executable_to_run='dansandu-service_runner',
+    executable_to_run=ArtifactPrefix('dansandu-service_runner'),
     library_to_load=None,
-    service_name='dansandu-radiance-run_unit_tests'
+    service_name='dansandu-radiance-run_tests'
 )
 
 

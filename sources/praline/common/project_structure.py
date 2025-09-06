@@ -32,8 +32,6 @@ class ProjectStructure:
         self.generated_root              = join(self.target_root,    'generated')
         self.main_generated_sources_root = join(self.generated_root, 'sources', main)
         self.test_generated_sources_root = join(self.generated_root, 'sources', test)
-        self.main_generated_objects_root = join(self.generated_root, 'objects', main)
-        self.test_generated_objects_root = join(self.generated_root, 'objects', test)
 
         self.executables_root          = join(self.target_root, 'executables')
         self.packages_root             = join(self.target_root, 'packages')

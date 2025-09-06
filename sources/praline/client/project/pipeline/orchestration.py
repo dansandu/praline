@@ -88,7 +88,7 @@ def create_pipeline(file_system: FileSystem,
         stage_subtree = valid_trees[0]
         stage_order   = root_last_traversal(target_stage, lambda n: stage_subtree[n][1])
         pipeline      = [(stage_subtree[stage][0], stage) for stage in stage_order]
-        logger.debug(f"Created pipepline {pipeline}")
+        logger.info(f"Created pipepline {pipeline}")
         return pipeline
     else:
         message = f"could not create a pipeline to satisfy stage '{target_stage}':\n"

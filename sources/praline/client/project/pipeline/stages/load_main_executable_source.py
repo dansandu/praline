@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
-from praline.common import ArtifactType, executable_source_file_name
+from praline.common import ArtifactType, main_executable_source_file_name
 from praline.common.file_system import join
 
 
@@ -15,8 +15,7 @@ int main(const int, const char* const* const)
 
 
 def predicate(arguments: StagePredicateArguments):
-    artifact_manifest = arguments.artifact_manifest
-    if artifact_manifest.artifact_type == ArtifactType.executable:
+    if arguments.artifact_manifest.artifact_type == ArtifactType.executable:
         return StagePredicateResult.success()
     else:
         return StagePredicateResult.failure("artifact type is not executable -- set artifact type to executable inside the Pralinefile or overwrite with the CLI flag")
@@ -28,7 +27,7 @@ def load_main_executable_source(arguments: StageArguments):
     project_structure = arguments.project_structure
     resources         = arguments.resources
 
-    main_executable_source = join(project_structure.main_sources_domain_root, executable_source_file_name)
+    main_executable_source = join(project_structure.main_sources_domain_root, main_executable_source_file_name)
 
     resources['main_executable_source'] = main_executable_source
 

@@ -2,7 +2,7 @@ from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments
 from praline.client.project.pipeline.stages.load_main_executable_source import load_main_executable_source, main_executable_source_contents, predicate
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
-                            CompilerType, ExportedSymbols, Mode, Platform, executable_source_file_name)
+                            CompilerType, ExportedSymbols, Mode, Platform, main_executable_source_file_name)
 from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 
@@ -47,7 +47,7 @@ class LoadMainExecutableSourceStageTest(TestCase):
             stage_arguments = StageArguments(file_system=file_system, project_structure=project_structure, resources=resources)
             load_main_executable_source(stage_arguments)
 
-        main_executable_source = join(project_structure.main_sources_domain_root, executable_source_file_name)
+        main_executable_source = join(project_structure.main_sources_domain_root, main_executable_source_file_name)
 
         expected_files = {
             main_executable_source: main_executable_source_contents.encode('utf-8'),

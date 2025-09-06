@@ -1,6 +1,6 @@
 from praline.common import (
     Architecture, ArtifactVersion, ArtifactType, CompilerType, DependencyScope, DependencyVersion, ExportedSymbols, 
-    Mode, Platform, ServiceConfiguration
+    Mode, Platform, ServiceConfiguration, ArtifactPrefix
 )
 from praline.common.pralinefile import read_pralinefile
 from praline.common.testing.file_system_mock import FileSystemMock 
@@ -35,14 +35,14 @@ class PralinefileTest(TestCase):
             'exported_symbols': ExportedSymbols.explicit,
             'artifact_type': ArtifactType.library,
             'main_service': ServiceConfiguration(
-                executable_to_run=None,
+                executable_to_run=ArtifactPrefix('dansandu-service_runner'),
                 library_to_load=None,
                 service_name=None,
             ),
             'test_service': ServiceConfiguration(
-                executable_to_run='dansandu-service_runner',
+                executable_to_run=ArtifactPrefix('dansandu-service_runner'),
                 library_to_load=None,
-                service_name='dansandu-radiance-run_unit_tests',
+                service_name='dansandu-radiance-run_tests',
             ),
             'dependencies': [
                 {
@@ -100,13 +100,13 @@ class PralinefileTest(TestCase):
             'exported_symbols': ExportedSymbols.all,
             'artifact_type': ArtifactType.executable,
             'main_service': ServiceConfiguration(
-                executable_to_run='org-art',
-                library_to_load='org-art',
+                executable_to_run=ArtifactPrefix('org-art'),
+                library_to_load=ArtifactPrefix('org-art'),
                 service_name='the-main-service',
             ),
             'test_service': ServiceConfiguration(
-                executable_to_run='org-art',
-                library_to_load='org-art',
+                executable_to_run=ArtifactPrefix('org-art'),
+                library_to_load=ArtifactPrefix('org-art'),
                 service_name='the-test-service',
             ),
             'dependencies': [

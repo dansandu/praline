@@ -2,16 +2,12 @@ from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stages import StageArguments, stage
 from praline.common import DirectUserMessageException
 from praline.common.file_system import ProcessExecutionError
-from praline.common.service_runner import get_test_service_runner_executable
+from praline.common.service import get_service_executable, get_service_library
 
 
 class TestProcessExecutionException(ProcessExecutionError, DirectUserMessageException):
     def __init__(self, status: int, stdout: bytes, stderror: bytes):
         super().__init__(status, stdout, stderror)
-
-
-class TestServiceRunnerNotSetException(DirectUserMessageException):
-    pass
 
 
 program_arguments = [
@@ -27,8 +23,16 @@ program_arguments = [
 ]
 
 
-@stage(requirements=[['project_directories', 'test_library', 'external_executables', 'main_executable'],
-                     ['project_directories', 'test_library', 'external_executables']], 
+@stage(requirements=[
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable', 'main_executable', 'main_library'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable', 'main_executable'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable', 'main_library'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'main_executable', 'main_library'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'main_executable'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'main_library'],
+            ['project_directories', 'external_executables', 'external_libraries', 'test_library'],
+        ],
        output=['tests_passed'],
        exposed=True, 
        program_arguments=program_arguments,
@@ -41,19 +45,30 @@ def test(arguments: StageArguments):
     progress_bar_supplier = arguments.progress_bar_supplier
     program_arguments     = arguments.program_arguments
 
-    test_library = resources['test_library']
+    executables = resources['external_executables'][:]
     
-    external_libraries_root = project_structure.external_libraries_root
+    if 'main_executable' in resources:
+        executables.append(resources['main_executable'])
+    if 'test_executable' in resources:
+        executables.append(resources['test_executable'])
 
-    test_service_runner_executable = get_test_service_runner_executable(artifact_manifest, resources)
+    libraries = resources['external_libraries'][:]
+    libraries.append(resources['test_library'])
 
-    if test_service_runner_executable == None:
-        raise TestServiceRunnerNotSetException(f"The test service runner is not set -- set it inside the Pralinefile using the test_service field")
+    if 'main_library' in resources:
+        libraries.append(resources['main_library'])
+
+    if artifact_manifest.test_service.library_to_load != None:
+        test_library = get_service_library(artifact_manifest.test_service.library_to_load, libraries)
+    else:
+        test_library = resources['test_library']
+    
+    test_service_executable = get_service_executable(artifact_manifest.test_service.executable_to_run, executables)
 
     try:
         file_system.execute_and_fail_on_bad_return(
-            [test_service_runner_executable, test_library, artifact_manifest.test_service.service_name] + program_arguments['byStage']['arguments'],
-            add_to_library_path=[external_libraries_root],
+            [test_service_executable, test_library, artifact_manifest.test_service.service_name] + program_arguments['byStage']['arguments'],
+            add_to_library_path=[project_structure.external_libraries_root],
             interactive=True,
             add_to_env={
                 'PRALINE_PROGRESS_BAR_STAGE_INDEX': str(progress_bar_supplier.stage_index),
