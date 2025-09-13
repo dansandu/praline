@@ -3,7 +3,6 @@ from typing import Any, Callable, Dict, IO, List, Set
 import io
 import os
 import os.path
-import pickle
 
 
 @dataclass

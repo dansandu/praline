@@ -1,17 +1,14 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
+from praline.common.exception import IllformedProjectException
 from praline.common.file_system import FileSystem, join
-
-
-class IllformedProjectError(Exception):
-    pass
 
 
 def check_unique(file_system: FileSystem, root: str, organization: str, artifact: str):
     if len(file_system.list_directory(root)) != 1:
-        raise IllformedProjectError(
+        raise IllformedProjectException(
             f"Directory '{root}'  must only contain the '{organization}' organization directory")
     if len(file_system.list_directory(join(root, organization))) != 1:
-        raise IllformedProjectError(
+        raise IllformedProjectException(
             f"Directory '{join(root, organization)}' must only contain the '{artifact}'  artifact directory")
 
 

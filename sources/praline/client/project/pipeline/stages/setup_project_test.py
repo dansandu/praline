@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stage_resources import DeclaredResourceNotSuppliedError, StageResources
-from praline.client.project.pipeline.stages.setup_project import setup_project, IllformedProjectError
+from praline.client.project.pipeline.stages.setup_project import setup_project, IllformedProjectException
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
@@ -40,14 +40,16 @@ class SetupProjectStageTest(TestCase):
             working_directory=self.project_structure.project_directory
         )
 
-        with StageResources(stage='setup_project', 
-                            activation=0, 
+        with StageResources(stage='setup_project',
                             resources={}, 
-                            constrained_output=['project_directories']) as resources:
-            stage_arguments = StageArguments(file_system=file_system, 
-                                             project_structure=self.project_structure, 
-                                             artifact_manifest=self.artifact_manifest, 
-                                             resources=resources)
+                            constrained_output=['project_directories']
+        ) as resources:
+            stage_arguments = StageArguments(
+                file_system=file_system, 
+                project_structure=self.project_structure, 
+                artifact_manifest=self.artifact_manifest, 
+                resources=resources
+            )
             setup_project(stage_arguments)
 
         self.assertTrue(resources['project_directories'])
@@ -69,15 +71,18 @@ class SetupProjectStageTest(TestCase):
         )
 
         try:
-            with StageResources(stage='setup_project', 
-                                activation=0, 
-                                resources={}, 
-                                constrained_output=['project_directories']) as resources:
-                stage_arguments = StageArguments(file_system=file_system, 
-                                                 project_structure=self.project_structure, 
-                                                 artifact_manifest=self.artifact_manifest, 
-                                                 resources=resources)
-                self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
+            with StageResources(
+                stage='setup_project', 
+                resources={}, 
+                constrained_output=['project_directories']
+            ) as resources:
+                stage_arguments = StageArguments(
+                    file_system=file_system, 
+                    project_structure=self.project_structure, 
+                    artifact_manifest=self.artifact_manifest, 
+                    resources=resources
+                )
+                self.assertRaises(IllformedProjectException, setup_project, stage_arguments)
         except DeclaredResourceNotSuppliedError:
             pass
 
@@ -95,15 +100,18 @@ class SetupProjectStageTest(TestCase):
         )
 
         try:
-            with StageResources(stage='setup_project', 
-                                activation=0, 
-                                resources={}, 
-                                constrained_output=['project_directories']) as resources:
-                stage_arguments = StageArguments(file_system=file_system, 
-                                                 project_structure=self.project_structure, 
-                                                 artifact_manifest=self.artifact_manifest, 
-                                                 resources=resources)
-                self.assertRaises(IllformedProjectError, setup_project, stage_arguments)
+            with StageResources(
+                stage='setup_project', 
+                resources={}, 
+                constrained_output=['project_directories']
+            ) as resources:
+                stage_arguments = StageArguments(
+                    file_system=file_system, 
+                    project_structure=self.project_structure, 
+                    artifact_manifest=self.artifact_manifest, 
+                    resources=resources
+                )
+                self.assertRaises(IllformedProjectException, setup_project, stage_arguments)
         except DeclaredResourceNotSuppliedError:
             pass
 
@@ -120,12 +128,15 @@ class SetupProjectStageTest(TestCase):
             working_directory=self.project_structure.project_directory
         )
 
-        with StageResources(stage='setup_project', 
-                            activation=0, 
-                            resources={}, 
-                            constrained_output=['project_directories']) as resources:
-            stage_arguments = StageArguments(file_system=file_system, 
-                                             project_structure=self.project_structure, 
-                                             artifact_manifest=self.artifact_manifest, 
-                                             resources=resources)
+        with StageResources(
+            stage='setup_project', 
+            resources={}, 
+            constrained_output=['project_directories']
+        ) as resources:
+            stage_arguments = StageArguments(
+                file_system=file_system, 
+                project_structure=self.project_structure, 
+                artifact_manifest=self.artifact_manifest, 
+                resources=resources
+            )
             setup_project(stage_arguments)

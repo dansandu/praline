@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
-from praline.common import DirectUserMessageException
+from praline.common.exception import PullDependenciesNoConnectionException
 from praline.common.file_system import join
 from praline.common.hashing import DeltaItem, DeltaType, delta, progression_resolution
 from praline.common.package import clean_up_package, get_package_contents, unpack
@@ -7,16 +7,14 @@ from praline.common.package import clean_up_package, get_package_contents, unpac
 from requests.exceptions import ConnectionError
 
 
-class PullDependenciesNoConnectionException(DirectUserMessageException):
-    pass
-
-
-@stage(requirements=[['project_directories']],
-       output=['external_resources', 'external_headers', 'external_executables', 
-               'external_libraries',  'external_libraries_interfaces', 
-               'external_symbols_tables'],
-       exposed=True,
-       has_progress_bar=True)
+@stage(
+    requirements=['project_directories'],
+    output=[
+        'external_resources', 'external_headers', 'external_executables', 'external_libraries',  
+        'external_libraries_interfaces', 'external_symbols_tables'
+    ],
+    exposed=True
+)
 def pull_dependencies(arguments: StageArguments):
     file_system       = arguments.file_system
     resources         = arguments.resources

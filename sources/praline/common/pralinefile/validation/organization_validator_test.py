@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.organization_validator import validate_organization
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -16,18 +16,18 @@ class OrganizationValidatorTest(TestCase):
             'organization': '_my_organization'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_organization, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_organization, pralinefile)
 
     def test_invalid_organization_with_sufix(self):
         pralinefile = {
             'organization': 'my_organization_'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_organization, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_organization, pralinefile)
 
     def test_invalid_organization_with_numbers(self):
         pralinefile = {
             'organization': '23my_organization'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_organization, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_organization, pralinefile)

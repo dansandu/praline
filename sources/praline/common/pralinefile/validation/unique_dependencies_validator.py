@@ -1,5 +1,6 @@
 from praline.common import get_duplicates
-from praline.common.pralinefile.validation.validator import validator, PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
+from praline.common.pralinefile.validation.validator import validator
 from typing import Any, Dict
 
 
@@ -12,7 +13,7 @@ def validate_unique_dependencies(pralinefile: Dict[str, Any]):
                 a.get('artifact', 'a') == b.get('artifact', 'b'))
 
     if any(duplicate_artifact(pralinefile, dependency) for dependency in dependencies):
-        raise PralinefileValidationError(f"Pralinefile cannot have itself as a dependency")
+        raise PralinefileValidationException(f"Pralinefile cannot have itself as a dependency")
     
     if get_duplicates(dependencies, lambda a, b: duplicate_artifact(a, b)):
-        raise PralinefileValidationError(f"Pralinefile cannot have duplicate dependencies")
+        raise PralinefileValidationException(f"Pralinefile cannot have duplicate dependencies")

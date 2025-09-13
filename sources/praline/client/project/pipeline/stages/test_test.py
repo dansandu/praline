@@ -19,8 +19,9 @@ class TestStageTest(TestCase):
 
         test_library = join(project_structure.libraries_root, 'org-art.dll')
 
-        test_service_executable = join(project_structure.external_executables_root, 'anotherorg-anotherart.exe')
+        test_executable = join(project_structure.external_executables_root, 'anotherorg-anotherart.exe')
         test_program_arguments = ['test', 'program', 'arguments']
+        test_service_name = 'custom-service'
 
         expected_env = {
             'PRALINE_PROGRESS_BAR_STAGE_INDEX': '1',
@@ -38,11 +39,7 @@ class TestStageTest(TestCase):
             exported_symbols=ExportedSymbols.explicit,
             artifact_type=ArtifactType.library,
             main_service=None,
-            test_service=ServiceConfiguration(
-                executable_to_run=ArtifactPrefix('anotherorg-anotherart'),
-                library_to_load=ArtifactPrefix('org-art'),
-                service_name='custom_service'
-            ),
+            test_service=None,
             dependencies=[
                 ArtifactDependency(
                     organization='anotherorg',
@@ -55,10 +52,10 @@ class TestStageTest(TestCase):
                        add_to_library_path: List[str], 
                        interactive: bool, 
                        add_to_env: Dict[str, str]):
-            self.assertEqual(command, [test_service_executable, test_library, 'custom_service'] + test_program_arguments)
+            self.assertEqual(command, [test_executable, test_library, test_service_name] + test_program_arguments)
             self.assertEqual(add_to_library_path, [project_structure.external_libraries_root])
             self.assertTrue(interactive)
-            self.assertEqual(add_to_env, expected_env)
+            self.assertEqual(len(add_to_env), 0)
             return True
 
         file_system = FileSystemMock(
@@ -69,7 +66,7 @@ class TestStageTest(TestCase):
                 project_structure.external_executables_root
             }, 
             files={
-                test_service_executable: b'',
+                test_executable: b'',
                 test_library: b'',
             },
             on_execute=on_execute
@@ -78,23 +75,31 @@ class TestStageTest(TestCase):
         program_arguments = {
             'byStage': {
                 'arguments': test_program_arguments
+            },
+            'global': {
+                'skip_unit_tests': False
             }
         }
 
-        progress_bar_supplier = ProgressBarSupplierMock(self, 
-                                                        expected_resolution=0, 
-                                                        stage_index=1, 
-                                                        stage_count=5)
+        progress_bar_supplier = ProgressBarSupplierMock(
+            self, 
+            expected_resolution=0, 
+            stage_index=1, 
+            stage_count=5
+        )
 
-        with StageResources(stage='test', 
-                            activation=0, 
-                            resources={
-                                'project_directories': True,
-                                'test_library': test_library,
-                                'external_executables': [test_service_executable],
-                                'external_libraries': [],
-                            }, 
-                            constrained_output=['tests_passed']) as resources:
+        with StageResources(
+            stage='test', 
+            resources={
+                'project_directories': True,
+                'test_service': ServiceConfiguration(
+                    executable_to_run=test_executable,
+                    library_to_load=test_library,
+                    service_name=test_service_name
+                ),
+            }, 
+            constrained_output=['tests_passed']
+        ) as resources:
             stage_arguments = StageArguments(
                 file_system=file_system,
                 project_structure=project_structure,
@@ -105,5 +110,5 @@ class TestStageTest(TestCase):
             )
             test(stage_arguments)
 
-        self.assertEqual(resources['tests_passed'], 'success')
+        self.assertTrue(resources['tests_passed'])
  

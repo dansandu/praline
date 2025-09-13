@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.test_service_validator import validate_test_service
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 
 from unittest import TestCase
 
@@ -48,4 +48,4 @@ class TestServiceTest(TestCase):
             ]
         }
 
-        self.assertRaises(PralinefileValidationError, validate_test_service, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_test_service, pralinefile)

@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.allowed_fields_validator import validate_allowed_fields
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -29,7 +29,7 @@ class AllowedFieldsValidatorTest(TestCase):
             'build': 'x32'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_allowed_fields, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_allowed_fields, pralinefile)
 
     def test_unrecognized_dependency_field(self):
         pralinefile = {
@@ -44,4 +44,4 @@ class AllowedFieldsValidatorTest(TestCase):
             ]
         }
         
-        self.assertRaises(PralinefileValidationError, validate_allowed_fields, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_allowed_fields, pralinefile)

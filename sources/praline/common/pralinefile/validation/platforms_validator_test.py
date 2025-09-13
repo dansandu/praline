@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.platforms_validator import validate_platforms
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -21,7 +21,7 @@ class PlatformsValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_platforms, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_platforms, pralinefile)
 
     def test_invalid_platforms_type(self):
         pralinefile = {
@@ -31,7 +31,7 @@ class PlatformsValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_platforms, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_platforms, pralinefile)
 
     def test_invalid_empty_platforms(self):
         pralinefile = {
@@ -41,7 +41,7 @@ class PlatformsValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_platforms, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_platforms, pralinefile)
 
     def test_valid_unset_platforms_field(self):
         pralinefile = {

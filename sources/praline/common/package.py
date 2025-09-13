@@ -1,8 +1,13 @@
-from praline.common import (ArtifactManifest, DependencyVersion, PackageVersion, package_extension, package_name_pattern)
+from praline.common import (
+    ArtifactManifest, DependencyVersion, PackageVersion, package_extension, package_name_pattern
+)
 from praline.common.algorithm.general import cartesian_product
-from praline.common.algorithm.graph.instance_traversal import InstanceValidationResult, multiple_instance_depth_first_traversal
+from praline.common.algorithm.graph.instance_traversal import (
+    InstanceValidationResult, multiple_instance_depth_first_traversal
+)
 from praline.common.compiling.compiler import get_compiling_strategy_supplier
 from praline.common.file_system import FileSystem, basename, common_path, join, normalized_path
+from praline.common.progress_bar import ProgressBarSupplier
 
 
 import logging
@@ -102,7 +107,7 @@ def get_package_dependencies_recursively(file_system: FileSystem,
     def no_cyclic_depedencies(cycle: List[str]):
         raise ArtifactCyclicDependenciesError(f"Artifact '{root_package}' has cyclic dependencies {cycle}")
 
-    def visitor(package):
+    def children_supplier(package):
         if package == root_package:
             dependencies = root_dependencies
         else:
@@ -116,10 +121,13 @@ def get_package_dependencies_recursively(file_system: FileSystem,
             fixed_dependencies.append(matching_packages)
         return cartesian_product(fixed_dependencies)
 
-    instances = multiple_instance_depth_first_traversal(start_node=root_package, 
-                                                        node_visitor=visitor, 
-                                                        instance_validator=no_version_conflicts, 
-                                                        on_cycle=no_cyclic_depedencies)
+    instances = multiple_instance_depth_first_traversal(
+        start_node=root_package, 
+        children_supplier=children_supplier, 
+        instance_validator=no_version_conflicts, 
+        on_cycle=no_cyclic_depedencies
+    )
+    
     valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
     
     if not valid_trees:
@@ -130,10 +138,17 @@ def get_package_dependencies_recursively(file_system: FileSystem,
     return dependencies
 
 
-def pack(file_system: FileSystem, package_path: str, package_files: List[Tuple[str, str]]):
-    with file_system.open_tarfile(package_path, 'w:gz') as archive:
-        for file_path, package_file_path in package_files:
-            archive.add(file_path, package_file_path)
+def pack(
+    file_system: FileSystem, 
+    package_path: str, package_files: List[Tuple[str, str]], 
+    progress_bar_supplier: ProgressBarSupplier
+):
+    with progress_bar_supplier.create(resolution=len(package_files)) as progress_bar:
+        with file_system.open_tarfile(package_path, 'w:gz') as archive:
+            for file_path, package_file_path in package_files:
+                progress_bar.update_description(file_path)
+                archive.add(file_path, package_file_path)
+                progress_bar.advance()
 
 
 def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> Dict[str, List[str]]:

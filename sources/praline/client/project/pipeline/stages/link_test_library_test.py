@@ -66,41 +66,38 @@ class LinkTestLibraryStageTest(TestCase):
         )
 
         object_a = main_object_path('org-art-a.obj')
-        object_b = main_object_path('org-art-b.obj')
-
-        object_d = test_object_path('org-art-c.test.obj')
-        object_e = test_object_path('org-art-d.test.obj')
+        object_b = test_object_path('org-art-b.test.obj')
+        object_c = test_object_path('org-art-c.test.obj')
 
         external_library = external_library_path('org-art-a-arm-linux-gcc-debug.0.0.1.dll')
         
         external_library_interface = external_interface_path('org-art-b-arm-linux-gcc-debug.0.0.2.lib')
 
-        compiler = CompilerMock(self,
-                                expected_objects=[
-                                    object_a,
-                                    object_b,
-                                    object_d,
-                                    object_e,
-                                ],
-                                external_libraries=[
-                                    external_library,
-                                ],
-                                external_libraries_interfaces=[
-                                    external_library_interface,
-                                ])
+        compiler = CompilerMock(
+            self,
+            expected_objects=[
+                object_a,
+                object_b,
+                object_c,
+            ],
+            external_libraries=[
+                external_library,
+            ],
+            external_libraries_interfaces=[
+                external_library_interface,
+            ]
+        )
 
         with StageResources(
             stage='link_main_library',
-            activation=0,
             resources={
                 'project_directories': True,
                 'main_objects': [
                     object_a,
-                    object_b,
                 ],
                 'test_objects': [
-                    object_d,
-                    object_e,
+                    object_b,
+                    object_c,
                 ],
                 'external_libraries': [
                     external_library,
@@ -115,7 +112,11 @@ class LinkTestLibraryStageTest(TestCase):
                 'test_library_symbols_table',
             ]
         ) as resources:
-            stage_arguments = StageArguments(compiler=compiler, artifact_manifest=artifact_manifest, resources=resources)
+            stage_arguments = StageArguments(
+                compiler=compiler, 
+                artifact_manifest=artifact_manifest, 
+                resources=resources
+            )
             link_test_library(stage_arguments)
 
         self.assertEqual(resources['test_library'], 'org-art-arm-linux-gcc-debug-1.3.0.test.dll')

@@ -1,5 +1,5 @@
 from praline.common import ArtifactPrefix, ServiceConfiguration
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from typing import Any, Dict
 
 
@@ -15,7 +15,7 @@ def validate_service(pralinefile: Dict[str, Any], key: str, default_service_conf
     service_runner = pralinefile.get(key)
 
     if service_runner != None and not isinstance(service_runner, dict):
-        raise PralinefileValidationError("Pralinefile service runner has invalid " +
+        raise PralinefileValidationException("Pralinefile service runner has invalid " +
                                          f"type '{type(service_runner)}' -- type must be dict")    
 
     if service_runner != None:
@@ -23,7 +23,7 @@ def validate_service(pralinefile: Dict[str, Any], key: str, default_service_conf
 
         for field in service_runner:
             if field not in allowed_fields:
-                raise PralinefileValidationError(f"Pralinefile {key} field has unrecognized field {field}")
+                raise PralinefileValidationException(f"Pralinefile {key} field has unrecognized field {field}")
 
         def check_if_prefix_is_dependency(artifact_prefix: str):
             prefix = ArtifactPrefix(artifact_prefix).prefix
@@ -36,7 +36,7 @@ def validate_service(pralinefile: Dict[str, Any], key: str, default_service_conf
             if not is_dependency:
                 root_prefix = get_artifact_prefix(pralinefile)
                 if prefix != root_prefix:
-                    raise PralinefileValidationError(
+                    raise PralinefileValidationException(
                         f"Pralinefile {key} {artifact_prefix} must be the root artifact or one of its dependencies")
 
         executable_to_run_raw = service_runner.get(
@@ -45,7 +45,7 @@ def validate_service(pralinefile: Dict[str, Any], key: str, default_service_conf
 
         if executable_to_run_raw != None:
             if not isinstance(executable_to_run_raw, str):
-                raise PralinefileValidationError(
+                raise PralinefileValidationException(
                     f"Pralinefile {key} executable_to_run has invalid type '{type(executable_to_run_raw)}' -- type must be str")
             check_if_prefix_is_dependency(executable_to_run_raw)
             executable_to_run = ArtifactPrefix(executable_to_run_raw)
@@ -58,7 +58,7 @@ def validate_service(pralinefile: Dict[str, Any], key: str, default_service_conf
 
         if library_to_load_raw != None:
             if not isinstance(library_to_load_raw, str):
-                raise PralinefileValidationError(
+                raise PralinefileValidationException(
                     f"Pralinefile {key} library_to_load has invalid type '{type(library_to_load_raw)}' -- type must be str")
             check_if_prefix_is_dependency(library_to_load_raw)
             library_to_load = ArtifactPrefix(library_to_load_raw)
@@ -68,7 +68,7 @@ def validate_service(pralinefile: Dict[str, Any], key: str, default_service_conf
         service_name = service_runner.get('service_name', default_service_configuration.service_name)
 
         if service_name != None and not isinstance(service_name, str):
-            raise PralinefileValidationError(
+            raise PralinefileValidationException(
                 f"Pralinefile {key} service_name has invalid type '{type(service_name)}' -- type must be str")
     
         pralinefile[key] = ServiceConfiguration(

@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.architectures_validator import validate_architecture
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -21,7 +21,7 @@ class ArchitecturesValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_architecture, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_architecture, pralinefile)
 
     def test_invalid_architecture_type(self):
         pralinefile = {
@@ -31,7 +31,7 @@ class ArchitecturesValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_architecture, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_architecture, pralinefile)
 
     def test_invalid_empty_architectures(self):
         pralinefile = {
@@ -41,7 +41,7 @@ class ArchitecturesValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_architecture, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_architecture, pralinefile)
 
     def test_valid_unset_architectures_field(self):
         pralinefile = {

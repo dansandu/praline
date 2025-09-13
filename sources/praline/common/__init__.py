@@ -14,15 +14,9 @@ header_file_extension = '.hpp'
 
 source_file_extension = '.cpp'
 
-main_executable_source_file_name = 'executable.cpp'
-
-test_executable_source_file_name = 'executable.test.cpp'
+executable_source_file_name = 'executable.cpp'
 
 package_extension = '.tar.gz'
-
-
-class DirectUserMessageException(Exception):
-    pass
 
 
 class Architecture(StrEnum):

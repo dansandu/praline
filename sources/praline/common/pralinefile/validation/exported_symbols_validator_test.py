@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.exported_symbols_validator import validate_exported_symbols
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -21,7 +21,7 @@ class ExportedSymbolsValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_exported_symbols, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_exported_symbols, pralinefile)
 
     def test_invalid_exported_symbols_value(self):
         pralinefile = {
@@ -31,7 +31,7 @@ class ExportedSymbolsValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_exported_symbols, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_exported_symbols, pralinefile)
 
     def test_default_value(self):
         pralinefile = {

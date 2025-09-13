@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.artifact_type_validator import validate_artifact_type
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -30,7 +30,7 @@ class ArtifactTypeValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_artifact_type, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_artifact_type, pralinefile)
 
     def test_invalid_artifact_type_value(self):
         pralinefile = {
@@ -40,7 +40,7 @@ class ArtifactTypeValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_artifact_type, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_artifact_type, pralinefile)
 
     def test_default_value(self):
         pralinefile = {

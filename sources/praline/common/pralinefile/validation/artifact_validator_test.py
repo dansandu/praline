@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.artifact_validator import validate_artifact
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -20,7 +20,7 @@ class ArtifactValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_artifact, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_artifact, pralinefile)
 
     def test_invalid_artifact_with_underscore_prefix(self):
         pralinefile = {
@@ -29,7 +29,7 @@ class ArtifactValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_artifact, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_artifact, pralinefile)
 
     def test_invalid_artifact_with_numbers(self):
         pralinefile = {
@@ -38,4 +38,4 @@ class ArtifactValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_artifact, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_artifact, pralinefile)

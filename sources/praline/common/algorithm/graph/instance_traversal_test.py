@@ -36,7 +36,7 @@ class InstanceTraversalTest(TestCase):
 
         instances = multiple_instance_depth_first_traversal(
             start_node='A', 
-            node_visitor=tree.__getitem__, 
+            children_supplier=tree.__getitem__, 
             instance_validator=lambda _, __, ___: InstanceValidationResult.success(), 
             on_cycle=error_on_cycle
         )
@@ -146,7 +146,7 @@ class InstanceTraversalTest(TestCase):
         
         instances = multiple_instance_depth_first_traversal(
             start_node='A', 
-            node_visitor=tree.__getitem__, 
+            children_supplier=tree.__getitem__, 
             instance_validator=lambda _, __, ___: InstanceValidationResult.success(), 
             on_cycle=cycles.append
         )

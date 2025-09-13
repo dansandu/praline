@@ -1,5 +1,5 @@
+from praline.common.exception import PralinefileValidationException
 from praline.common.pralinefile.validation.version_validator import validate_version
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
 from unittest import TestCase
 
 
@@ -66,7 +66,7 @@ class VersionValidatorTest(TestCase):
             ]
         }
 
-        self.assertRaises(PralinefileValidationError, validate_version, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_version, pralinefile)
 
     def test_invalid_version_wildcard(self):
         pralinefile = {
@@ -75,7 +75,7 @@ class VersionValidatorTest(TestCase):
             'version': '0.1.+31'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_version, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_version, pralinefile)
 
     def test_invalid_dependency_version_numbers(self):
         pralinefile = {
@@ -91,4 +91,4 @@ class VersionValidatorTest(TestCase):
             ]
         }
 
-        self.assertRaises(PralinefileValidationError, validate_version, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_version, pralinefile)

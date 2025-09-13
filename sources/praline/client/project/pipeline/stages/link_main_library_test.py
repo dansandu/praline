@@ -1,6 +1,6 @@
 from praline.client.project.pipeline.stage_resources import StageResources
 from praline.client.project.pipeline.stages import StageArguments
-from praline.client.project.pipeline.stages.link_main_library import link_main_library, predicate
+from praline.client.project.pipeline.stages.link_main_library import link_main_library
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform)
 from praline.common.progress_bar import ProgressBarSupplier
@@ -43,16 +43,11 @@ class LinkMainLibraryStageTest(TestCase):
     def test_link_main_library(self):
         project_structure = ProjectStructure('project', 'org', 'art')
 
-        main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
-
         main_object_path = lambda object: join(project_structure.main_objects_root, object)
 
         external_library_path = lambda external_library: join(project_structure.external_libraries_root, external_library)
 
         external_interface_path = lambda external_interface: join(project_structure.external_libraries_interfaces_root, external_interface)
-
-        source_a = main_source_path('a.cpp')
-        source_b = main_source_path('b.cpp')
 
         object_a = main_object_path('org-art-a.obj')
         object_b = main_object_path('org-art-b.obj')
@@ -75,55 +70,20 @@ class LinkMainLibraryStageTest(TestCase):
             ]
         )
 
-        file_system = FileSystemMock(
-            directories={
-                project_structure.main_sources_domain_root,
-                project_structure.main_objects_root,
-                project_structure.external_libraries_root,
-                project_structure.external_libraries_interfaces_root,
-            },
-            files={
-                source_a: b'',
-                source_b: b'',
-                object_a: b'',
-                object_b: b'',
-            }
-        )
-
-        artifact_manifest = ArtifactManifest(
-            organization='org',
-            artifact='art',
-            version=ArtifactVersion.from_string('1.3.0'),
-            mode=Mode.debug,
-            architecture=Architecture.arm,
-            platform=Platform.linux,
-            compiler=CompilerType.gcc,
-            exported_symbols=ExportedSymbols.explicit,
-            artifact_type=ArtifactType.library,
-            main_service=None,
-            test_service=None,
-            dependencies=[]
-        )
-
-        predicate_result = predicate(StageArguments(project_structure=project_structure, file_system=file_system, artifact_manifest=artifact_manifest))
-
-        self.assertTrue(predicate_result.can_run)
-
         with StageResources(
             stage='link_main_library',
-            activation=0,
             resources={
                 'project_directories': True,
-                'main_objects': [
-                    object_a,
-                    object_b,
-                ],
                 'external_libraries': [
                     external_library,
                 ],
                 'external_libraries_interfaces': [
                     external_library_interface,
-                ]
+                ],
+                'main_objects': [
+                    object_a,
+                    object_b,
+                ],
             },
             constrained_output=[
                 'main_library', 

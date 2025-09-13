@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.modes_validator import validate_mode
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -21,7 +21,7 @@ class ModeValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_mode, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_mode, pralinefile)
 
     def test_invalid_modes_value(self):
         pralinefile = {
@@ -31,7 +31,7 @@ class ModeValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_mode, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_mode, pralinefile)
 
     def test_invalid_empty_modes(self):
         pralinefile = {
@@ -41,7 +41,7 @@ class ModeValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_mode, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_mode, pralinefile)
 
     def test_valid_unset_modes_field(self):
         pralinefile = {
