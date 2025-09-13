@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.scope_validator import validate_scope
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -50,4 +50,4 @@ class ScopeValidatorTest(TestCase):
             ]
         }
 
-        self.assertRaises(PralinefileValidationError, validate_scope, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_scope, pralinefile)

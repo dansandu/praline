@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.unique_dependencies_validator import validate_unique_dependencies
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -43,7 +43,7 @@ class UniqueDependenciesValidatorTest(TestCase):
             ]
         }
 
-        self.assertRaises(PralinefileValidationError, validate_unique_dependencies, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_unique_dependencies, pralinefile)
 
     def test_invalid_duplicate_dependencies(self):
         pralinefile = {
@@ -64,4 +64,4 @@ class UniqueDependenciesValidatorTest(TestCase):
             ]
         }
 
-        self.assertRaises(PralinefileValidationError, validate_unique_dependencies, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_unique_dependencies, pralinefile)

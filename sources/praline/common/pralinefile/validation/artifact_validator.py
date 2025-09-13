@@ -1,17 +1,18 @@
 from praline.common import artifact_pattern
-from praline.common.pralinefile.validation.validator import PralinefileValidationError, validator
+from praline.common.exception import PralinefileValidationException
+from praline.common.pralinefile.validation.validator import validator
 from typing import Any, Dict
 
 
 def validate_artifact_work(pralinefile: Dict[str, Any]):
     artifact = pralinefile.get('artifact')
     if artifact == None:
-        raise PralinefileValidationError(f"Pralinefile is missing mandatory artifact field")
+        raise PralinefileValidationException(f"Pralinefile is missing mandatory artifact field")
     if not isinstance(artifact, str):
-        raise PralinefileValidationError(
+        raise PralinefileValidationException(
             f"Pralinefile artifact '{artifact}' has invalid type '{type(artifact)}' -- type must be str")
     if not artifact_pattern.fullmatch(artifact):
-        raise PralinefileValidationError(
+        raise PralinefileValidationException(
             f"Pralinefile artifact '{artifact}' is not valid -- artifact must contain lowercase alphanumerics "
             "or underscores")
 

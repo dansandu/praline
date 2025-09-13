@@ -47,12 +47,15 @@ class MainStageTest(TestCase):
             }
         }
 
-        with StageResources(stage='main', 
-                            activation=0, 
-                            resources={'main_executable': main_executable}, 
-                            constrained_output=[]) as resources:
-            stage_arguments = StageArguments(file_system=file_system, 
-                                             project_structure=project_structure,
-                                             program_arguments=program_arguments, 
-                                             resources=resources)
+        with StageResources(
+            stage='main', 
+            resources={'main_executable': main_executable}, 
+            constrained_output=[]
+        ) as resources:
+            stage_arguments = StageArguments(
+                file_system=file_system, 
+                project_structure=project_structure,
+                program_arguments=program_arguments, 
+                resources=resources
+            )
             main(stage_arguments)

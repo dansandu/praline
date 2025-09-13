@@ -1,4 +1,5 @@
 from praline.common import Architecture, Platform
+from praline.common.exception import ProcessExecutionException
 
 import os
 import os.path
@@ -14,24 +15,6 @@ from typing import Any, IO, List, Dict
 
 
 logger = getLogger(__name__)
-
-
-class ProcessExecutionError(Exception):
-    def __init__(self, status: int, stdout: bytes, stderror: bytes):
-        self.status = status
-        self.stdout = stdout
-        self.stderror = stderror
-        self.output = stdout + stderror
-
-    def __str__(self):
-        if self.status != 0 and len(self.output) > 0:
-            return f"Command exited with return code {self.status} and output:\n{self.output.decode()}"
-        elif self.status == 0 and len(self.stderror) > 0:
-            return f"Command exited with output:\n{self.output.decode()}"
-        elif self.status != 0 and len(self.output) == 0:
-            return f"Command exited with return code {self.status}"
-        else:
-            return "Command execution error"
 
 
 def directory_name(path : str) -> str:
@@ -68,6 +51,10 @@ def get_path_with_extension(path: str) -> str:
         return path[:index]
     else:
         return path
+    
+
+def is_subpath(root, path):
+    return pathlib.Path(root) in pathlib.Path(path).parents
 
 
 class FileSystem:
@@ -118,13 +105,13 @@ class FileSystem:
                                   add_to_env=add_to_env)
             
             if status != 0:
-                raise ProcessExecutionError(status, stdout=b'', stderror=b'')
+                raise ProcessExecutionException(status, stdout=b'', stderror=b'')
         else:
             status, stdout, stderror = self.execute(command, 
                                                     add_to_library_path=add_to_library_path, 
                                                     add_to_env=add_to_env)            
             if status != 0 or stderror:
-                raise ProcessExecutionError(status, stdout, stderror)
+                raise ProcessExecutionException(status, stdout, stderror)
 
     def exists(self, path: str) -> bool:
         return path != None and os.path.exists(path)

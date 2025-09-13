@@ -38,114 +38,40 @@ class CompileMainSourcesStageTest(TestCase):
         
         self.external_header_path = lambda header: join(self.project_structure.external_headers_root, header)
 
-    def test_with_formatted_sources(self):
-        header_farseer_a = self.main_generated_source_path('farseer_a.hpp')
-        source_farseer_a = self.main_generated_source_path('farseer_a.cpp')
-        object_farseer_a = self.main_object_path('theorg-theart-farseer_a.obj')
+    def test_with_generated_sources(self):
 
         header_a = self.main_source_path('a.hpp')
         source_a = self.main_source_path('a.cpp')
-        object_a = self.main_object_path('someorg-someart-a.obj')
-
-        header_b = self.main_source_path('b.hpp')
-        source_b = self.main_source_path('b.cpp')
-        object_b = self.main_object_path('someorg-someart-b.obj')
-
-        header_c = self.external_header_path('c.hpp')
-        
-        compiler = CompilerMock(
-            self,
-            expected_headers=[
-                header_farseer_a,
-                header_a,
-                header_b,
-                header_c,
-            ],
-            sources_to_objects={
-                source_farseer_a: object_farseer_a,
-                source_a: object_a,
-                source_b: object_b,
-            }
-        )
-
-        with StageResources(
-            stage='compile_main_sources',
-            activation=0,
-            resources={
-                'generated_main_farseer_cpp_headers': [
-                    header_farseer_a,
-                ],
-                'generated_main_farseer_cpp_sources': [
-                    source_farseer_a,
-                ],
-                'formatted_main_headers': [
-                    header_a,
-                    header_b,
-                ],
-                'formatted_main_sources': [
-                    source_a,
-                    source_b,
-                ],
-                'external_headers': [
-                    header_c,
-                ]
-            },
-            constrained_output=['main_objects']
-        ) as resources:
-            stage_arguments = StageArguments(compiler=compiler, resources=resources)
-            compile_main_sources(stage_arguments)
-
-        expected_objects = {
-            object_farseer_a,
-            object_a,
-            object_b,
-        }
-
-        self.assertCountEqual(resources['main_objects'], expected_objects)
-
-
-    def test_with_unformatted_sources(self):
-        header_farseer_a = self.main_generated_source_path('farseer_a.hpp')
-        source_farseer_a = self.main_generated_source_path('farseer_a.cpp')
-        object_farseer_a = self.main_object_path('theorg-theart-farseer_a.obj')
-
-        header_a = self.main_source_path('a.hpp')
-        source_a = self.main_source_path('a.cpp')
-
-        header_b = self.main_source_path('b.hpp')
-        source_b = self.main_source_path('b.cpp')
-        
         object_a = self.main_object_path('org-art-a.obj')
 
+        header_b = self.main_source_path('b.hpp')
+        source_b = self.main_source_path('b.cpp')
         object_b = self.main_object_path('org-art-b.obj')
 
         header_c = self.external_header_path('c.hpp')
 
+        header_d = self.main_generated_source_path('d.hpp')
+        source_d = self.main_generated_source_path('d.cpp')
+        object_d = self.main_object_path('theorg-theart-d.obj')
+
         compiler = CompilerMock(
             self,
             expected_headers=[
-                header_farseer_a,
+                header_d,
                 header_a,
                 header_b,
                 header_c,
             ],
             sources_to_objects={
-                source_farseer_a: object_farseer_a,
                 source_a: object_a,
                 source_b: object_b,
+                source_d: object_d,
             }
         )
 
         with StageResources(
             stage='compile_main_sources',
-            activation=1,
             resources={
-                'generated_main_farseer_cpp_headers': [
-                    header_farseer_a,
-                ],
-                'generated_main_farseer_cpp_sources': [
-                    source_farseer_a,
-                ],
                 'main_headers': [
                     header_a,
                     header_b,
@@ -156,17 +82,23 @@ class CompileMainSourcesStageTest(TestCase):
                 ],
                 'external_headers': [
                     header_c,
-                ]
+                ],
+                'main_farseer_cpp_headers': [
+                    header_d,
+                ],
+                'main_farseer_cpp_sources': [
+                    source_d,
+                ],
             },
             constrained_output=['main_objects']
-        ) as resources:            
+        ) as resources:
             stage_arguments = StageArguments(compiler=compiler, resources=resources)
             compile_main_sources(stage_arguments)
 
         expected_objects = {
-            object_farseer_a,
             object_a,
             object_b,
+            object_d,
         }
 
         self.assertCountEqual(resources['main_objects'], expected_objects)

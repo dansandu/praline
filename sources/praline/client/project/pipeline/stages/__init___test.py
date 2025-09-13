@@ -12,12 +12,6 @@ class StagesTest(TestCase):
             'compile_test_executable',
             'compile_test_sources', 
             'deploy', 
-            'format_main_executable',
-            'format_main_headers', 
-            'format_main_sources', 
-            'format_test_executable',
-            'format_test_headers', 
-            'format_test_sources', 
             'format', 
             'generate_main_farseer_cpp_sources',
             'generate_test_farseer_cpp_sources',
@@ -26,25 +20,17 @@ class StagesTest(TestCase):
             'link_test_executable',
             'link_test_library', 
             'load_clang_format', 
-            'load_main_executable_source',
-            'load_main_farseer_sources',
-            'load_main_headers', 
-            'load_main_resources', 
-            'load_main_sources', 
-            'load_test_executable_source',
-            'load_test_farseer_sources',
-            'load_test_headers', 
-            'load_test_resources', 
-            'load_test_sources', 
+            'load_project_files',
+            'load_test_service',
             'main',
             'package', 
             'pull_dependencies', 
             'setup_project', 
             'test', 
         }
-        
+
         stages = get_stages()
 
         actual_stages = set(stages.keys())
-        
+
         self.assertEqual(actual_stages, expected_stages)

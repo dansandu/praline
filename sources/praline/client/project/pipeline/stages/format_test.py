@@ -1,5 +1,5 @@
 from praline.client.project.pipeline.stage_resources import StageResources
-from praline.client.project.pipeline.stages.format_test_headers import format_test_headers
+from praline.client.project.pipeline.stages.format import format
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
@@ -10,16 +10,16 @@ from typing import Dict, List
 from unittest import TestCase
 
 
-class FormatTestHeadersStageTest(TestCase):
-    def test_format_test_headers(self):
+class FormatMainHeadersStageTest(TestCase):
+    def test_format(self):
         project_structure = ProjectStructure('project', 'org', 'art')
 
-        test_source_path = lambda source: join(project_structure.test_sources_domain_root, source)
+        main_source_path = lambda source: join(project_structure.main_sources_domain_root, source)
 
-        header_math    = test_source_path('math.hpp')
-        header_vector  = test_source_path('vector.hpp')
-        header_map     = test_source_path('map.hpp')
-        header_request = test_source_path('request.hpp')
+        header_math    = main_source_path('math.hpp')
+        header_vector  = main_source_path('vector.hpp')
+        header_map     = main_source_path('map.hpp')
+        header_request = main_source_path('request.hpp')
 
         files_to_format_checklist = [
             header_math,
@@ -37,7 +37,7 @@ class FormatTestHeadersStageTest(TestCase):
 
         file_system = FileSystemMock(
             directories={
-                project_structure.test_sources_domain_root
+                project_structure.main_sources_domain_root
             }, 
             files={
                 header_math: b'math-contents',
@@ -58,31 +58,35 @@ class FormatTestHeadersStageTest(TestCase):
         progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=4)
 
         with StageResources(
-            stage='format_test_headers',
-            activation=0,
+            stage='format_main_headers',
             resources={
                 'clang_format_executable': clang_format_executable,
-                'test_headers': [
+                'main_headers': [
                     header_math, 
                     header_vector,
                     header_map
                 ],
+                'main_sources': [],
+                'main_farseer_cpp_headers': [],
+                'main_farseer_cpp_sources': [],
+                'main_executable_source': None,
+                'test_headers': [],
+                'test_sources': [],
+                'test_farseer_cpp_headers': [],
+                'test_farseer_cpp_sources': [],
+                'test_executable_source': None,
             },
-            constrained_output=['formatted_test_headers']
+            constrained_output=['formatted_sources']
         ) as resources:
-            stage_arguments = StageArguments(file_system=file_system,
-                                             resources=resources,
-                                             cache=cache,
-                                             progress_bar_supplier=progress_bar_supplier)
-            format_test_headers(stage_arguments)
+            stage_arguments = StageArguments(
+                file_system=file_system,
+                resources=resources,
+                cache=cache,
+                progress_bar_supplier=progress_bar_supplier
+            )
+            format(stage_arguments)
 
-        expected_formatted_headers = {
-            header_math,
-            header_map,
-            header_vector,
-        }
-
-        self.assertCountEqual(resources['formatted_test_headers'], expected_formatted_headers)
+        self.assertTrue(resources['formatted_sources'])
 
         expected_cache = {
             header_math:   '38527a9ac8d06095ec3a63b5409cdf92888fd8ee721a38628b7c83765f52e182',

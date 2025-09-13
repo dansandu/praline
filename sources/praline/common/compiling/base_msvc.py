@@ -1,8 +1,8 @@
 from praline.common import Architecture, ArtifactManifest, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
-from praline.common.compiling.compiler import (
-    CompilationError, CompilerInstantionError, ICompilingStrategy, 
-    IYieldDescriptor, LinkingError, PreprocessingError
+from praline.common.compiling.compiler import ICompilingStrategy, IYieldDescriptor
+from praline.common.exception import (
+    CompilationException, CompilerInstantionException, LinkingException, PreprocessingException
 )
 from praline.common.file_system import FileSystem, join, directory_name
 from typing import List
@@ -21,7 +21,7 @@ def get_msvc_machine(architecture: Architecture) -> str:
     elif architecture ==Architecture.arm:
         return 'ARM'
     else:
-        raise RuntimeError(f"Unrecognized architecture '{architecture}'")
+        raise CompilerInstantionException(f"Unrecognized architecture '{architecture}'")
 
 
 def get_environment_file(architecture: Architecture) -> str:
@@ -32,7 +32,7 @@ def get_environment_file(architecture: Architecture) -> str:
     elif architecture ==Architecture.arm:
         batfile = 'vcvarsall.bat'
     else:
-        raise RuntimeError(f"Unrecognized architecture '{architecture}'")
+        raise CompilerInstantionException(f"Unrecognized architecture '{architecture}'")
     return fr"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\{batfile}"
 
 
@@ -85,19 +85,23 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             self.compiler_flags.extend(['/MD', '/O2', '/DNDEBUG'])
             self.linker_flags.extend(['/DEBUG:NONE'])
         else:
-            raise RuntimeError(f"Unrecognized mode '{self.mode}'")
+            raise CompilerInstantionException(f"Unrecognized mode '{self.mode}'")
 
         if artifact_manifest.platform != Platform.windows:
-            raise CompilerInstantionError(f"The {compiler_name} compiler does not support the '{artifact_manifest.platform}' platform")
+            raise CompilerInstantionException(
+                f"The {compiler_name} compiler does not support the '{artifact_manifest.platform}' platform")
 
         if not file_system.exists(self.environment_file):
-            raise CompilerInstantionError(f"The {compiler_name} compiler could not find environment configuration batch file")
+            raise CompilerInstantionException(
+                f"The {compiler_name} compiler could not find environment configuration batch file")
 
         if compiler_name != 'cl' and file_system.which(compiler_name) == None:
-            raise CompilerInstantionError(f"The {compiler_name} compiler could not find the {compiler_name} executable in the PATH")
+            raise CompilerInstantionException(
+                f"The {compiler_name} compiler could not find the {compiler_name} executable in the PATH")
 
         if artifact_manifest.exported_symbols == ExportedSymbols.all:
-            raise CompilerInstantionError(f"The {compiler_name} compiler does not support currently exporting all symbols")
+            raise CompilerInstantionException(
+                f"The {compiler_name} compiler does not support currently exporting all symbols")
 
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return BaseMsvcYieldDescriptor()
@@ -119,7 +123,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         )
 
         if  status != 0 or (self.compiler_name != 'cl' and len(stderror) > 0):
-            raise PreprocessingError(status, stderror)
+            raise PreprocessingException(status, stderror)
 
         return stdout
 
@@ -140,7 +144,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         )
 
         if  status != 0 or len(stderror) > 0:
-            raise CompilationError(status, stdout, stderror)
+            raise CompilationException(status, stdout, stderror)
 
     def link_executable(self,
                         objects: List[str],
@@ -175,7 +179,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         )
         
         if  status != 0 or len(stderror) > 0:
-            raise LinkingError(status, stdout, stderror)
+            raise LinkingException(status, stdout, stderror)
         
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
@@ -217,7 +221,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         )
 
         if  status != 0 or len(stderror) > 0:
-            raise LinkingError(status, stdout, stderror)
+            raise LinkingException(status, stdout, stderror)
         
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)

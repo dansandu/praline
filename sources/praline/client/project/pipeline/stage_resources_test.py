@@ -1,13 +1,13 @@
-from praline.client.project.pipeline.stage_resources import (StageResources, ResourceNotPresentError, 
-                                                             ResourceOverriddenError, UndeclaredResourceSuppliedError,
-                                                             DeclaredResourceNotSuppliedError)
+from praline.client.project.pipeline.stage_resources import (
+    StageResources, ResourceNotPresentError, ResourceOverriddenError, UndeclaredResourceSuppliedError,
+    DeclaredResourceNotSuppliedError)
 
 from unittest import TestCase
 
 
 class StageResourcesTest(TestCase):
     def test_empty_resources(self):
-        with StageResources('compile', 0, {}, ['objects']) as resources:
+        with StageResources('compile', {}, ['objects']) as resources:
             self.assertFalse('objects' in resources)
             self.assertRaises(ResourceNotPresentError, resources.__getitem__, 'objects')
 
@@ -19,7 +19,7 @@ class StageResourcesTest(TestCase):
             self.assertRaises(UndeclaredResourceSuppliedError, resources.__setitem__, 'sources', 'mySources')
 
     def test_populated_resources(self):
-        with StageResources('test', 0, {'package': 'myPackage'}, ['tests_passed']) as resources:
+        with StageResources('test', {'package': 'myPackage'}, ['tests_passed']) as resources:
             self.assertIn('package', resources)
             self.assertNotIn('tests_passed', resources)
             self.assertEqual(resources['package'], 'myPackage')
@@ -35,7 +35,7 @@ class StageResourcesTest(TestCase):
 
     def test_unsupplied_resource(self):
         try:
-            with StageResources('format', 0, {'source': 'mySource'}, ['formatted_source']):
+            with StageResources('format', {'source': 'mySource'}, ['formatted_source']):
                 pass
         except DeclaredResourceNotSuppliedError:
             pass

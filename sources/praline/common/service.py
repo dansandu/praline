@@ -1,10 +1,7 @@
-from praline.common import ArtifactPrefix, DirectUserMessageException
+from praline.common import ArtifactPrefix
+from praline.common.exception import ServiceConfigurationException
 from praline.common.file_system import basename, get_path_with_extension
 from typing import List
-
-
-class ServiceConfigurationException(DirectUserMessageException):
-    pass
 
 
 def artifact_prefix_matches_path(artifact_prefix: ArtifactPrefix, path: str):
@@ -16,8 +13,7 @@ def artifact_prefix_matches_path(artifact_prefix: ArtifactPrefix, path: str):
 
 def get_service_executable(executable_to_run: ArtifactPrefix, executables: List[str]):
     if executable_to_run == None:
-        raise ServiceConfigurationException(
-            f"Service artifact executable prefix cannot be null")
+        return None
 
     candidate_executables = [
         executable for executable in executables
@@ -25,8 +21,7 @@ def get_service_executable(executable_to_run: ArtifactPrefix, executables: List[
     ]
 
     if len(candidate_executables) == 0:
-        raise ServiceConfigurationException(
-            f"No executable was found matching the artifact prefix '{executable_to_run}' -- make sure to add it as a dependency.")
+        return None
     elif len(candidate_executables) > 1:
         raise ServiceConfigurationException(
             f"Multiple executables were found matching the artifact prefix '{executable_to_run}'")
@@ -36,8 +31,7 @@ def get_service_executable(executable_to_run: ArtifactPrefix, executables: List[
 
 def get_service_library(library_to_load: ArtifactPrefix, libraries: List[str]):
     if library_to_load == None:
-        raise ServiceConfigurationException(
-            f"Service artifact library prefix cannot be null")
+        return None
     
     candidate_libraries_to_load = [
         library for library in libraries
@@ -45,8 +39,7 @@ def get_service_library(library_to_load: ArtifactPrefix, libraries: List[str]):
     ]
 
     if len(candidate_libraries_to_load) == 0:
-        raise ServiceConfigurationException(
-            f"No library was found matching the artifact prefix '{library_to_load}' -- make sure to add it as a dependency")
+        return None
     elif len(candidate_libraries_to_load) > 1:
         raise ServiceConfigurationException(
             f"Multiple libraries were found matching the artifact prefix '{library_to_load}'")

@@ -1,11 +1,8 @@
+from praline.common.exception import PralinefileValidationException
 import functools
 
 
 registered_validators = []
-
-
-class PralinefileValidationError(Exception):
-    pass
 
 
 def validator(function):
@@ -18,7 +15,7 @@ def validator(function):
 
 def validate(pralinefile):
     if not isinstance(pralinefile, dict):
-        raise PralinefileValidationError(
+        raise PralinefileValidationException(
             f"Pralinefile has invalid type '{type(pralinefile)}' -- type must be dictionary")
     for validator in registered_validators:
         validator(pralinefile)

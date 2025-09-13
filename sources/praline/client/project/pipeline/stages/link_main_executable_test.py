@@ -61,7 +61,6 @@ class LinkMainExecutableStageTest(TestCase):
 
         with StageResources(
             stage='link_main_executable',
-            activation=1,
             resources={
                 'project_directories': True,
                 'main_executable_object': object_x,
@@ -70,7 +69,9 @@ class LinkMainExecutableStageTest(TestCase):
                 ],
                 'external_libraries_interfaces': [
                     external_library_interface,
-                ]
+                ],
+                'main_library': None,
+                'main_library_interface': None,
             },
             constrained_output=['main_executable', 'main_executable_symbols_table']
         ) as resources:

@@ -25,7 +25,6 @@ class DeclaredResourceNotSuppliedError(Exception):
 @dataclass(frozen=True)
 class StageResources:
     stage: str
-    activation: int
     resources: Dict[str, Any]
     constrained_output: List[str]
 

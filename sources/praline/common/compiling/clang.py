@@ -1,9 +1,11 @@
 from praline.common import ArtifactManifest, CompilerType, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
 from praline.common.compiling.compiler import (
-    CompilationError, CompilerInstantionError, ICompilingStrategy, 
-    ICompilingStrategySupplier, IYieldDescriptor, LinkingError,
-    PreprocessingError, ProcessExecutionError
+    ICompilingStrategy, ICompilingStrategySupplier, IYieldDescriptor, 
+)
+from praline.common.exception import (
+    CompilerInstantionException, CompilationException, LinkingException, 
+    PreprocessingException, ProcessExecutionException
 )
 from praline.common.file_system import basename, FileSystem
 from typing import List
@@ -39,7 +41,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
         elif artifact_manifest.exported_symbols == ExportedSymbols.all:
             visibility = 'default'
         else:
-            raise RuntimeError(f"Unrecognized exported symbols '{artifact_manifest.exported_symbols}'")
+            raise CompilerInstantionException(f"Unrecognized exported symbols '{artifact_manifest.exported_symbols}'")
 
         self.flags = [
             f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++23',
@@ -53,14 +55,14 @@ class ClangCompilingStrategy(ICompilingStrategy):
         elif artifact_manifest.mode == Mode.release:
             self.flags.append('-O3')            
         else:
-            raise RuntimeError(f"Unrecognized mode '{artifact_manifest.mode}'")
+            raise CompilerInstantionException(f"Unrecognized mode '{artifact_manifest.mode}'")
 
         if artifact_manifest.platform != Platform.darwin:
-            raise CompilerInstantionError(
+            raise CompilerInstantionException(
                 f"The clang compiler cannot be used on the '{artifact_manifest.platform}' platform")
         
         if file_system.which('clang++') == None:
-            raise CompilerInstantionError(f"The clang compiler could not find the clang++ executable in the PATH")
+            raise CompilerInstantionException(f"The clang compiler could not find the clang++ executable in the PATH")
 
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return ClangYieldDescriptor()
@@ -83,7 +85,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
         )
         
         if  status != 0 or len(stderror) > 0:
-            raise PreprocessingError(status, stderror)
+            raise PreprocessingException(status, stderror)
         
         return stdout
 
@@ -104,8 +106,8 @@ class ClangCompilingStrategy(ICompilingStrategy):
                 self.flags + 
                 include_paths
             )
-        except ProcessExecutionError as exception:
-            raise CompilationError(exception.status, exception.stdout, exception.stderror)
+        except ProcessExecutionException as exception:
+            raise CompilationException(exception.status, exception.stdout, exception.stderror)
 
     def link_executable(self,
                         objects: List[str],
@@ -122,8 +124,8 @@ class ClangCompilingStrategy(ICompilingStrategy):
                 [f'-L{self.project_structure.external_libraries_root}'] +
                 [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
             )
-        except ProcessExecutionError as exception:
-            raise LinkingError(exception.status, exception.stdout, exception.stderror)
+        except ProcessExecutionException as exception:
+            raise LinkingException(exception.status, exception.stdout, exception.stderror)
 
     def link_library(self,
                      objects: List[str],
@@ -139,8 +141,8 @@ class ClangCompilingStrategy(ICompilingStrategy):
                 [f'-L{self.project_structure.external_libraries_root}'] +
                 [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
             )
-        except ProcessExecutionError as exception:
-            raise LinkingError(exception.status, exception.stdout, exception.stderror)
+        except ProcessExecutionException as exception:
+            raise LinkingException(exception.status, exception.stdout, exception.stderror)
 
 class ClangCompilingStrategySupplier(ICompilingStrategySupplier):
     def get_type(self) -> CompilerType:

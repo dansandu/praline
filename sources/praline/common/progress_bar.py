@@ -42,11 +42,8 @@ def format_text(text: str, highlight=TextHighlight.No):
         raise ValueError(f"Invalid TextHighlight provided: {highlight}")  
 
 
-def format_title(stage_index, stage_count, stage_name):
-    index_str = str(stage_index)
-    count_str = str(stage_count)
-    padding = (len(count_str) - len(index_str)) * ' '
-    return f"{padding}({index_str}/{count_str}) {stage_name.replace('_', ' ')}" 
+def format_title(stage_name):
+    return stage_name.replace('_', ' ')
 
 
 def format_description(text: str):
@@ -63,7 +60,7 @@ def format_timedelta(td: timedelta):
     elapsed_remainder = 0
     elapsed_remainder_unit = None
     for factor, unit in promotions:
-        if elapsed > factor:
+        if elapsed >= factor:
             elapsed_remainder = elapsed % factor
             elapsed_remainder_unit = elapsed_unit
             elapsed = elapsed // factor
@@ -78,13 +75,11 @@ def format_timedelta(td: timedelta):
 
 
 class ProgressBar:
-    def __init__(self, file_system: FileSystem, stage_index: int, stage_count, stage_name: str, resolution: int, display_elapsed_time: bool):        
+    def __init__(self, file_system: FileSystem, stage_name: str, resolution: int, display_elapsed_time: bool):        
         if resolution < 0:
             raise ValueError("Progress bar resolution must be greater or equal to 0")
         
         self.file_system          = file_system
-        self.stage_index          = stage_index
-        self.stage_count          = stage_count
         self.stage_name           = stage_name
         self.resolution           = resolution
         self.progress             = 0
@@ -116,13 +111,13 @@ class ProgressBar:
         self.display()
     
     def display(self, first_print: bool = False):
-        header = format_title(self.stage_index, self.stage_count, self.stage_name)
+        header = f" {format_title(self.stage_name)}"
 
         if len(self.description) > 0:
             header = f"{header} {format_description(self.description)}"
 
         if not first_print:
-            header = move_cursor_up_two_lines + delete_two_lines + header
+            header = f"{move_cursor_up_two_lines}{delete_two_lines}{header}"
 
         if self.resolution > 0:
             percentage = self.progress / self.resolution
@@ -136,8 +131,7 @@ class ProgressBar:
         self.file_system.print(header, footer, sep='\n', flush=True)
 
     def __exit__(self, type, value, traceback):
-        title  = format_title(self.stage_index, self.stage_count, self.stage_name)
-        header = f"{move_cursor_up_two_lines}{delete_two_lines}{title}"
+        header = f"{move_cursor_up_two_lines}{delete_two_lines} {format_title(self.stage_name)}"
 
         success = type == None
         if success:
@@ -169,17 +163,15 @@ class ProgressBar:
 
 
 class ProgressBarSupplier:
-    def __init__(self, file_system: FileSystem, 
-                 stage_index: int, 
-                 stage_count: int, 
-                 stage_name: str, 
-                 display_elapsed_time: bool = True):
+    def __init__(self, file_system: FileSystem, stage_name: str, display_elapsed_time: bool = True):
         self.file_system          = file_system
-        self.stage_index          = stage_index
-        self.stage_count          = stage_count
         self.stage_name           = stage_name
         self.display_elapsed_time = display_elapsed_time
     
     def create(self, resolution: int) -> ProgressBar:
-        return ProgressBar(self.file_system, self.stage_index, self.stage_count, 
-                           self.stage_name, resolution, self.display_elapsed_time)
+        return ProgressBar(
+            self.file_system,
+            self.stage_name, 
+            resolution, 
+            self.display_elapsed_time
+        )

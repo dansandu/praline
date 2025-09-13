@@ -1,4 +1,5 @@
-from praline.client.project.pipeline.stages import StageArguments, StagePredicateArguments, StagePredicateResult, stage
+from praline.client.project.pipeline.stages import StageArguments, stage
+from praline.common.exception import ClangFormatConfigurationException
 from praline.common.file_system import join
 
 
@@ -24,38 +25,34 @@ UseTab: Never
 """
 
 
-class ClangFormatConfigurationError(Exception):
-    pass
-
-
-def predicate(arguments: StagePredicateArguments):
-    if not arguments.program_arguments['global']['skip_formatting']:
-        return StagePredicateResult.success()
-    else:
-        return StagePredicateResult.failure("the skip_formatting flag was used")
-
-
-@stage(output=['clang_format_style_file', 'clang_format_executable'], predicate=predicate)
+@stage(output=['clang_format_executable'])
 def load_clang_format(arguments: StageArguments):
-    file_system   = arguments.file_system
-    configuration = arguments.configuration
-    resources     = arguments.resources
+    project_structure = arguments.project_structure
+    file_system       = arguments.file_system
+    configuration     = arguments.configuration
+    resources         = arguments.resources
+
+    if arguments.skipOrExceptionIf(
+        arguments.program_arguments['global']['skip_formatting'],
+        "Cannot run tests because the skip-formatting flag was used"
+    ):
+        resources['clang_format_executable'] = None
+        return
     
     if 'clang-format-executable-path' in configuration:
         clang_format_executable = configuration['clang-format-executable-path']
         if not file_system.is_file(clang_format_executable):
-            raise ClangFormatConfigurationError(
+            raise ClangFormatConfigurationException(
                 f"User supplied clang-format '{clang_format_executable}' is not a file")
     else:
         clang_format_executable = file_system.which('clang-format')
         if clang_format_executable is None:
-            raise ClangFormatConfigurationError(
+            raise ClangFormatConfigurationException(
                 "Coudn't find clang-format in path -- either supply it in the praline-client.config file or add it "
                 "to the path environment variable")
-    
-    project_directory = file_system.get_working_directory()
-    
-    resources['clang_format_executable'] = clang_format_executable
-    resources['clang_format_style_file'] = clang_format_style_file = join(project_directory, '.clang-format')
+
+    clang_format_style_file = join(project_structure.project_directory, '.clang-format')
 
     file_system.create_file_if_missing(clang_format_style_file, clang_format_style_file_contents)
+
+    resources['clang_format_executable'] = clang_format_executable

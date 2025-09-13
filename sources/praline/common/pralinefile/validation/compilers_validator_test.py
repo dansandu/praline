@@ -1,5 +1,5 @@
 from praline.common.pralinefile.validation.compilers_validator import validate_compilers
-from praline.common.pralinefile.validation.validator import PralinefileValidationError
+from praline.common.exception import PralinefileValidationException
 from unittest import TestCase
 
 
@@ -22,7 +22,7 @@ class CompilersValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_compilers, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_compilers, pralinefile)
 
     def test_invalid_compilers_type(self):
         pralinefile = {
@@ -32,7 +32,7 @@ class CompilersValidatorTest(TestCase):
             'version': '1.5.0'
         }
 
-        self.assertRaises(PralinefileValidationError, validate_compilers, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_compilers, pralinefile)
 
     def test_invalid_empty_compilers(self):
         pralinefile = {
@@ -42,7 +42,7 @@ class CompilersValidatorTest(TestCase):
             'version': '1.5.0'
         }
         
-        self.assertRaises(PralinefileValidationError, validate_compilers, pralinefile)
+        self.assertRaises(PralinefileValidationException, validate_compilers, pralinefile)
 
     def test_valid_default_compilers(self):
         pralinefile = {

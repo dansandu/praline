@@ -1,36 +1,32 @@
 from praline.client.project.pipeline.stages import StageArguments, stage
 
 
-@stage(requirements=[
-            ['project_directories', 'external_headers', 'formatted_main_headers', 'formatted_main_executable_source', 'generated_main_farseer_cpp_headers'],
-            ['project_directories', 'external_headers', 'formatted_main_headers', 'formatted_main_executable_source'],
-            ['project_directories', 'external_headers',           'main_headers',           'main_executable_source', 'generated_main_farseer_cpp_headers'],
-            ['project_directories', 'external_headers',           'main_headers',           'main_executable_source'],
-        ],
-        output=['main_executable_object'],
-        has_progress_bar=True)
+@stage(
+    requirements=[
+        'project_directories', 'external_headers', 'main_farseer_cpp_headers', 'main_headers', 
+        'main_executable_source', 'formatted_sources',
+    ],
+    output=['main_executable_object']
+)
 def compile_main_executable(arguments: StageArguments):
     resources = arguments.resources
-    compiler  = arguments.compiler
-    cache     = arguments.cache
-    
-    progress_bar_supplier = arguments.progress_bar_supplier
 
     headers = []
     headers.extend(resources['external_headers'])
-    
-    if 'formatted_main_headers' in resources:
-        headers.extend(resources['formatted_main_headers'])
+    headers.extend(resources['main_farseer_cpp_headers'])
+    headers.extend(resources['main_headers'])
 
-        executable_source = resources['formatted_main_executable_source']
-    else:
-        headers.extend(resources['main_headers'])
-        
-        executable_source = resources['main_executable_source']
+    main_executable_source = resources['main_executable_source']
+
+    if arguments.skipOrExceptionIf(
+        main_executable_source == None, 
+        "There is no main executable source to compile"
+    ):
+        resources['main_executable_object'] = None
+        return
     
-    if 'generated_main_farseer_cpp_headers' in resources:
-        headers.extend(resources['generated_main_farseer_cpp_headers'])
-    
-    objects = compiler.compile_sources_using_cache(headers, [executable_source], cache, progress_bar_supplier, main_sources=True)
+    objects = arguments.compiler.compile_sources_using_cache(
+        headers, [main_executable_source], arguments.cache, 
+        arguments.progress_bar_supplier, main_sources=True)
     
     resources['main_executable_object'] = objects[0]

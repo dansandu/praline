@@ -1,9 +1,10 @@
-from praline.common import ArtifactManifest, CompilerType, DirectUserMessageException, Platform, get_duplicates
+from praline.common import ArtifactManifest, CompilerType, Platform, get_duplicates
 from praline.common.yield_descriptor import IYieldDescriptor
 from praline.common.project_structure import ProjectStructure
 from praline.common.progress_bar import ProgressBarSupplier
-from praline.common.file_system import FileSystem, ProcessExecutionError
+from praline.common.file_system import FileSystem
 from praline.common.hashing import DeltaItem, DeltaType, delta, hash_binary, progression_resolution
+from praline.common.exception import CompilerInstantionException, NoSupportedCompilerFoundException
 from praline.common.reflection import subclasses_of
 
 import logging
@@ -12,29 +13,6 @@ from typing import Any, Dict, List, Tuple
 
 
 logger = logging.getLogger(__name__)
-
-
-class PreprocessingError(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status: int, stderror: bytes):
-        super().__init__(status, stdout=b'', stderror=stderror)
-
-
-class CompilationError(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status: int, stdout: bytes, stderror: bytes):
-        super().__init__(status, stdout, stderror)
-
-
-class LinkingError(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status: int, stdout: bytes, stderror: bytes):
-        super().__init__(status, stdout, stderror)
-
-
-class CompilerInstantionError(Exception):
-    pass
-
-
-class NoSupportedCompilerFoundError(Exception):
-    pass
 
 
 class ICompilingStrategy(ABC):
@@ -257,10 +235,10 @@ def intantiate_compiler(file_system: FileSystem,
                 supplier             = get_compiling_strategy_supplier(candidate)
                 compiling_strategy   = supplier.instantiate(file_system, final_manifest, project_structure)
                 break
-            except CompilerInstantionError as e:
+            except CompilerInstantionException as e:
                 messages.append(str(e))
     
         if compiling_strategy == None:
-            raise NoSupportedCompilerFoundError(f"No suitable compiler was found:\n" + '\n'.join(messages))
+            raise NoSupportedCompilerFoundException(f"No suitable compiler was found:\n" + '\n'.join(messages))
     
     return Compiler(file_system, project_structure, final_manifest, compiling_strategy)

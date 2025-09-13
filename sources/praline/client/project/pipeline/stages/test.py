@@ -1,13 +1,6 @@
 from praline.client.project.pipeline.program_arguments import REMAINDER
 from praline.client.project.pipeline.stages import StageArguments, stage
-from praline.common import DirectUserMessageException
-from praline.common.file_system import ProcessExecutionError
-from praline.common.service import get_service_executable, get_service_library
-
-
-class TestProcessExecutionException(ProcessExecutionError, DirectUserMessageException):
-    def __init__(self, status: int, stdout: bytes, stderror: bytes):
-        super().__init__(status, stdout, stderror)
+from praline.common.exception import TestProcessExecutionException, ProcessExecutionException
 
 
 program_arguments = [
@@ -23,58 +16,48 @@ program_arguments = [
 ]
 
 
-@stage(requirements=[
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable', 'main_executable', 'main_library'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable', 'main_executable'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable', 'main_library'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'main_executable', 'main_library'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'test_executable'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'main_executable'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library', 'main_library'],
-            ['project_directories', 'external_executables', 'external_libraries', 'test_library'],
-        ],
-       output=['tests_passed'],
-       exposed=True, 
-       program_arguments=program_arguments,
-       has_progress_bar=True)
+@stage(
+    requirements=['project_directories', 'test_service'],
+    output=['tests_passed'],
+    exposed=True, 
+    program_arguments=program_arguments
+)
 def test(arguments: StageArguments):
-    artifact_manifest     = arguments.artifact_manifest
     file_system           = arguments.file_system
     resources             = arguments.resources
     project_structure     = arguments.project_structure
     progress_bar_supplier = arguments.progress_bar_supplier
     program_arguments     = arguments.program_arguments
 
-    executables = resources['external_executables'][:]
-    
-    if 'main_executable' in resources:
-        executables.append(resources['main_executable'])
-    if 'test_executable' in resources:
-        executables.append(resources['test_executable'])
+    service = resources['test_service']
 
-    libraries = resources['external_libraries'][:]
-    libraries.append(resources['test_library'])
+    if any([
+        arguments.skipOrExceptionIf(
+            arguments.program_arguments['global']['skip_unit_tests'], 
+            "Cannot run tests because the skip-unit-tests flag was used"),
+        
+        arguments.skipOrExceptionIf(
+            service.executable_to_run == None, 
+            "Cannot run tests because the test service executable is not set"),
 
-    if 'main_library' in resources:
-        libraries.append(resources['main_library'])
+        arguments.skipOrExceptionIf(
+            service.library_to_load == None, 
+            "Cannot run tests because the test service library is not set"),
 
-    if artifact_manifest.test_service.library_to_load != None:
-        test_library = get_service_library(artifact_manifest.test_service.library_to_load, libraries)
-    else:
-        test_library = resources['test_library']
-    
-    test_service_executable = get_service_executable(artifact_manifest.test_service.executable_to_run, executables)
+        arguments.skipOrExceptionIf(
+            service.service_name == None, 
+            "Cannot run tests because the test service name is not set"),
+    ]):
+        resources['tests_passed'] = False
+        return
 
     try:
         file_system.execute_and_fail_on_bad_return(
-            [test_service_executable, test_library, artifact_manifest.test_service.service_name] + program_arguments['byStage']['arguments'],
+            [service.executable_to_run, service.library_to_load, service.service_name] + program_arguments['byStage']['arguments'],
             add_to_library_path=[project_structure.external_libraries_root],
-            interactive=True,
-            add_to_env={
-                'PRALINE_PROGRESS_BAR_STAGE_INDEX': str(progress_bar_supplier.stage_index),
-                'PRALINE_PROGRESS_BAR_STAGE_COUNT': str(progress_bar_supplier.stage_count),
-            })
-    except ProcessExecutionError as exception:
+            interactive=True
+        )
+    except ProcessExecutionException as exception:
         raise TestProcessExecutionException(exception.status, exception.stdout, exception.stderror)
 
-    resources['tests_passed'] = 'success'
+    resources['tests_passed'] = True

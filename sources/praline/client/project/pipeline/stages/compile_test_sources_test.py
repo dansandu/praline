@@ -44,13 +44,7 @@ class CompileTestSourcesStageTest(TestCase):
 
         self.test_object_path = lambda object: join(self.project_structure.test_objects_root, object)
 
-    def test_with_formatted_sources(self):
-        main_header_farseer_a = self.main_generated_source_path('farseer_a.hpp')
-
-        test_header_farseer_b = self.test_generated_source_path('farseer_b.hpp')
-        test_source_farseer_b = self.test_generated_source_path('farseer_b.cpp')
-        test_object_farseer_b = self.main_object_path('theorg-theart-farseer_b.obj')
-
+    def test_with_generated_sources(self):
         main_header_a = self.main_source_path('a.hpp')
         main_source_a = self.main_source_path('a.cpp')
         main_object_a = self.main_object_path('theorg-theart-a.obj')
@@ -65,120 +59,47 @@ class CompileTestSourcesStageTest(TestCase):
 
         external_header_c = self.external_header_path('c.hpp')
 
+        main_header_d = self.main_generated_source_path('d.hpp')
+        main_source_d = self.main_generated_source_path('d.cpp')
+        main_object_d = self.main_object_path('theorg-theart-d.obj')
+
+        test_header_e = self.test_generated_source_path('e.hpp')
+        test_source_e = self.test_generated_source_path('e.cpp')
+        test_object_e = self.test_object_path('theorg-theart-e.obj')
+
         compiler = CompilerMock(
             self,
             expected_headers=[
-                main_header_farseer_a,
-                test_header_farseer_b,
                 main_header_a,
                 test_header_a,
                 test_header_b,
                 external_header_c,
+                main_header_d,
+                test_header_e,
             ],
             sources_to_objects={
                 main_source_a: main_object_a,
-                test_source_farseer_b: test_object_farseer_b,
                 test_source_a: test_object_a,
                 test_source_b: test_object_b,
+                main_source_d: main_object_d,
+                test_source_e: test_object_e,
             }
         )
 
         with StageResources(
             stage='compile_test_sources',
-            activation=0,
             resources={
-                'generated_main_farseer_cpp_headers': [
-                    main_header_farseer_a,
-                ],
-                'generated_test_farseer_cpp_headers': [
-                    test_header_farseer_b,
-                ],
-                'generated_test_farseer_cpp_sources': [
-                    test_source_farseer_b,
-                ],
-                'formatted_main_headers': [
-                    main_header_a,
-                ],
-                'formatted_test_headers': [
-                    test_header_a,
-                    test_header_b,
-                ],
-                'formatted_test_sources': [
-                    test_source_a,
-                    test_source_b,
-                ],
-                'external_headers': [
-                    external_header_c,
-                ]
-            },
-            constrained_output=['test_objects']
-        ) as resources:
-            stage_arguments = StageArguments(compiler=compiler, resources=resources)
-            compile_test_sources(stage_arguments)
-
-        expected_objects = {
-            test_object_farseer_b,
-            test_object_a,
-            test_object_b,
-        }
-
-        self.assertEqual(set(resources['test_objects']), expected_objects)
-
-    def test_without_formatted_sources(self):
-        main_header_farseer_a = self.main_generated_source_path('farseer_a.hpp')
-        main_object_farseer_a = self.main_object_path('theorg-theart-farseer_a.obj')
-
-        test_header_farseer_b = self.test_generated_source_path('farseer_b.hpp')
-        test_source_farseer_b = self.test_generated_source_path('farseer_b.cpp')
-        test_object_farseer_b = self.main_object_path('theorg-theart-farseer_b.obj')
-
-        main_header_a = self.main_source_path('a.hpp')
-        main_source_a = self.main_source_path('a.cpp')
-        main_object_a = self.main_object_path('theorg-theart-a.obj')
-
-        test_header_a = self.test_source_path('a.test.hpp')
-        test_source_a = self.test_source_path('a.test.cpp')
-        test_object_a = self.test_object_path('theorg-theart-a.test.obj')
-
-        test_header_b = self.test_source_path('b.test.hpp')
-        test_source_b = self.test_source_path('b.test.cpp')
-        test_object_b = self.test_object_path('theorg-theart-b.test.obj')
-
-        external_header_c = self.external_header_path('c.hpp')
-
-        compiler = CompilerMock(
-            self,
-            expected_headers=[
-                main_header_farseer_a,
-                test_header_farseer_b,
-                main_header_a,
-                test_header_a,
-                test_header_b,
-                external_header_c,
-            ],
-            sources_to_objects={
-                main_source_a: main_object_a,
-                test_source_farseer_b: test_object_farseer_b,
-                test_source_a: test_object_a,
-                test_source_b: test_object_b,
-            }
-        )
-
-        with StageResources(
-            stage='compile_test_sources',
-            activation=1,
-            resources={
-                'generated_main_farseer_cpp_headers': [
-                    main_header_farseer_a,
-                ],
-                'generated_test_farseer_cpp_headers': [
-                    test_header_farseer_b,
-                ],
-                'generated_test_farseer_cpp_sources': [
-                    test_source_farseer_b,
+                'main_farseer_cpp_headers': [
+                    main_header_d,
                 ],
                 'main_headers': [
                     main_header_a,
+                ],
+                'test_farseer_cpp_headers': [
+                    test_header_e,
+                ],
+                'test_farseer_cpp_sources': [
+                    test_source_e,
                 ],
                 'test_headers': [
                     test_header_a,
@@ -198,9 +119,9 @@ class CompileTestSourcesStageTest(TestCase):
             compile_test_sources(stage_arguments)
 
         expected_objects = {
-            test_object_farseer_b,
             test_object_a,
             test_object_b,
+            test_object_e,
         }
 
         self.assertEqual(set(resources['test_objects']), expected_objects)

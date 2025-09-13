@@ -1,17 +1,18 @@
 from praline.common import artifact_version_pattern, dependency_version_pattern, ArtifactVersion, DependencyVersion
-from praline.common.pralinefile.validation.validator import PralinefileValidationError, validator
+from praline.common.exception import PralinefileValidationException
+from praline.common.pralinefile.validation.validator import validator
 from typing import Any, Dict, Pattern
 
 
 def validate_version_work(pralinefile: Dict[str, Any], pattern: Pattern[str], klass: type):
     version = pralinefile.get('version')
     if version == None:
-        raise PralinefileValidationError(f"Pralinefile is missing mandatory version field")
+        raise PralinefileValidationException(f"Pralinefile is missing mandatory version field")
     if not isinstance(version, str):
-        raise PralinefileValidationError(
+        raise PralinefileValidationException(
             f"Pralinefile version '{version}' has invalid type '{type(version)}' -- type must be str")
     if not pattern.fullmatch(version):
-        raise PralinefileValidationError(f"Pralinefile version '{version}' is not valid")
+        raise PralinefileValidationException(f"Pralinefile version '{version}' is not valid")
     pralinefile['version'] = klass.from_string(version)
 
 @validator
