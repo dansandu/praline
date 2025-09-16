@@ -3,7 +3,7 @@ from praline.client.project.pipeline.stages.test import test
 from praline.client.project.pipeline.stages import StageArguments
 from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
                             CompilerType, ExportedSymbols, Mode, Platform, ArtifactDependency,
-                            DependencyScope, ArtifactPrefix, ServiceConfiguration)
+                            DependencyScope, ServiceConfiguration)
 from praline.common.project_structure import ProjectStructure
 from praline.common.testing.file_system_mock import FileSystemMock
 from praline.common.testing.progress_bar_mock import ProgressBarSupplierMock
@@ -22,11 +22,6 @@ class TestStageTest(TestCase):
         test_executable = join(project_structure.external_executables_root, 'anotherorg-anotherart.exe')
         test_program_arguments = ['test', 'program', 'arguments']
         test_service_name = 'custom-service'
-
-        expected_env = {
-            'PRALINE_PROGRESS_BAR_STAGE_INDEX': '1',
-            'PRALINE_PROGRESS_BAR_STAGE_COUNT': '5',
-        }
 
         artifact_manifest = ArtifactManifest(
             organization='org',
@@ -81,12 +76,7 @@ class TestStageTest(TestCase):
             }
         }
 
-        progress_bar_supplier = ProgressBarSupplierMock(
-            self, 
-            expected_resolution=0, 
-            stage_index=1, 
-            stage_count=5
-        )
+        progress_bar_supplier = ProgressBarSupplierMock(self, expected_resolution=0)
 
         with StageResources(
             stage='test', 

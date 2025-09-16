@@ -23,11 +23,10 @@ program_arguments = [
     program_arguments=program_arguments
 )
 def test(arguments: StageArguments):
-    file_system           = arguments.file_system
-    resources             = arguments.resources
-    project_structure     = arguments.project_structure
-    progress_bar_supplier = arguments.progress_bar_supplier
-    program_arguments     = arguments.program_arguments
+    file_system       = arguments.file_system
+    resources         = arguments.resources
+    project_structure = arguments.project_structure
+    program_arguments = arguments.program_arguments
 
     service = resources['test_service']
 

@@ -24,12 +24,8 @@ class ProgressBarMock:
 class ProgressBarSupplierMock:
     def __init__(self, test_case: TestCase, 
                  expected_resolution: int,
-                 stage_index: int = 1, 
-                 stage_count: int = 1, 
                  stage_name: str = 'stage'):
         self.test_case = test_case
-        self.stage_index = stage_index
-        self.stage_count = stage_count
         self.stage_name = stage_name
         self.expected_resolution = expected_resolution
 

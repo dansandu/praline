@@ -195,10 +195,10 @@ def get_compiling_strategy_supplier(compiler_type: CompilerType) -> ICompilingSt
     return matching[0]
 
 
-def get_prefered_compiler(file_system: FileSystem) -> CompilerType:
+def get_preferred_compiler(file_system: FileSystem) -> CompilerType:
     platform = file_system.get_platform()
     if platform == Platform.windows:
-        return CompilerType.clang_cl
+        return CompilerType.msvc
     elif platform == Platform.linux:
         return CompilerType.gcc
     elif platform == Platform.darwin:
@@ -221,7 +221,7 @@ def intantiate_compiler(file_system: FileSystem,
         supplier             = get_compiling_strategy_supplier(compiler_name)
         compiling_strategy   = supplier.instantiate(file_system, final_manifest, project_structure)
     else:        
-        prefered_compiler = get_prefered_compiler(file_system)
+        prefered_compiler = get_preferred_compiler(file_system)
         compilers = fallback_compilers[:]
         if prefered_compiler in fallback_compilers:
             compilers.remove(prefered_compiler)
