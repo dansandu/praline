@@ -8,8 +8,7 @@ from praline.client.project.pipeline.stages import StageArguments, stage
         'project_directories', 'external_executables', 'external_libraries',
         'main_executable', 'test_executable', 'test_library',
     ], 
-    output=['test_service'],
-    exposed=True
+    output=['test_service']
 )
 def load_test_service(arguments: StageArguments):
     artifact_manifest = arguments.artifact_manifest
