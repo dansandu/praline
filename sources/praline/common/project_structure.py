@@ -1,5 +1,5 @@
 from praline.common.yield_descriptor import IYieldDescriptor
-from praline.common.file_system import join, relative_path
+from praline.common.file_system import is_subpath, join, relative_path
 
 
 class ProjectStructure:
@@ -49,11 +49,19 @@ class ProjectStructure:
         self.external_symbols_tables_root       = join(self.external_root, 'symbols_tables')
 
     def get_main_object_path(self, yield_descriptor: IYieldDescriptor, main_source_path: str) -> str:
-        main_source_relative_path = relative_path(main_source_path, self.main_sources_root)
+        if is_subpath(self.main_generated_sources_root, main_source_path):
+            main_source_relative_path = relative_path(main_source_path, self.main_generated_sources_root)
+        else:
+            main_source_relative_path = relative_path(main_source_path, self.main_sources_root)
+
         return join(self.main_objects_root, yield_descriptor.get_object(main_source_relative_path))
     
     def get_test_object_path(self, yield_descriptor: IYieldDescriptor, test_source_path: str) -> str:
-        test_source_relative_path = relative_path(test_source_path, self.test_sources_root)
+        if is_subpath(self.test_generated_sources_root, test_source_path):
+            test_source_relative_path = relative_path(test_source_path, self.test_generated_sources_root)
+        else:
+            test_source_relative_path = relative_path(test_source_path, self.test_sources_root)
+    
         return join(self.test_objects_root, yield_descriptor.get_object(test_source_relative_path))
 
     def get_executable_and_symbols_table_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:

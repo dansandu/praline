@@ -45,13 +45,13 @@ def common_path(paths: List[str]) -> str:
     return os.path.commonpath(paths)
 
 
-def get_path_with_extension(path: str) -> str:
+def get_path_without_extension(path: str) -> str:
     index = path.rfind('.')
     if index >= 0:
         return path[:index]
     else:
         return path
-    
+
 
 def is_subpath(root, path):
     return pathlib.Path(root) in pathlib.Path(path).parents
