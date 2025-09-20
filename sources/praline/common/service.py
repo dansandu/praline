@@ -1,12 +1,12 @@
 from praline.common import ArtifactPrefix
 from praline.common.exception import ServiceConfigurationException
-from praline.common.file_system import basename, get_path_with_extension
+from praline.common.file_system import basename, get_path_without_extension
 from typing import List
 
 
 def artifact_prefix_matches_path(artifact_prefix: ArtifactPrefix, path: str):
     base = basename(path)
-    stem = get_path_with_extension(get_path_with_extension(base))
+    stem = get_path_without_extension(get_path_without_extension(base))
     scope = 'test' if stem == 'test' else 'main'
     return base.startswith(artifact_prefix.prefix) and artifact_prefix.scope == scope
 

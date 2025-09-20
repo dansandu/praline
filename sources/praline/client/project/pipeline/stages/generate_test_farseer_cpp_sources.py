@@ -1,5 +1,5 @@
 from praline.common import ArtifactPrefix, header_file_extension, source_file_extension
-from praline.common.file_system import join, relative_path, get_path_with_extension, directory_name
+from praline.common.file_system import join, relative_path, get_path_without_extension, directory_name
 from praline.common.service import get_service_executable, get_service_library
 from praline.client.project.pipeline.stages import StageArguments, stage
 
@@ -45,7 +45,11 @@ def generate_test_farseer_cpp_sources(arguments: StageArguments):
     for farseer_source in farseer_sources:
         farseer_cpp_base = join(
             project_structure.test_generated_sources_root, 
-            relative_path(get_path_with_extension(farseer_source), project_structure.test_sources_root))
+            relative_path(
+                get_path_without_extension(farseer_source), 
+                project_structure.test_sources_root
+            )
+        )
         
         file_system.create_directory_if_missing(directory_name(farseer_cpp_base))
         
