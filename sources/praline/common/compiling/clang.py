@@ -47,13 +47,14 @@ class ClangCompilingStrategy(ICompilingStrategy):
             f'-fvisibility={visibility}', '-fPIC', '-pthread', '-std=c++23',
             '-Werror', '-Wall', '-Wextra',
             '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
-            '-DPRALINE_IMPORT=__attribute__((visibility("default")))'
+            '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
+            f'-DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"'
         ]
         
         if artifact_manifest.mode == Mode.debug:
-            self.flags.append('-g')
+            self.flags.extend(['-g', '-DDEBUG'])
         elif artifact_manifest.mode == Mode.release:
-            self.flags.append('-O3')            
+            self.flags.extend(['-O3', '-DNDEBUG'])
         else:
             raise CompilerInstantionException(f"Unrecognized mode '{artifact_manifest.mode}'")
 

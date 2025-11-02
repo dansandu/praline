@@ -6,24 +6,24 @@ class ProjectStructure:
     def __init__(self, project_directory, organization, artifact):
         self.project_directory = project_directory
 
-        sources_root = join(self.project_directory, 'sources')
-
         main = 'main'
         test = 'test'
+
+        self.sources_root = join(self.project_directory, 'sources')
 
         self.resources_root = join(self.project_directory, 'resources')
 
         self.main_resources_root        = join(self.resources_root, main)
         self.main_resources_domain_root = join(self.resources_root, main, organization, artifact)
 
-        self.main_sources_root          = join(sources_root, main)
-        self.main_sources_domain_root   = join(sources_root, main, organization, artifact)
+        self.main_sources_root          = join(self.sources_root, main)
+        self.main_sources_domain_root   = join(self.sources_root, main, organization, artifact)
 
         self.test_resources_root        = join(self.resources_root, test)
         self.test_resources_domain_root = join(self.resources_root, test, organization, artifact)
 
-        self.test_sources_root        = join(sources_root, test)
-        self.test_sources_domain_root = join(sources_root, test, organization, artifact)
+        self.test_sources_root        = join(self.sources_root, test)
+        self.test_sources_domain_root = join(self.sources_root, test, organization, artifact)
 
         self.target_root       = join(self.project_directory, 'target')
         self.main_objects_root = join(self.target_root,       'objects', main)
