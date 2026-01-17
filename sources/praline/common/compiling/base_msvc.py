@@ -61,7 +61,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         
         self.compiler_flags  = [
             '/analyze-', '/permissive-', '/GS', '/Gd', '/FC', '/sdl', '/fp:precise',
-            '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++latest', '/nologo', '/WX',
+            '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++23preview', '/nologo', '/WX',
             '/W3', '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_CONSOLE',
             '/D_UNICODE', '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)',
             '/DPRALINE_IMPORT=__declspec(dllimport)',
