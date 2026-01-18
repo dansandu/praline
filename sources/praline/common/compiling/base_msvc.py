@@ -58,7 +58,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         self.project_structure = project_structure
         self.environment_file  = get_environment_file(artifact_manifest.architecture)
         self.machine           = get_msvc_machine(artifact_manifest.architecture)
-        
+
         self.compiler_flags  = [
             '/analyze-', '/permissive-', '/GS', '/Gd', '/FC', '/sdl', '/fp:precise',
             '/EHsc', '/diagnostics:caret', '/errorReport:none', '/std:c++23preview', '/nologo', '/WX',
@@ -74,8 +74,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         ]
 
         self.extra_libraries_interfaces = [
-            'kernel32.lib', 'user32.lib', 'gdi32.lib', 'winspool.lib', 'comdlg32.lib', 
-            'advapi32.lib', 'shell32.lib', 'ole32.lib', 'oleaut32.lib', 'uuid.lib', 
+            'kernel32.lib', 'user32.lib', 'gdi32.lib', 'winspool.lib', 'comdlg32.lib',
+            'advapi32.lib', 'shell32.lib', 'ole32.lib', 'oleaut32.lib', 'uuid.lib',
             'odbc32.lib', 'odbccp32.lib', 'ws2_32.lib'
         ]
 
@@ -118,8 +118,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             include_paths.extend(['/I', self.project_structure.test_generated_sources_root])
 
         status, stdout, stderror = self.file_system.execute(
-            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, '/EP', source_path] + 
-            self.compiler_flags + 
+            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, '/EP', source_path] +
+            self.compiler_flags +
             include_paths
         )
 
@@ -130,7 +130,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool) -> None:
         include_paths = [
-            '/I', self.project_structure.main_sources_root, 
+            '/I', self.project_structure.main_sources_root,
             '/I', self.project_structure.main_generated_sources_root,
             '/I', self.project_structure.external_headers_root,
         ]
@@ -139,7 +139,7 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             include_paths.extend(['/I', self.project_structure.test_generated_sources_root])
 
         status, stdout, stderror = self.file_system.execute(
-            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, f'/Fo{object_path}', '/c', source_path] + 
+            [self.environment_file, '>nul', '2>&1', '&&', self.compiler_name, f'/Fo{object_path}', '/c', source_path] +
             self.compiler_flags +
             include_paths
         )
@@ -149,8 +149,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
 
     def link_executable(self,
                         objects: List[str],
-                        external_libraries: List[str],
-                        external_libraries_interfaces: List[str],
+                        libraries: List[str],
+                        libraries_interfaces: List[str],
                         executable: str,
                         symbols_table: str) -> None:
         library_interface = executable[:-4] + '.lib'
@@ -163,13 +163,13 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             [
                 f'/OUT:{executable}',
                 f'/MACHINE:{self.machine}',
-                f'/IMPLIB:{library_interface}', 
+                f'/IMPLIB:{library_interface}',
                 f'/PDB:{symbols_table}'
             ] +
             self.linker_flags +
             objects +
             self.extra_libraries_interfaces +
-            external_libraries_interfaces
+            libraries_interfaces
         )
 
         with self.file_system.open_file(link_executable_rsp_file, 'w') as f:
@@ -178,13 +178,13 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
         status, stdout, stderror = self.file_system.execute(
             [self.environment_file, '>nul', '2>&1', '&&', 'lld-link', f'@{link_executable_rsp_file}']
         )
-        
+
         if  status != 0 or len(stderror) > 0:
             raise LinkingException(status, stdout, stderror)
-        
+
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
-        
+
         if self.file_system.exists(library_interface):
             self.file_system.remove_file(library_interface)
 
@@ -203,14 +203,14 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
 
         link_library_arguments = ' '.join(
             [
-                f'/OUT:{library}', '/DLL', 
+                f'/OUT:{library}', '/DLL',
                 f'/IMPLIB:{library_interface}',
                 f'/MACHINE:{self.machine}',
                 f'/PDB:{symbols_table}'
-            ] + 
-            self.linker_flags + 
+            ] +
+            self.linker_flags +
             objects +
-            self.extra_libraries_interfaces + 
+            self.extra_libraries_interfaces +
             external_libraries_interfaces
         )
 
@@ -223,10 +223,10 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
 
         if  status != 0 or len(stderror) > 0:
             raise LinkingException(status, stdout, stderror)
-        
+
         if self.file_system.exists(export_file):
             self.file_system.remove_file(export_file)
-        
+
         if not self.file_system.exists(library_interface):
-            logger.warn(f"No library interface file '{library_interface}' was created because there are no symbols to"
+            logger.warn(f"No library interface file '{library_interface}' was created because there are no symbols to "
                         "export -- use PRALINE_EXPORT to export symbols")

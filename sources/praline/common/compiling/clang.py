@@ -50,7 +50,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
             '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
             f'-DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"'
         ]
-        
+
         if artifact_manifest.mode == Mode.debug:
             self.flags.extend(['-g', '-DDEBUG'])
         elif artifact_manifest.mode == Mode.release:
@@ -61,7 +61,7 @@ class ClangCompilingStrategy(ICompilingStrategy):
         if artifact_manifest.platform != Platform.darwin:
             raise CompilerInstantionException(
                 f"The clang compiler cannot be used on the '{artifact_manifest.platform}' platform")
-        
+
         if file_system.which('clang++') == None:
             raise CompilerInstantionException(f"The clang compiler could not find the clang++ executable in the PATH")
 
@@ -70,24 +70,24 @@ class ClangCompilingStrategy(ICompilingStrategy):
 
     def preprocess(self, headers: List[str], source_path: str, main_source: bool) -> bytes:
         include_paths = [
-            f'-I{self.project_structure.main_sources_root}', 
-            f'-I{self.project_structure.main_generated_sources_root}', 
+            f'-I{self.project_structure.main_sources_root}',
+            f'-I{self.project_structure.main_generated_sources_root}',
             f'-I{self.project_structure.external_headers_root}'
         ]
-        
+
         if not main_source:
             include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
             include_paths.extend([f'-I{self.project_structure.test_generated_sources_root}'])
 
         status, stdout, stderror = self.file_system.execute(
-            ['clang++', '-E', '-P', source_path] + 
-            self.flags + 
+            ['clang++', '-E', '-P', source_path] +
+            self.flags +
             include_paths
         )
-        
+
         if  status != 0 or len(stderror) > 0:
             raise PreprocessingException(status, stderror)
-        
+
         return stdout
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool):
@@ -96,15 +96,15 @@ class ClangCompilingStrategy(ICompilingStrategy):
             f'-I{self.project_structure.main_generated_sources_root}',
             f'-I{self.project_structure.external_headers_root}'
         ]
-        
+
         if not main_source:
             include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
             include_paths.extend([f'-I{self.project_structure.test_generated_sources_root}'])
 
         try:
             self.file_system.execute_and_fail_on_bad_return(
-                ['clang++', '-o', object_path, '-c', source_path] + 
-                self.flags + 
+                ['clang++', '-o', object_path, '-c', source_path] +
+                self.flags +
                 include_paths
             )
         except ProcessExecutionException as exception:
@@ -112,17 +112,16 @@ class ClangCompilingStrategy(ICompilingStrategy):
 
     def link_executable(self,
                         objects: List[str],
-                        external_libraries: List[str],
-                        external_libraries_interfaces: List[str],
+                        libraries: List[str],
+                        libraries_interfaces: List[str],
                         executable: str,
                         symbols_table: str):
         try:
             self.file_system.execute_and_fail_on_bad_return(
-                ['clang++', '-o', executable, '-rpath', 
-                '@executable_path/../libraries',
-                '-rpath', '@executable_path/../external/libraries'] +
-                self.flags + objects + 
-                [f'-L{self.project_structure.external_libraries_root}'] +
+                ['clang++', '-o', executable, '-rpath', '@executable_path/../libraries',
+                 '-rpath', '@executable_path/../external/libraries'] +
+                self.flags + objects +
+                [f'-L{self.project_structure.libraries_root}', f'-L{self.project_structure.external_libraries_root}'] +
                 [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
             )
         except ProcessExecutionException as exception:
@@ -137,8 +136,8 @@ class ClangCompilingStrategy(ICompilingStrategy):
                      symbols_table: str):
         try:
             self.file_system.execute_and_fail_on_bad_return(
-                ['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] + 
-                self.flags + objects + 
+                ['clang++', '-o', library, '-shared', '-install_name', f'@rpath/{basename(library)}'] +
+                self.flags + objects +
                 [f'-L{self.project_structure.external_libraries_root}'] +
                 [f'-l{basename(lib)[3:-6]}' for lib in external_libraries]
             )

@@ -4,7 +4,7 @@ from praline.common.compiling.compiler import (
     ICompilingStrategy, ICompilingStrategySupplier, IYieldDescriptor
 )
 from praline.common.exception import (
-    CompilationException, CompilerInstantionException, LinkingException, 
+    CompilationException, CompilerInstantionException, LinkingException,
     PreprocessingException, ProcessExecutionException
 )
 from praline.common.file_system import basename, FileSystem
@@ -50,17 +50,19 @@ class GccCompilingStrategy(ICompilingStrategy):
             '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
             f'-DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"'
         ]
-        
+
+        self.extra_libraries = ['libstdc++_libbacktrace.so']
+
         if artifact_manifest.mode == Mode.debug:
             self.flags.extend(['-g', '-DDEBUG'])
         elif artifact_manifest.mode == Mode.release:
-            self.flags.extend(['-O3', '-DNDEBUG'])     
+            self.flags.extend(['-O3', '-DNDEBUG'])
         else:
             raise CompilerInstantionException(f"Unrecognized mode '{artifact_manifest.mode}'")
-        
+
         if artifact_manifest.platform != Platform.linux:
             raise CompilerInstantionException(f"The gcc compiler cannot be used on the '{artifact_manifest.platform}' platform")
-        
+
         if file_system.which('g++') == None:
             raise CompilerInstantionException(f"The gcc compiler could not find the g++ executable in the PATH")
 
@@ -79,8 +81,8 @@ class GccCompilingStrategy(ICompilingStrategy):
             include_paths.extend([f'-I{self.project_structure.test_generated_sources_root}'])
 
         status, stdout, stderror = self.file_system.execute(
-            ['g++', '-E', '-P', source_path] + 
-            self.flags + 
+            ['g++', '-E', '-P', source_path] +
+            self.flags +
             include_paths
         )
 
@@ -91,36 +93,35 @@ class GccCompilingStrategy(ICompilingStrategy):
 
     def compile(self, headers: List[str], source_path: str, object_path: str, main_source: bool):
         include_paths = [
-            f'-I{self.project_structure.main_sources_root}', 
-            f'-I{self.project_structure.main_generated_sources_root}', 
+            f'-I{self.project_structure.main_sources_root}',
+            f'-I{self.project_structure.main_generated_sources_root}',
             f'-I{self.project_structure.external_headers_root}'
         ]
 
         if not main_source:
             include_paths.extend([f'-I{self.project_structure.test_sources_root}'])
             include_paths.extend([f'-I{self.project_structure.test_generated_sources_root}'])
-        
+
         try:
             self.file_system.execute_and_fail_on_bad_return(
-                ['g++', '-o', object_path, '-c', source_path] + 
-                self.flags + 
-                include_paths
+                ['g++', '-o', object_path, '-c', source_path] + self.flags + include_paths
             )
         except ProcessExecutionException as exception:
             raise CompilationException(exception.status, exception.stdout, exception.stderror)
 
     def link_executable(self,
                         objects: List[str],
-                        external_libraries: List[str],
-                        external_libraries_interfaces: List[str],
+                        libraries: List[str],
+                        libraries_interfaces: List[str],
                         executable: str,
                         symbols_table: str):
         try:
             self.file_system.execute_and_fail_on_bad_return(
                 ['g++', '-o', executable, '-Wl,-rpath,$ORIGIN/../libraries', '-Wl,-rpath,$ORIGIN/../external/libraries'] +
-                self.flags + objects + 
-                [f'-L{self.project_structure.external_libraries_root}'] +
-                [f'-l{basename(lib)[3:-3]}' for lib in external_libraries]
+                self.flags + objects +
+                [f'-L{self.project_structure.libraries_root}', f'-L{self.project_structure.external_libraries_root}'] +
+                [f'-l{basename(lib)[3:-3]}' for lib in libraries] +
+                [f'-l{basename(lib)[3:-3]}' for lib in self.extra_libraries]
             )
         except ProcessExecutionException as exception:
             raise LinkingException(exception.status, exception.stdout, exception.stderror)
@@ -137,7 +138,8 @@ class GccCompilingStrategy(ICompilingStrategy):
                 ['g++', '-o', library, '-shared'] +
                 self.flags + objects + 
                 [f'-L{self.project_structure.external_libraries_root}'] +
-                [f'-l{basename(lib)[3:-3]}' for lib in external_libraries]
+                [f'-l{basename(lib)[3:-3]}' for lib in external_libraries] +
+                [f'-l{basename(lib)[3:-3]}' for lib in self.extra_libraries]
             )
         except ProcessExecutionException as exception:
             raise LinkingException(exception.status, exception.stdout, exception.stderror)

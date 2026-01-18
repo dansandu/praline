@@ -79,7 +79,7 @@ def get_matching_packages(dependency: str, candidate_packages: List[str]) -> Lis
 
 
 def get_packages_from_directory(file_system: FileSystem, directory: str) -> List[str]:
-    return [entry.name for entry in file_system.list_directory(directory) 
+    return [entry.name for entry in file_system.list_directory(directory)
             if package_name_pattern.fullmatch(entry.name)]
 
 
@@ -88,7 +88,7 @@ def get_package_dependencies_from_archive(file_system: FileSystem, package_path:
     return artifact_manifest.get_package_dependencies_file_names()
 
 
-def get_package_dependencies_recursively(file_system: FileSystem, 
+def get_package_dependencies_recursively(file_system: FileSystem,
                                          artifact_manifest: ArtifactManifest,
                                          repository_path: str) -> List[str]:
     root_package      = artifact_manifest.get_package_file_name()
@@ -122,25 +122,25 @@ def get_package_dependencies_recursively(file_system: FileSystem,
         return cartesian_product(fixed_dependencies)
 
     instances = multiple_instance_depth_first_traversal(
-        start_node=root_package, 
-        children_supplier=children_supplier, 
-        instance_validator=no_version_conflicts, 
+        start_node=root_package,
+        children_supplier=children_supplier,
+        instance_validator=no_version_conflicts,
         on_cycle=no_cyclic_depedencies
     )
-    
+
     valid_trees = [instance.tree for instance in instances if instance.validation_result.valid]
-    
+
     if not valid_trees:
         raise UnsatisfiableArtifactDependenciesError(f"Dependencies for package '{root_package}' cannot be satisfied")
-    
+
     dependencies = [dependency for dependency in valid_trees[0]]
     dependencies.remove(root_package)
     return dependencies
 
 
 def pack(
-    file_system: FileSystem, 
-    package_path: str, package_files: List[Tuple[str, str]], 
+    file_system: FileSystem,
+    package_path: str, package_files: List[Tuple[str, str]],
     progress_bar_supplier: ProgressBarSupplier
 ):
     with progress_bar_supplier.create(resolution=len(package_files)) as progress_bar:
@@ -172,7 +172,7 @@ def unpack(file_system: FileSystem, package_path: str, extraction_path: str) -> 
                         valid = True
                 if member.name != manifest_file_name and not valid:
                     raise InvalidPackageContentsError(f"Unrecognized file '{member.name}' in package")
-    
+
     for header in contents['headers']:
         with file_system.open_file(header, 'rb') as f:
             text = f.read().decode()
@@ -200,7 +200,7 @@ def get_package_contents(file_system: FileSystem, package_path: str, extraction_
                         files.append(join(extraction_path, member.name))
                         valid = True
                 if member.name != manifest_file_name and not valid:
-                    raise InvalidPackageContentsError(f"Unrecognized file '{member.name}' in package")    
+                    raise InvalidPackageContentsError(f"Unrecognized file '{member.name}' in package")
     return contents
 
 
@@ -209,7 +209,7 @@ def clean_up_package(file_system: FileSystem, package_path: str, extraction_path
     match        = package_name_pattern.fullmatch(package_name)
     if not match:
         raise RuntimeError(f"Invalid package name '{package_name}'")
-    
+
     organization = match['organization']
     artifact     = match['artifact']
     compiler     = match['compiler']
@@ -232,20 +232,24 @@ def clean_up_package(file_system: FileSystem, package_path: str, extraction_path
     executable, executable_symbols_table = yield_descriptor.get_executable_and_symbols_table(artifact_identifer)
 
     executable_path = join(extraction_path, 'executables', executable)
+    file_system.remove_file_if_it_exists(executable_path)
 
-    executable_symbols_table_path = join(extraction_path, 'symbols_tables', executable_symbols_table) 
+    if executable_symbols_table:
+        executable_symbols_table_path = join(extraction_path, 'symbols_tables', executable_symbols_table)
+        file_system.remove_file_if_it_exists(executable_symbols_table_path)
 
     library, library_symbols_table = yield_descriptor.get_library_and_symbols_table(artifact_identifer)
-    
+
     library_path = join(extraction_path, 'libraries', library)
-
-    library_symbols_table_path = join(extraction_path, 'symbols_tables', library_symbols_table) 
-
-    library_interface_path = join(extraction_path, 'libraries_interfaces', yield_descriptor.get_library_interface(artifact_identifer))
-    
-    file_system.remove_file_if_it_exists(executable_path)
-    file_system.remove_file_if_it_exists(executable_symbols_table_path)
     file_system.remove_file_if_it_exists(library_path)
-    file_system.remove_file_if_it_exists(library_symbols_table_path)
-    file_system.remove_file_if_it_exists(library_interface_path)
+
+    if library_symbols_table:
+        library_symbols_table_path = join(extraction_path, 'symbols_tables', library_symbols_table)
+        file_system.remove_file_if_it_exists(library_symbols_table_path)
+
+    library_interface = yield_descriptor.get_library_interface(artifact_identifer)
+    if library_interface:
+        library_interface_path = join(extraction_path, 'libraries_interfaces', library_interface)
+        file_system.remove_file_if_it_exists(library_interface_path)
+
     file_system.remove_file_if_it_exists(package_path)
