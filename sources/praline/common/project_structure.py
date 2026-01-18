@@ -55,13 +55,13 @@ class ProjectStructure:
             main_source_relative_path = relative_path(main_source_path, self.main_sources_root)
 
         return join(self.main_objects_root, yield_descriptor.get_object(main_source_relative_path))
-    
+
     def get_test_object_path(self, yield_descriptor: IYieldDescriptor, test_source_path: str) -> str:
         if is_subpath(self.test_generated_sources_root, test_source_path):
             test_source_relative_path = relative_path(test_source_path, self.test_generated_sources_root)
         else:
             test_source_relative_path = relative_path(test_source_path, self.test_sources_root)
-    
+
         return join(self.test_objects_root, yield_descriptor.get_object(test_source_relative_path))
 
     def get_executable_and_symbols_table_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
@@ -77,6 +77,10 @@ class ProjectStructure:
             return (join(self.libraries_root, library), join(self.symbols_tables_root, symbols_table))
         else:
             return (join(self.libraries_root, library), None)
-    
+
     def get_library_interface_path(self, yield_descriptor: IYieldDescriptor, artifact_identifier: str) -> str:
-        return join(self.libraries_interfaces_root, yield_descriptor.get_library_interface(artifact_identifier))
+        library_interface = yield_descriptor.get_library_interface(artifact_identifier)
+        if library_interface:
+            return join(self.libraries_interfaces_root, library_interface)
+        else:
+            return None
