@@ -12,7 +12,11 @@ farseer_file_extension = '.seer'
 
 header_file_extension = '.hpp'
 
+generated_header_file_extension = '.g.hpp'
+
 source_file_extension = '.cpp'
+
+generated_source_file_extension = '.g.cpp'
 
 executable_source_file_name = 'executable.cpp'
 
