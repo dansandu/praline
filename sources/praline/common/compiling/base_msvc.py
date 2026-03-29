@@ -1,4 +1,4 @@
-from praline.common import Architecture, ArtifactManifest, ExportedSymbols, Mode, Platform
+from praline.common import Architecture, ArtifactManifest, ArtifactPrefix, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
 from praline.common.compiling.compiler import ICompilingStrategy, IYieldDescriptor
 from praline.common.exception import (
@@ -48,6 +48,12 @@ class BaseMsvcYieldDescriptor(IYieldDescriptor):
 
     def get_library_interface(self, artifact_identifier: str) -> str:
         return artifact_identifier + '.lib'
+
+    def get_executable_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        return artifact_prefix
+
+    def get_library_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        return artifact_prefix
 
 
 class BaseMsvcCompilingStrategy(ICompilingStrategy):
