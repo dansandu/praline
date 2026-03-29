@@ -1,4 +1,4 @@
-from praline.common import source_file_extension
+from praline.common import ArtifactPrefix, source_file_extension
 from praline.common.file_system import get_separator
 from abc import ABC, abstractmethod
 
@@ -19,3 +19,12 @@ class IYieldDescriptor(ABC):
     @abstractmethod
     def get_library_interface(self, artifact_identifier: str) -> str:
         raise NotImplementedError()
+
+    @abstractmethod
+    def get_executable_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_library_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        raise NotImplementedError()
+

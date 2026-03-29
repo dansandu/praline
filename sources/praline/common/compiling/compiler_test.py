@@ -1,4 +1,4 @@
-from praline.common import (Architecture, ArtifactManifest, ArtifactType, ArtifactVersion, 
+from praline.common import (Architecture, ArtifactManifest, ArtifactPrefix, ArtifactType, ArtifactVersion,
                             CompilerType, ExportedSymbols, Mode, Platform)
 from praline.common.compiling.compiler import ICompilingStrategy, IYieldDescriptor, Compiler
 from praline.common.file_system import join
@@ -22,6 +22,12 @@ class YieldDescriptorMock(IYieldDescriptor):
 
     def get_library_interface(self, artifact_identifier: str) -> str:
         return artifact_identifier + '.lib'
+
+    def get_executable_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        return artifact_prefix
+
+    def get_library_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        return artifact_prefix
 
 
 class CompilingStrategyMock(ICompilingStrategy):

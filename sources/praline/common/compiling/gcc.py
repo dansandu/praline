@@ -1,4 +1,4 @@
-from praline.common import ArtifactManifest, CompilerType, ExportedSymbols, Mode, Platform
+from praline.common import ArtifactManifest, ArtifactPrefix, CompilerType, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
 from praline.common.compiling.compiler import (
     ICompilingStrategy, ICompilingStrategySupplier, IYieldDescriptor
@@ -28,6 +28,12 @@ class GccYieldDescriptor(IYieldDescriptor):
 
     def get_library_interface(self, artifact_identifier: str) -> str:
         return None
+
+    def get_executable_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        return artifact_prefix
+
+    def get_library_prefix(self, artifact_prefix: ArtifactPrefix) -> ArtifactPrefix:
+        return ArtifactPrefix(f'{artifact_prefix.scope}:lib{artifact_prefix.prefix}')
 
 
 class GccCompilingStrategy(ICompilingStrategy):

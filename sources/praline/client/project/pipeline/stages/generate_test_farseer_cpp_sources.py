@@ -13,6 +13,7 @@ from praline.client.project.pipeline.stages import StageArguments, stage
 )
 def generate_test_farseer_cpp_sources(arguments: StageArguments):
     artifact_manifest = arguments.artifact_manifest
+    compiler          = arguments.compiler
     file_system       = arguments.file_system
     project_structure = arguments.project_structure
     resources         = arguments.resources
@@ -35,11 +36,18 @@ def generate_test_farseer_cpp_sources(arguments: StageArguments):
     ):
         return
 
-    executable_to_run = artifact_manifest.main_service.executable_to_run
-    library_to_load = ArtifactPrefix('dansandu-farseer')
+    if artifact_manifest.main_service.executable_to_run == None:
+        raise RuntimeError("Main service must be configured in order to generate farseer sources")
 
-    service_executable = get_service_executable(executable_to_run, executables)
-    service_library = get_service_library(library_to_load, libraries)
+    yieldDescriptor = compiler.compiler_strategy.get_yield_descriptor()
+
+    executable_prefix = yieldDescriptor.get_executable_prefix(
+        artifact_manifest.main_service.executable_to_run)
+
+    library_prefix = yieldDescriptor.get_library_prefix(ArtifactPrefix('dansandu-farseer'))
+
+    service_executable = get_service_executable(executable_prefix, executables)
+    service_library = get_service_library(library_prefix, libraries)
     service_name = 'dansandu-farseer-generate_protocol'
 
     for farseer_source in farseer_sources:
@@ -50,9 +58,8 @@ def generate_test_farseer_cpp_sources(arguments: StageArguments):
                 project_structure.test_sources_root
             )
         )
-        
         file_system.create_directory_if_missing(directory_name(farseer_cpp_base))
-        
+
         farseer_cpp_header = farseer_cpp_base + generated_header_file_extension
 
         farseer_cpp_source = farseer_cpp_base + generated_source_file_extension
