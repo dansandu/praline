@@ -25,5 +25,6 @@ build_project journey &&
     build_project service_runner &&
     build_project radiance &&
     build_project ballotin &&
+    build_project math &&
     build_project glyph &&
     build_project farseer
