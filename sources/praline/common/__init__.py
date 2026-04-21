@@ -6,8 +6,6 @@ from typing import List, Callable, Tuple, TypeVar
 import re
 
 
-snapshot_datetime_format = "%Y%m%d%H%M%S%f"
-
 farseer_file_extension = '.seer'
 
 header_file_extension = '.hpp'
@@ -21,6 +19,14 @@ generated_source_file_extension = '.g.cpp'
 executable_source_file_name = 'executable.cpp'
 
 package_extension = '.tar.gz'
+
+snapshot_timestamp_length = 17
+
+
+def get_formatted_snapshot_timestamp(date: datetime):
+    timestamp = date.strftime("%Y%m%d%H%M%S%f")[:-3]
+    assert len(timestamp) == snapshot_timestamp_length
+    return timestamp
 
 
 class Architecture(StrEnum):
@@ -117,7 +123,7 @@ dependency_version_pattern = re.compile(
 package_version_pattern = re.compile(
     fr"(?P<major>{number_regex})\."
     fr"(?P<minor>{number_regex})\."
-    fr"(?P<patch>{number_regex})(?P<snapshot>.SNAPSHOT\d{{20}})?"
+    fr"(?P<patch>{number_regex})(?P<snapshot>.SNAPSHOT\d{{{snapshot_timestamp_length}}})?"
 )
 
 
@@ -130,7 +136,7 @@ package_name_pattern = re.compile(
     f"(?P<mode>{'|'.join(Mode)})-"
     fr"(?P<major>{number_regex})\."
     fr"(?P<minor>{number_regex})\."
-    fr"(?P<patch>{number_regex})(?P<snapshot>.SNAPSHOT\d{{20}})?\.tar\.gz"
+    fr"(?P<patch>{number_regex})(?P<snapshot>.SNAPSHOT\d{{{snapshot_timestamp_length}}})?\.tar\.gz"
 )
 
 
@@ -172,7 +178,7 @@ class PackageVersion(ArtifactVersion):
                              hour=int(snapshot[17:19]),
                              minute=int(snapshot[19:21]),
                              second=int(snapshot[21:23]),
-                             microsecond=int(snapshot[23:]),
+                             microsecond=1000 * int(snapshot[23:]),
                              tzinfo=timezone.utc) if snapshot else None
         return PackageVersion(int(match['major']), 
                               int(match['minor']), 
@@ -188,9 +194,11 @@ class PackageVersion(ArtifactVersion):
         object.__setattr__(self, 'timestamp', timestamp)
 
     def __str__(self) -> str:
-        timestamp = self.timestamp.strftime(snapshot_datetime_format) if self.snapshot else ''
-        return super().__str__() + timestamp
-    
+        if self.snapshot:
+            return super().__str__() + get_formatted_snapshot_timestamp(self.timestamp)
+        else:
+            return super().__str__()
+
     def __lt__(self, other) -> bool:
         a = (self.major, self.minor, self.patch, not self.snapshot, self.timestamp)
         b = (other.major, other.minor, other.patch, not other.snapshot, other.timestamp)
