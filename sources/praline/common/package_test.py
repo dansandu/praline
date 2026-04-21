@@ -108,35 +108,35 @@ class PackageTest(TestCase):
 
     def test_split_package_version(self):
         identifier, version = split_package_version(
-            'org-art-x64-windows-msvc-release-12.4.0.SNAPSHOT20210125115010123456.tar.gz')
+            'org-art-x64-windows-msvc-release-12.4.0.SNAPSHOT20210125115010123.tar.gz')
 
         self.assertEqual(identifier, 'org-art-x64-windows-msvc-release')
-        self.assertEqual(version, '12.4.0.SNAPSHOT20210125115010123456')
+        self.assertEqual(version, '12.4.0.SNAPSHOT20210125115010123')
 
     def test_get_matching_packages(self):
         dependency = 'org-art-x64-linux-gcc-debug-12.+4.+0.SNAPSHOT.tar.gz'
 
         candidates = [
             'org-art-x64-linux-gcc-debug-12.4.0.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.4.1.SNAPSHOT20230120115015000003.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015006.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.1.SNAPSHOT20230120115015003.tar.gz',
             'org-art-x64-linux-gcc-debug-12.4.1.tar.gz',
-            'or2-ar2-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000005.tar.gz',
+            'or2-ar2-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015005.tar.gz',
             'or2-ar2-x64-linux-gcc-debug-12.4.0.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000001.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000002.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015001.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015002.tar.gz',
             'org-art-x64-linux-gcc-debug-12.5.0.tar.gz',
             'org-art-x64-linux-gcc-debug-13.5.0.tar.gz',
         ]
 
         expected_matching_packages = [
             'org-art-x64-linux-gcc-debug-12.5.0.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000002.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015000001.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015002.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.5.0.SNAPSHOT20230120115015001.tar.gz',
             'org-art-x64-linux-gcc-debug-12.4.1.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.4.1.SNAPSHOT20230120115015000003.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.1.SNAPSHOT20230120115015003.tar.gz',
             'org-art-x64-linux-gcc-debug-12.4.0.tar.gz',
-            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015006.tar.gz',
         ]
 
         matching_packages = get_matching_packages(dependency, candidates)
@@ -146,7 +146,7 @@ class PackageTest(TestCase):
     def test_get_packages_from_directory(self):
         file_system = FileSystemMock(
             files={
-                join('packages', 'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz'): b'',
+                join('packages', 'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015006.tar.gz'): b'',
                 join('packages', 'org-art-x64-linux-gcc-debug-12.4.0.tar.gz'): b'',
                 join('packages', 'not-a-package.tar.gz'): b'',
             },
@@ -156,7 +156,7 @@ class PackageTest(TestCase):
         packages = get_packages_from_directory(file_system, 'packages')
 
         expected_packages = {
-            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015000006.tar.gz',
+            'org-art-x64-linux-gcc-debug-12.4.0.SNAPSHOT20230120115015006.tar.gz',
             'org-art-x64-linux-gcc-debug-12.4.0.tar.gz'
         }
 

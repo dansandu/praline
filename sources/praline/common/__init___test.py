@@ -108,7 +108,7 @@ class PralineCommonTest(TestCase):
         self.assertEqual(str(version), version_string)
 
     def test_package_version_snapshot(self):
-        version_string = '22.6.8.SNAPSHOT20090102030405000006'
+        version_string = '22.6.8.SNAPSHOT20090102030405006'
 
         version = PackageVersion.from_string(version_string)
 
@@ -126,7 +126,7 @@ class PralineCommonTest(TestCase):
                                       hour=3, 
                                       minute=4, 
                                       second=5, 
-                                      microsecond=6,
+                                      microsecond=6000,
                                       tzinfo=timezone.utc)
 
         self.assertEqual(version.timestamp, expected_timestamp)
@@ -142,22 +142,22 @@ class PralineCommonTest(TestCase):
 
         mismatches = [
             PackageVersion.from_string('2.2.3'),
-            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506000009'),
+            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506009'),
             PackageVersion.from_string('1.3.4'),
-            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506000008'),
+            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506008'),
             PackageVersion.from_string('1.3.3'),
-            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506000007'),
+            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506007'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000006'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506006'),
             PackageVersion.from_string('1.2.4'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000005'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506000004'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506005'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506004'),
             PackageVersion.from_string('1.2.2'),
-            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506000003'),
+            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506003'),
             PackageVersion.from_string('1.1.3'),
-            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.1.2'),
-            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506001'),
         ]
 
         for match in matches:
@@ -176,21 +176,21 @@ class PralineCommonTest(TestCase):
 
         mismatches = [
             PackageVersion.from_string('2.2.3'),
-            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506000009'),
+            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506009'),
             PackageVersion.from_string('1.3.4'),
-            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506000008'),
+            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506008'),
             PackageVersion.from_string('1.3.3'),
-            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506000007'),
+            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506007'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000006'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000005'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506000004'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506006'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506005'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506004'),
             PackageVersion.from_string('1.2.2'),
-            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506000003'),
+            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506003'),
             PackageVersion.from_string('1.1.3'),
-            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.1.2'),
-            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506001'),
         ]
 
         for match in matches:
@@ -212,18 +212,18 @@ class PralineCommonTest(TestCase):
 
         mismatches = [
             PackageVersion.from_string('2.2.3'),
-            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506000009'),
-            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506000008'),
-            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506000007'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000006'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000005'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506000004'),
+            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506009'),
+            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506008'),
+            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506007'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506006'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506005'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506004'),
             PackageVersion.from_string('1.2.2'),
-            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506000003'),
+            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506003'),
             PackageVersion.from_string('1.1.3'),
-            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.1.2'),
-            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506001'),
         ]
 
         for match in matches:
@@ -237,26 +237,26 @@ class PralineCommonTest(TestCase):
 
         matches = [
             PackageVersion.from_string('1.2.3'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506000010'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506010'),
         ]
 
         mismatches = [
             PackageVersion.from_string('2.2.3'),
-            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506000009'),
+            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506009'),
             PackageVersion.from_string('1.3.4'),
-            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506000008'),
+            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506008'),
             PackageVersion.from_string('1.3.3'),
-            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506000007'),
+            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506007'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000006'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506006'),
             PackageVersion.from_string('1.2.4'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000005'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506005'),
             PackageVersion.from_string('1.2.2'),
-            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506000003'),
+            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506003'),
             PackageVersion.from_string('1.1.3'),
-            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.1.2'),
-            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506001'),
         ]
 
         for match in matches:
@@ -270,26 +270,26 @@ class PralineCommonTest(TestCase):
 
         matches = [
             PackageVersion.from_string('1.2.4'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000009'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506009'),
             PackageVersion.from_string('1.2.3'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506000008'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506008'),
         ]
 
         mismatches = [
             PackageVersion.from_string('2.2.3'),
-            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506000007'),
+            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506007'),
             PackageVersion.from_string('1.3.4'),
-            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506000006'),
+            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506006'),
             PackageVersion.from_string('1.3.3'),
-            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506000005'),
+            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506005'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000004'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506004'),
             PackageVersion.from_string('1.2.2'),
-            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506000003'),
+            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506003'),
             PackageVersion.from_string('1.1.3'),
-            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.1.2'),
-            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506001'),
         ]
 
         for match in matches:
@@ -303,24 +303,24 @@ class PralineCommonTest(TestCase):
 
         matches = [
             PackageVersion.from_string('1.3.4'),
-            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506000008'),
+            PackageVersion.from_string('1.3.4.SNAPSHOT20010203040506008'),
             PackageVersion.from_string('1.3.3'),
-            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506000007'),
+            PackageVersion.from_string('1.3.3.SNAPSHOT20010203040506007'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000006'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506006'),
             PackageVersion.from_string('1.2.3'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506000005'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506005'),
         ]
 
         mismatches = [
             PackageVersion.from_string('2.2.3'),
-            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506000004'),
+            PackageVersion.from_string('2.2.3.SNAPSHOT20010203040506004'),
             PackageVersion.from_string('1.2.2'),
-            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506000003'),
+            PackageVersion.from_string('1.2.2.SNAPSHOT20010203040506003'),
             PackageVersion.from_string('1.1.3'),
-            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.1.3.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.1.2'),
-            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.1.2.SNAPSHOT20010203040506001'),
         ]
 
         for match in matches:
@@ -331,32 +331,32 @@ class PralineCommonTest(TestCase):
 
     def test_dependency_version_ordering(self):
         versions = [
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506002000'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506400'),
             PackageVersion.from_string('2.2.0'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000020'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506020'),
             PackageVersion.from_string('1.2.4'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000200'),
-            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506200'),
+            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000100'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000010'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506100'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506010'),
             PackageVersion.from_string('1.2.3'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506001000'),
-            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506000001'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506300'),
+            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506001'),
         ]
 
         expected_sorted_versions = [
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506001000'),
-            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506002000'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506300'),
+            PackageVersion.from_string('1.2.3.SNAPSHOT20010203040506400'),
             PackageVersion.from_string('1.2.3'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000100'),
-            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506000200'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506100'),
+            PackageVersion.from_string('1.2.4.SNAPSHOT20010203040506200'),
             PackageVersion.from_string('1.2.4'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000010'),
-            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506000020'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506010'),
+            PackageVersion.from_string('1.3.0.SNAPSHOT20010203040506020'),
             PackageVersion.from_string('1.3.0'),
-            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506000001'),
-            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506000002'),
+            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506001'),
+            PackageVersion.from_string('2.2.0.SNAPSHOT20010203040506002'),
             PackageVersion.from_string('2.2.0'),
         ]
 
