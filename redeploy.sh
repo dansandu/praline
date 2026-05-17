@@ -26,5 +26,7 @@ build_project journey &&
     build_project radiance &&
     build_project ballotin &&
     build_project math &&
+    build_project canvas &&
+    build_project chocolate &&
     build_project glyph &&
     build_project farseer
