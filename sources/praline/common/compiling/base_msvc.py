@@ -5,9 +5,10 @@ from praline.common.exception import (
     CompilationException, CompilerInstantionException, LinkingException, PreprocessingException
 )
 from praline.common.file_system import FileSystem, join, directory_name
-from typing import List
+from typing import Any, Dict, List
 
 import logging
+import os.path
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def get_msvc_machine(architecture: Architecture) -> str:
         raise CompilerInstantionException(f"Unrecognized architecture '{architecture}'")
 
 
-def get_environment_file(architecture: Architecture) -> str:
+def get_environment_file(environment_directory: str, architecture: Architecture) -> str:
     if architecture == Architecture.x32:
         batfile = 'vcvars32.bat'
     elif architecture == Architecture.x64:
@@ -33,7 +34,7 @@ def get_environment_file(architecture: Architecture) -> str:
         batfile = 'vcvarsall.bat'
     else:
         raise CompilerInstantionException(f"Unrecognized architecture '{architecture}'")
-    return fr"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\{batfile}"
+    return os.path.join(environment_directory, batfile)
 
 
 class BaseMsvcYieldDescriptor(IYieldDescriptor):
@@ -57,12 +58,26 @@ class BaseMsvcYieldDescriptor(IYieldDescriptor):
 
 
 class BaseMsvcCompilingStrategy(ICompilingStrategy):
-    def __init__(self, compiler_name: str, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
+    def __init__(
+        self,
+        file_system: FileSystem,
+        configuration: Dict[str, Any],
+        artifact_manifest: ArtifactManifest,
+        project_structure: ProjectStructure,
+        compiler_name: str
+    ):
+        msvc_environment_key = 'msvc-environment'
+
+        if msvc_environment_key in configuration:
+            environment_directory = configuration[msvc_environment_key]
+        else:
+            raise RuntimeError(f"The field '{msvc_environment_key}' must set in the configuration to use the MSVC compiler")
+
         self.compiler_name     = compiler_name
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
         self.project_structure = project_structure
-        self.environment_file  = get_environment_file(artifact_manifest.architecture)
+        self.environment_file  = get_environment_file(environment_directory, artifact_manifest.architecture)
         self.machine           = get_msvc_machine(artifact_manifest.architecture)
 
         self.compiler_flags  = [

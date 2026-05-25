@@ -157,5 +157,11 @@ class GccCompilingStrategySupplier(ICompilingStrategySupplier):
     def get_yield_descriptor(self) -> IYieldDescriptor:
         return GccYieldDescriptor()
 
-    def instantiate(self, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure) -> ICompilingStrategy:
-        return GccCompilingStrategy(file_system, artifact_manifest, project_structure)
+    def instantiate(
+        self,
+        file_system: FileSystem,
+        configuration: Dict[str, Any],
+        artifact_manifest: ArtifactManifest,
+        project_structure: ProjectStructure
+    ) -> ICompilingStrategy:
+        return GccCompilingStrategy(file_system, configuration, artifact_manifest, project_structure)

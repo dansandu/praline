@@ -6,9 +6,15 @@ import yaml
 import traceback
 
 
-with open(f"{os.path.dirname(__file__)}/../resources/praline-client.config", 'r') as f:
-    configuration = yaml.load(f.read(), Loader=yaml.SafeLoader)
-    logging.config.dictConfig(configuration['logging'])
+def read_configuration():
+    with open(f"{os.path.dirname(__file__)}/../resources/praline-client.config", 'r') as f:
+        configuration = yaml.load(f.read(), Loader=yaml.SafeLoader)
+        return configuration
+
+
+configuration = read_configuration()
+
+logging.config.dictConfig(configuration['logging'])
 
 
 from praline.client.project.pipeline.orchestration import invoke_stage
@@ -34,12 +40,12 @@ if __name__ == '__main__':
             pralinefile_path  = join(project_directory, 'Pralinefile')
             pralinefile = read_pralinefile(file_system, pralinefile_path)
         except FileNotFoundError as e:
-            raise FileNotFoundError(f"Pralinefile was not found in working directory {project_directory}") from e
+            raise FileNotFoundError(f"Pralinefile was not found in the working directory {project_directory}") from e
 
-        compiler = get_compiler(file_system, program_arguments, pralinefile)
+        compiler = get_compiler(file_system, configuration, program_arguments, pralinefile)
         project_structure = compiler.project_structure
         artifact_manifest = compiler.artifact_manifest
-        
+
         stage = program_arguments['global']['running_stage']
 
         invoke_stage(

@@ -58,15 +58,21 @@ class ICompilingStrategySupplier(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def instantiate(self, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure) -> ICompilingStrategy:
+    def instantiate(
+        self,
+        file_system: FileSystem,
+        configuration: Dict[str, Any],
+        artifact_manifest: ArtifactManifest,
+        project_structure: ProjectStructure
+    ) -> ICompilingStrategy:
         raise NotImplementedError()
 
 
 class Compiler:
-    def __init__(self, 
-                 file_system: FileSystem, 
-                 project_structure: ProjectStructure, 
-                 artifact_manifest: ArtifactManifest, 
+    def __init__(self,
+                 file_system: FileSystem,
+                 project_structure: ProjectStructure,
+                 artifact_manifest: ArtifactManifest,
                  compiler_strategy: ICompilingStrategy):
         self.file_system = file_system
         self.project_structure = project_structure
@@ -111,7 +117,7 @@ class Compiler:
                     logger.debug(f"Source '{source_path}' has been removed")
                     if self.file_system.exists(object_path):
                         self.file_system.remove_file(object_path)
-                
+
                 progress_bar.advance()
 
             delta(sources, hasher, cache, new_cache, consumer)
@@ -134,7 +140,7 @@ class Compiler:
         yield_descriptor = self.compiler_strategy.get_yield_descriptor()
 
         executable_path, symbols_table_path = self.project_structure.get_executable_and_symbols_table_path(yield_descriptor, artifact_identifier)
-    
+
         with progress_bar_supplier.create(resolution=1) as progress_bar:
             progress_bar.update_description(executable_path)
             self.compiler_strategy.link_executable(objects, external_libraries, external_libraries_interfaces, executable_path, symbols_table_path)
@@ -172,7 +178,7 @@ class Compiler:
                                                 library_interface_path,
                                                 symbols_table_path)
             progress_bar.advance()
-        
+
         if self.file_system.exists(symbols_table_path):
             return (library_path, library_interface_path, symbols_table_path)
         else:
@@ -208,9 +214,10 @@ def get_preferred_compiler(file_system: FileSystem) -> CompilerType:
 
 
 def intantiate_compiler(file_system: FileSystem,
-                        artifact_manifest: ArtifactManifest, 
+                        configuration: Dict[str, Any],
+                        artifact_manifest: ArtifactManifest,
                         project_structure: ProjectStructure,
-                        compiler_name: CompilerType, 
+                        compiler_name: CompilerType,
                         fallback_compilers: List[CompilerType]) -> Compiler:
     manifest           = vars(artifact_manifest)
     final_manifest     = None
@@ -219,26 +226,26 @@ def intantiate_compiler(file_system: FileSystem,
         manifest['compiler'] = compiler_name
         final_manifest       = ArtifactManifest(**manifest)
         supplier             = get_compiling_strategy_supplier(compiler_name)
-        compiling_strategy   = supplier.instantiate(file_system, final_manifest, project_structure)
-    else:        
+        compiling_strategy   = supplier.instantiate(file_system, configuration, final_manifest, project_structure)
+    else:
         prefered_compiler = get_preferred_compiler(file_system)
         compilers = fallback_compilers[:]
         if prefered_compiler in fallback_compilers:
             compilers.remove(prefered_compiler)
             compilers = [prefered_compiler] + compilers
-    
+
         messages = []
         for candidate in compilers:
             try:
                 manifest['compiler'] = candidate
                 final_manifest       = ArtifactManifest(**manifest)
                 supplier             = get_compiling_strategy_supplier(candidate)
-                compiling_strategy   = supplier.instantiate(file_system, final_manifest, project_structure)
+                compiling_strategy   = supplier.instantiate(file_system, configuration, final_manifest, project_structure)
                 break
             except CompilerInstantionException as e:
                 messages.append(str(e))
-    
+
         if compiling_strategy == None:
             raise NoSupportedCompilerFoundException(f"No suitable compiler was found:\n" + '\n'.join(messages))
-    
+
     return Compiler(file_system, project_structure, final_manifest, compiling_strategy)
