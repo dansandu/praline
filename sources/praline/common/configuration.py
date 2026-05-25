@@ -6,7 +6,12 @@ from praline.common.file_system import FileSystem
 from typing import Any, Dict
 
 
-def get_compiler(file_system: FileSystem, program_arguments: Dict[str, Any], pralinefile: Dict[str, Any]) -> Compiler:
+def get_compiler(
+    file_system: FileSystem, 
+    configuration: Dict[str, Any], 
+    program_arguments: Dict[str, Any], 
+    pralinefile: Dict[str, Any]
+) -> Compiler:
     organization = pralinefile['organization']
     artifact     = pralinefile['artifact']
     version      = pralinefile['version']
@@ -98,6 +103,7 @@ def get_compiler(file_system: FileSystem, program_arguments: Dict[str, Any], pra
     fallback_compilers = pralinefile['compilers']
     compiler = intantiate_compiler(
         file_system,
+        configuration,
         artifact_manifest, 
         project_structure,
         compiler_name, 
