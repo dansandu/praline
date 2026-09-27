@@ -37,7 +37,12 @@ class GccYieldDescriptor(IYieldDescriptor):
 
 
 class GccCompilingStrategy(ICompilingStrategy):
-    def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
+    def __init__(
+        self,
+        file_system: FileSystem,
+        artifact_manifest: ArtifactManifest,
+        project_structure: ProjectStructure
+    ):
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
         self.project_structure = project_structure
@@ -57,7 +62,7 @@ class GccCompilingStrategy(ICompilingStrategy):
             f'-DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"'
         ]
 
-        self.extra_libraries = ['libstdc++_libbacktrace.so']
+        self.extra_libraries = ['libstdc++exp.so']
 
         if artifact_manifest.mode == Mode.debug:
             self.flags.extend(['-g', '-DDEBUG'])
@@ -164,4 +169,4 @@ class GccCompilingStrategySupplier(ICompilingStrategySupplier):
         artifact_manifest: ArtifactManifest,
         project_structure: ProjectStructure
     ) -> ICompilingStrategy:
-        return GccCompilingStrategy(file_system, configuration, artifact_manifest, project_structure)
+        return GccCompilingStrategy(file_system, artifact_manifest, project_structure)

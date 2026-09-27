@@ -1,10 +1,10 @@
 from praline.common import ArtifactManifest, ArtifactPrefix, CompilerType, ExportedSymbols, Mode, Platform
 from praline.common.project_structure import ProjectStructure
 from praline.common.compiling.compiler import (
-    ICompilingStrategy, ICompilingStrategySupplier, IYieldDescriptor, 
+    ICompilingStrategy, ICompilingStrategySupplier, IYieldDescriptor,
 )
 from praline.common.exception import (
-    CompilerInstantionException, CompilationException, LinkingException, 
+    CompilerInstantionException, CompilationException, LinkingException,
     PreprocessingException, ProcessExecutionException
 )
 from praline.common.file_system import basename, FileSystem
@@ -37,7 +37,12 @@ class ClangYieldDescriptor(IYieldDescriptor):
 
 
 class ClangCompilingStrategy(ICompilingStrategy):
-    def __init__(self, file_system: FileSystem, artifact_manifest: ArtifactManifest, project_structure: ProjectStructure):
+    def __init__(
+        self,
+        file_system: FileSystem,
+        artifact_manifest: ArtifactManifest,
+        project_structure: ProjectStructure
+    ):
         self.file_system       = file_system
         self.artifact_manifest = artifact_manifest
         self.project_structure = project_structure
@@ -164,4 +169,4 @@ class ClangCompilingStrategySupplier(ICompilingStrategySupplier):
         artifact_manifest: ArtifactManifest,
         project_structure: ProjectStructure
     ) -> ICompilingStrategy:
-        return ClangCompilingStrategy(file_system, configuration, artifact_manifest, project_structure)
+        return ClangCompilingStrategy(file_system, artifact_manifest, project_structure)
