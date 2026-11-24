@@ -6,6 +6,7 @@ from praline.common.file_system import join
 clang_format_style_file_contents = """\
 Language: Cpp
 AccessModifierOffset: -4
+AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
@@ -22,6 +23,11 @@ SortUsingDeclarations: true
 SpaceAfterTemplateKeyword: false
 SpacesInAngles: false
 UseTab: Never
+ForEachMacros: [TEST_CLASS, TEST_METHOD]
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterForeachMacros: false
 """
 
 
