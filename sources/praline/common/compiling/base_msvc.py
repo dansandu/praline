@@ -86,7 +86,8 @@ class BaseMsvcCompilingStrategy(ICompilingStrategy):
             '/W3', '/Zc:wchar_t', '/Zc:inline', '/Zc:forScope', '/Oy-', '/wd4251', '/D_CONSOLE',
             '/D_UNICODE', '/DUNICODE', '/DPRALINE_EXPORT=__declspec(dllexport)',
             '/DPRALINE_IMPORT=__declspec(dllimport)',
-            f'/DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"'
+            f'/DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"',
+            f'/DPRALINE_PROJECT_ROOT="{self.project_structure.project_directory.replace('\\', '/')}"',
         ]
 
         self.linker_flags = [

@@ -59,7 +59,8 @@ class GccCompilingStrategy(ICompilingStrategy):
             '-Werror', '-Wall', '-Wextra',
             '-DPRALINE_EXPORT=__attribute__((visibility("default")))',
             '-DPRALINE_IMPORT=__attribute__((visibility("default")))',
-            f'-DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"'
+            f'-DPRALINE_SOURCES_ROOT="{self.project_structure.sources_root.replace('\\', '/')}"',
+            f'-DPRALINE_PROJECT_ROOT="{self.project_structure.project_directory.replace('\\', '/')}"',
         ]
 
         self.extra_libraries = ['libstdc++exp.so']
